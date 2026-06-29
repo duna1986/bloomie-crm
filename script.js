@@ -972,3 +972,36 @@ renderAjustes = function(){
 }
 
 render();
+
+/* v4.1 — Emails con previsualización y adjuntos */
+function isImageAttachment(file){const n=(file?.name||'').toLowerCase(),t=(file?.type||'').toLowerCase();return t.startsWith('image/')||/\.(png|jpe?g|webp|gif|svg)$/i.test(n)}
+function filesToDataList(input){return Promise.all([...(input?.files||[])].map(fileToData))}
+function emailAttachmentList(files=[]){return files.length?`<div class="email-attachments">${files.map((f,i)=>`<article><b>${isImageAttachment(f)?'🖼️':'📎'} ${esc(f.name||'Adjunto')}</b><span>${f.size?Math.round(f.size/1024)+' KB':''}</span><div class="row-actions"><button onclick="previewAnyFile(state.emails.flatMap(e=>e.adjuntos||[]).find(x=>x.data==='${esc(f.data||'')}'),'${esc(f.name||'Adjunto')}')">Ver</button><a href="${f.data||'#'}" download="${esc(f.name||'adjunto')}">Descargar</a></div></article>`).join('')}</div>`:'<p class="muted-small">Sin imágenes ni documentos adjuntos.</p>'}
+function emailBodyHTML(text=''){return esc(text).replace(/\n/g,'<br>')}
+function previewEmailTemplate(id){const t=state.emails.find(x=>Number(x.id)===Number(id));if(!t)return;const imgs=(t.adjuntos||[]).filter(isImageAttachment),docs=(t.adjuntos||[]).filter(x=>!isImageAttachment(x));modal('Previsualizar mensaje',`<section class="email-preview"><p class="eyebrow">${esc(t.nombre||'Plantilla')}</p><h2>${esc(t.asunto||'Sin asunto')}</h2><article class="email-message">${emailBodyHTML(t.cuerpo||'')}</article>${imgs.length?`<h3>Imágenes</h3><div class="email-image-grid">${imgs.map(f=>`<figure><img src="${f.data}" alt="${esc(f.name||'Imagen')}"><figcaption>${esc(f.name||'Imagen')}</figcaption></figure>`).join('')}</div>`:''}${docs.length?`<h3>Documentos</h3>${emailAttachmentList(docs)}`:''}</section>`,()=>closeModal())}
+function removeEmailAttachment(id,index){const t=state.emails.find(x=>Number(x.id)===Number(id));if(!t||!Array.isArray(t.adjuntos))return;t.adjuntos.splice(index,1);save();closeModal();openEmailTemplate(id);toast('Adjunto eliminado 🌸')}
+openEmailTemplate = function(id=null){
+  const t = state.emails.find(x=>Number(x.id)===Number(id)) || {nombre:"",asunto:"",cuerpo:"",adjuntos:[]};
+  if(!Array.isArray(t.adjuntos)) t.adjuntos=[];
+  modal(id?"Modificar plantilla":"Nueva plantilla",`<form id="emailTemplateForm" class="form-grid">
+    <input name="nombre" value="${esc(t.nombre)}" placeholder="Nombre plantilla" required>
+    <input name="asunto" value="${esc(t.asunto||"")}" placeholder="Asunto">
+    <textarea name="cuerpo" placeholder="Cuerpo del mensaje">${esc(t.cuerpo||"")}</textarea>
+    <label class="student-files" style="grid-column:1/-1">Añadir imágenes o documentos
+      <input id="emailAdjuntos" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.odt">
+    </label>
+    <div style="grid-column:1/-1"><b>Adjuntos actuales</b>${(t.adjuntos||[]).length?`<div class="email-attachments">${t.adjuntos.map((f,i)=>`<article><b>${isImageAttachment(f)?'🖼️':'📎'} ${esc(f.name||'Adjunto')}</b><span>${f.size?Math.round(f.size/1024)+' KB':''}</span><div class="row-actions">${id?`<button type="button" onclick="removeEmailAttachment(${id},${i})">Eliminar</button>`:''}</div></article>`).join('')}</div>`:'<p class="muted-small">No hay adjuntos todavía.</p>'}</div>
+  </form>`,async()=>{
+    Object.assign(t,Object.fromEntries(new FormData($("#emailTemplateForm")).entries()));
+    const nuevos=await filesToDataList($("#emailAdjuntos"));
+    t.adjuntos=[...(t.adjuntos||[]),...nuevos.filter(Boolean)];
+    if(!id){t.id=uid();state.emails.unshift(t)}
+    log(`${id?"Plantilla modificada":"Plantilla creada"}: ${t.nombre}`);
+    save(); closeModal(); render(); toast(id?"Plantilla modificada 🌸":"Plantilla guardada 🌸");
+  });
+}
+copyEmail = function(id){const t=state.emails.find(x=>Number(x.id)===Number(id));if(!t)return;navigator.clipboard.writeText(`Asunto: ${t.asunto||''}\n\n${t.cuerpo||''}\n\nAdjuntos: ${(t.adjuntos||[]).map(f=>f.name).join(', ')||'Sin adjuntos'}`);toast('Mensaje copiado')}
+renderEmails = function(){
+  const rows=state.emails.map(t=>`<article class="item"><div><b>${esc(t.nombre)}</b><p>${esc(t.asunto)} ${(t.adjuntos||[]).length?`· ${(t.adjuntos||[]).length} adjunto(s)`:''}</p></div><div class="row-actions"><button onclick="previewEmailTemplate(${t.id})">Previsualizar</button><button onclick="copyEmail(${t.id})">Copiar</button><button onclick="openEmailTemplate(${t.id})">Modificar</button><button onclick="delEmail(${t.id})">Eliminar</button></div></article>`).join('')||"<p>No hay plantillas.</p>";
+  $("#emails").innerHTML=pageHead("Emails","Emails","Plantillas reutilizables con previsualización y adjuntos")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Plantillas</p><h3>Crear mensaje</h3></div><button class="primary" onclick="openEmailTemplate()">Añadir plantilla</button></div><p>Ahora puedes previsualizar el mensaje y guardar imágenes o documentos junto a cada plantilla.</p></div><div class="card table-card"><div class="list">${rows}</div></div></section>`
+}

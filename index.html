@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bloom CRM 3.0</title>
+  <meta name="theme-color" content="#fff7fb" />
+  <link rel="stylesheet" href="style.css?v=3.3-import-excel" />
+</head>
+<body>
+  <div class="petals"><i></i><i></i><i></i><i></i><i></i></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">✿</div>
+      <div><h1>Bloom</h1><p>CRM Prácticas</p></div>
+    </div>
+    <nav id="nav">
+      <button data-view="dashboard" class="active"><span data-i="home"></span>Dashboard</button>
+      <button data-view="empresas"><span data-i="building"></span>Empresas</button>
+      <button data-view="alumnos"><span data-i="student"></span>Alumnos</button>
+      <button data-view="convenios"><span data-i="file"></span>Convenios</button>
+      <button data-view="expedientes"><span data-i="folder"></span>Expedientes</button>
+      <button data-view="documentos"><span data-i="archive"></span>Documentos</button>
+      <button data-view="seguimiento"><span data-i="phone"></span>Seguimiento</button>
+      <button data-view="emails"><span data-i="mail"></span>Emails</button>
+      <button data-view="agenda"><span data-i="calendar"></span>Agenda</button>
+      <button data-view="reportes"><span data-i="chart"></span>Reportes</button>
+      <button data-view="ajustes"><span data-i="settings"></span>Ajustes</button>
+    </nav>
+    <section class="plant-card">
+      <div class="plant-wrap"><img src="assets/bloom-plant.png" alt="Flor Bloom" /></div>
+      <h3 id="plantTitle">Que hoy florezcan nuevas oportunidades.</h3>
+      <p id="plantMessage">Cada pequeño paso también cuenta.</p>
+    </section>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="mobile-menu" id="menuBtn">☰</button>
+      <label class="search">
+        <span data-i="search"></span>
+        <input id="globalSearch" placeholder="Buscar empresas, alumnos, convenios, documentos..." />
+      </label>
+      <div class="top-actions">
+        <span id="syncStatus" class="sync ok"><i></i> Sincronizado</span>
+        <button id="notificationsBtn" class="icon-btn heart" title="Notificaciones">♡<b id="alertCount">0</b></button>
+        <button id="quickBtn" class="icon-btn" title="Acciones rápidas">＋</button>
+      </div>
+    </header>
+    <section id="searchResults" class="search-results hidden"></section>
+    <section id="dashboard" class="view active"></section>
+    <section id="empresas" class="view"></section>
+    <section id="alumnos" class="view"></section>
+    <section id="convenios" class="view"></section>
+    <section id="expedientes" class="view"></section>
+    <section id="documentos" class="view"></section>
+    <section id="seguimiento" class="view"></section>
+    <section id="emails" class="view"></section>
+    <section id="agenda" class="view"></section>
+    <section id="reportes" class="view"></section>
+    <section id="ajustes" class="view"></section>
+  </main>
+
+  <aside id="drawer" class="drawer">
+    <div class="drawer-head"><div><p>Revisiones</p><h2>Notificaciones</h2></div><button id="closeDrawer" class="icon-btn">×</button></div>
+    <div id="drawerList" class="drawer-list"></div>
+  </aside>
+  <div id="overlay" class="overlay"></div>
+  <dialog id="modal"></dialog>
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="script.js?v=3.3-import-excel"></script>
+</body>
+</html>

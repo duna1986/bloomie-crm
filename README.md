@@ -60,3 +60,21 @@ En la pestaña Empresas se añade:
   acepta_practicas, tipo_practicas, ciclos_recomendados,
   contacto_nombre, contacto_email, contacto_telefono,
   estado_crm, prioridad y notas.
+
+
+## v3.4 — Importar alumnos desde Excel/CSV
+
+En la pestaña Alumnos se añade:
+- Botón “Importar Excel/CSV”.
+- Botón “Plantilla Excel”.
+- Lectura de .xlsx, .xls y .csv.
+- Vista previa antes de importar.
+- Detección de alumnos existentes por email o nombre.
+- Opción para actualizar alumnos existentes.
+- Importación de campos:
+  nombre_alumno, telefono, email, direccion, nss, estado, empresa, inicio, fin, tutor y notas.
+
+
+## v3.5 — Limpiar centro de notificaciones
+
+En el centro de notificaciones se añade el botón “Limpiar” para ocultar las revisiones actuales. Las nuevas revisiones o cambios volverán a aparecer automáticamente.

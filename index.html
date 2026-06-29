@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloom CRM 3.0</title>
   <meta name="theme-color" content="#fff7fb" />
-  <link rel="stylesheet" href="style.css?v=3.3-import-excel" />
+  <link rel="stylesheet" href="style.css?v=3.4-import-alumnos" />
 </head>
 <body>
   <div class="petals"><i></i><i></i><i></i><i></i><i></i></div>
@@ -62,7 +62,7 @@
   </main>
 
   <aside id="drawer" class="drawer">
-    <div class="drawer-head"><div><p>Revisiones</p><h2>Notificaciones</h2></div><button id="closeDrawer" class="icon-btn">×</button></div>
+    <div class="drawer-head"><div><p>Revisiones</p><h2>Notificaciones</h2></div><div class="drawer-actions"><button id="clearNotifications" class="soft-btn" onclick="clearNotifications()">Limpiar</button><button id="closeDrawer" class="icon-btn">×</button></div></div>
     <div id="drawerList" class="drawer-list"></div>
   </aside>
   <div id="overlay" class="overlay"></div>
@@ -71,6 +71,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="script.js?v=3.3-import-excel"></script>
+  <script src="script.js?v=3.5-limpiar-notificaciones"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ const KEY="bloom_crm_3_state"; const SUPABASE_URL="https://wmvalzkkoivfwhhwhplw.
 const icons={home:'<svg viewBox="0 0 24 24"><path d="M4 10.6 12 4l8 6.6V20h-6v-5h-4v5H4Z"/></svg>',building:'<svg viewBox="0 0 24 24"><path d="M5 21V5h14v16M8 9h2M14 9h2M8 13h2M14 13h2M3 21h18"/></svg>',student:'<svg viewBox="0 0 24 24"><path d="M12 4 3 8.5 12 13l9-4.5Z"/><path d="M6 11v5c2 2 10 2 12 0v-5"/></svg>',file:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',folder:'<svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10H3Z"/></svg>',archive:'<svg viewBox="0 0 24 24"><path d="M3 7h18v4H3Z"/><path d="M5 11h14l-2 8H7Z"/></svg>',phone:'<svg viewBox="0 0 24 24"><path d="M6 4l4 4-2 2c1.5 3 3.5 5 6.5 6.5l2-2 4 4-2 3C10 20 4 14 3 6Z"/></svg>',mail:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 8 8 5 8-5"/></svg>',calendar:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',chart:'<svg viewBox="0 0 24 24"><path d="M4 20h16M7 17V9M12 17V5M17 17v-6"/></svg>',settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4"/></svg>',search:'<svg viewBox="0 0 24 24"><path d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>',users:'<svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><path d="M3 20c1-4 11-4 12 0"/><circle cx="17" cy="10" r="2"/><path d="M15 16c2 0 4 1 5 4"/></svg>'};
 function uid(){return Date.now()+Math.floor(Math.random()*9999)} function today(){return new Date().toISOString().slice(0,10)} function datePlus(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)} function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))} function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)} function fileToData(file){return new Promise(res=>{if(!file)return res(null);const r=new FileReader();r.onload=()=>res({name:file.name,type:file.type,size:file.size,data:r.result});r.readAsDataURL(file)})}
 const seed={empresas:[{id:uid(),nombre:"Deloitte",sector:"Consultoría",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"nueva",prioridad:"alta",contacto:"Laura Pérez",telefono:"928000001",email:"rrhh@deloitte.es",notas:"Potencial para administración y finanzas"},{id:uid()+1,nombre:"AON",sector:"Seguros",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"contactada",prioridad:"alta",contacto:"Marta Sosa",telefono:"928000002",email:"canarias@aon.es",notas:"Enviar convenio"},{id:uid()+2,nombre:"EY",sector:"Consultoría",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"interesada",prioridad:"media",contacto:"Javier Martín",telefono:"928000003",email:"talent@ey.es",notas:"Interesados"},{id:uid()+3,nombre:"Domingo Alonso",sector:"Automoción",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"convenio",prioridad:"alta",contacto:"Beatriz Vega",telefono:"928000005",email:"personas@domingoalonso.com",notas:"Convenio enviado"},{id:uid()+4,nombre:"Clínica Dental",sector:"Salud",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"activa",prioridad:"baja",contacto:"Sara González",telefono:"928000006",email:"info@clinicadental.es",notas:"Prácticas activas"}],alumnos:[{id:uid()+10,nombre:"María López",telefono:"600000001",email:"maria@email.com",direccion:"Las Palmas",nss:"123456789012",estado:"sin asignar",empresa:"",inicio:"",fin:"",tutor:"",notas:"",foto:null,curriculum:null},{id:uid()+11,nombre:"Juan Pérez",telefono:"600000002",email:"juan@email.com",direccion:"Telde",nss:"223456789012",estado:"prácticas",empresa:"Clínica Dental",inicio:today(),fin:datePlus(60),tutor:"Sara González",notas:"Buen progreso",foto:null,curriculum:null}],convenios:[{id:uid()+20,empresa:"AON",centro:"Centro educativo",inicio:today(),fin:datePlus(90),tutorEmpresa:"Marta Sosa",tutorCentro:"María García",estado:"pendiente",anexos:[]},{id:uid()+21,empresa:"Domingo Alonso",centro:"Centro educativo",inicio:today(),fin:datePlus(100),tutorEmpresa:"Beatriz Vega",tutorCentro:"María García",estado:"enviado",anexos:[]}],documentos:[],carpetas:[{id:"all",nombre:"Todas"},{id:"sin",nombre:"Sin carpeta"},{id:"curso",nombre:"Curso 2025/26"},{id:"conv",nombre:"Convenios"}],seguimientos:[{id:uid()+40,fecha:today(),empresa:"Deloitte",tipo:"llamada",resultado:"Pendiente respuesta",proxima:"Llamar a Deloitte",fechaProxima:today(),responsable:""},{id:uid()+41,fecha:today(),empresa:"AON",tipo:"email",resultado:"Convenio enviado",proxima:"Revisar firma",fechaProxima:datePlus(2),responsable:""}],emails:[{id:uid()+50,nombre:"Primer contacto",asunto:"Colaboración para prácticas",cuerpo:"Buenos días,\n\nNos gustaría valorar una posible colaboración para prácticas.\n\nUn saludo."}],actividad:[]};
-let state=JSON.parse(localStorage.getItem(KEY)||"null")||seed; let current="dashboard"; let activeFolder="all"; let selectedDate=today(); let draggedCompany=null; let cloudTimer=null;
+let state=JSON.parse(localStorage.getItem(KEY)||"null")||seed; if(!Array.isArray(state.dismissedNotifications)) state.dismissedNotifications=[]; let current="dashboard"; let activeFolder="all"; let selectedDate=today(); let draggedCompany=null; let cloudTimer=null;
 function save(){localStorage.setItem(KEY,JSON.stringify(state));setSync("Guardando...","saving");clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>saveCloud(true),1000);setTimeout(()=>setSync("Sincronizado","ok"),400)} function log(t){state.actividad.unshift({id:uid(),txt:t,fecha:new Date().toISOString()});state.actividad=state.actividad.slice(0,50)} function setSync(t,c="ok"){const el=$("#syncStatus");if(el){el.className="sync "+c;el.innerHTML=`<i></i> ${t}`}}
 function show(v){current=v;$$(".view").forEach(x=>x.classList.toggle("active",x.id===v));$$("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));render();if(innerWidth<820)$("#sidebar").classList.remove("open")} function pageHead(p,h,s){return `<div class="page-head"><div><p>${p}</p><h2>${h}</h2><span>${s}</span></div><button class="date-pill">${new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})}</button></div>`}
 function render(){updateIcons();updatePlant();renderDashboard();renderEmpresas();renderAlumnos();renderConvenios();renderExpedientes();renderDocumentos();renderSeguimiento();renderEmails();renderAgenda();renderReportes();renderAjustes();renderNotifications();setupPipeline()}
@@ -89,7 +89,7 @@ function quickEvent(date){modal("Añadir pendiente",`<form id="quickForm" class=
 function renderReportes(){const group=(arr,fn)=>arr.reduce((a,x)=>{const k=fn(x)||"Sin dato";a[k]=(a[k]||0)+1;return a},{});$("#reportes").innerHTML=pageHead("Reportes","Reportes","Estadísticas y exportación")+`<section class="kpi-grid">${kpi("Empresas",state.empresas.length,"empresas","pink","building")}${kpi("Alumnos",state.alumnos.length,"alumnos","blue","student")}${kpi("Convenios",state.convenios.length,"convenios","orange","file")}${kpi("Documentos",state.documentos.length,"documentos","green","archive")}</section><section class="report-grid"><div class="card table-card"><h3>Empresas por sector</h3>${bars(group(state.empresas,e=>e.sector))}</div><div class="card table-card"><h3>Estados CRM</h3>${bars(group(state.empresas,e=>e.estado))}</div><div class="card table-card"><h3>Convenios</h3>${bars(group(state.convenios,c=>c.estado))}</div><div class="card table-card"><h3>Alumnos</h3>${bars(group(state.alumnos,a=>a.estado))}</div><div class="card table-card"><button class="primary" onclick="exportCSV()">Exportar CSV</button><button class="soft-btn" onclick="window.print()">Exportar PDF</button></div></section>`} function bars(obj){const max=Math.max(1,...Object.values(obj));return Object.entries(obj).map(([k,v])=>`<div class="bar-row"><span>${esc(k)}</span><div class="bar"><i style="width:${v/max*100}%"></i></div><b>${v}</b></div>`).join("")||"<p>Sin datos.</p>"} function exportCSV(){const rows=[["tipo","nombre","estado"],...state.empresas.map(e=>["empresa",e.nombre,e.estado]),...state.alumnos.map(a=>["alumno",a.nombre,a.estado]),...state.convenios.map(c=>["convenio",c.empresa,c.estado])];const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"}));a.download="bloom-crm-reportes.csv";a.click()}
 function renderAjustes(){$("#ajustes").innerHTML=pageHead("Ajustes","Ajustes","Supabase, backup y restauración")+`<section class="grid-2"><div class="card table-card"><h3>Supabase</h3><p>Usa la tabla <b>bloom_crm_backups</b>.</p><button class="primary" onclick="saveCloud()">Guardar nube</button><button class="soft-btn" onclick="loadCloud()">Cargar nube</button><button class="soft-btn" onclick="downloadSQL()">Descargar SQL</button></div><div class="card table-card"><h3>Backup local</h3><button class="primary" onclick="downloadBackup()">Descargar JSON</button><label class="soft-btn">Restaurar JSON<input type="file" onchange="restoreBackup(event)" hidden></label></div></section>`}
 function modal(title,body,onSave){const m=$("#modal");m.innerHTML=`<div class="modal-body"><h2>${title}</h2>${body}<div class="modal-actions"><button class="soft-btn" onclick="closeModal()">Cerrar</button><button class="primary" id="modalSave">Guardar</button></div></div>`;m.showModal();$("#modalSave").onclick=onSave} function closeModal(){$("#modal").close()} function globalSearch(){const q=$("#globalSearch").value.toLowerCase(),box=$("#searchResults");if(!q){box.classList.add("hidden");return}const results=[...state.empresas.map(x=>({t:"Empresa",n:x.nombre,v:"empresas"})),...state.alumnos.map(x=>({t:"Alumno",n:x.nombre,v:"alumnos"})),...state.documentos.map(x=>({t:"Documento",n:x.nombre,v:"documentos"})),...state.convenios.map(x=>({t:"Convenio",n:x.empresa,v:"convenios"}))].filter(r=>r.n.toLowerCase().includes(q));box.classList.remove("hidden");box.innerHTML=results.slice(0,8).map(r=>`<article class="item" onclick="show('${r.v}');$('#globalSearch').value='';globalSearch()"><div><b>${esc(r.n)}</b><p>${r.t}</p></div></article>`).join("")||"<p>Sin resultados.</p>"}
-function buildNotifications(){const list=[];state.empresas.filter(e=>!state.seguimientos.some(s=>s.empresa===e.nombre)).forEach(e=>list.push({t:"Empresa",h:`${e.nombre} sin seguimiento`,p:"No tiene interacción registrada.",v:"empresas"}));state.convenios.filter(c=>c.estado!=="firmado"&&c.estado!=="completo").forEach(c=>list.push({t:"Convenio",h:`Convenio pendiente · ${c.empresa}`,p:`Estado: ${c.estado}`,v:"convenios"}));state.alumnos.filter(a=>!a.empresa).forEach(a=>list.push({t:"Alumno",h:`${a.nombre} sin empresa`,p:"Pendiente de asignación.",v:"alumnos"}));state.seguimientos.filter(s=>s.fechaProxima&&s.fechaProxima<=datePlus(2)).forEach(s=>list.push({t:"Seguimiento",h:s.proxima||`Revisar ${s.empresa}`,p:`${s.empresa} · ${s.fechaProxima}`,v:"seguimiento"}));return list} function renderNotifications(){const n=buildNotifications();$("#alertCount").textContent=n.length;$("#drawerList").innerHTML=n.length?n.map(x=>`<article class="notification" onclick="show('${x.v}');closeDrawer()"><b>${esc(x.h)}</b><p>${esc(x.t)} · ${esc(x.p)}</p></article>`).join(""):`<article class="notification"><b>Todo tranquilo</b><p>No hay revisiones urgentes.</p></article>`} function openDrawer(){renderNotifications();$("#drawer").classList.add("open");$("#overlay").classList.add("open")} function closeDrawer(){$("#drawer").classList.remove("open");$("#overlay").classList.remove("open")}
+function buildAllNotifications(){const list=[];state.empresas.filter(e=>!state.seguimientos.some(s=>s.empresa===e.nombre)).forEach(e=>list.push({id:`empresa-sin-seguimiento-${e.id}-${e.nombre}`,t:"Empresa",h:`${e.nombre} sin seguimiento`,p:"No tiene interacción registrada.",v:"empresas"}));state.convenios.filter(c=>c.estado!=="firmado"&&c.estado!=="completo").forEach(c=>list.push({id:`convenio-pendiente-${c.id}-${c.estado}`,t:"Convenio",h:`Convenio pendiente · ${c.empresa}`,p:`Estado: ${c.estado}`,v:"convenios"}));state.alumnos.filter(a=>!a.empresa).forEach(a=>list.push({id:`alumno-sin-empresa-${a.id}-${a.nombre}`,t:"Alumno",h:`${a.nombre} sin empresa`,p:"Pendiente de asignación.",v:"alumnos"}));state.seguimientos.filter(s=>s.fechaProxima&&s.fechaProxima<=datePlus(2)).forEach(s=>list.push({id:`seguimiento-${s.id}-${s.fechaProxima}-${s.proxima||s.empresa}`,t:"Seguimiento",h:s.proxima||`Revisar ${s.empresa}`,p:`${s.empresa} · ${s.fechaProxima}`,v:"seguimiento"}));return list} function buildNotifications(){const hidden=new Set(state.dismissedNotifications||[]);return buildAllNotifications().filter(n=>!hidden.has(n.id))} function renderNotifications(){const n=buildNotifications();$("#alertCount").textContent=n.length;const clearBtn=$("#clearNotifications");if(clearBtn)clearBtn.disabled=!n.length;$("#drawerList").innerHTML=n.length?n.map(x=>`<article class="notification" onclick="show('${x.v}');closeDrawer()"><b>${esc(x.h)}</b><p>${esc(x.t)} · ${esc(x.p)}</p></article>`).join(""):`<article class="notification"><b>Todo tranquilo</b><p>No hay revisiones urgentes.</p></article>`} function clearNotifications(){const currentIds=buildNotifications().map(n=>n.id);state.dismissedNotifications=[...new Set([...(state.dismissedNotifications||[]),...currentIds])];save();renderNotifications();toast("Centro de notificaciones limpio 🌸")} function openDrawer(){renderNotifications();$("#drawer").classList.add("open");$("#overlay").classList.add("open")} function closeDrawer(){$("#drawer").classList.remove("open");$("#overlay").classList.remove("open")}
 async function saveCloud(silent=false){try{setSync("Guardando...","saving");const res=await fetch(`${SUPABASE_URL}/rest/v1/bloom_crm_backups`,{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id:CLOUD_ID,data:state,updated_at:new Date().toISOString()})});if(!res.ok)throw new Error(await res.text());setSync("Sincronizado","ok");if(!silent)toast("Guardado en nube 🌸")}catch(e){console.error(e);setSync("Error nube","error");if(!silent)alert("Error Supabase: "+e.message)}} async function loadCloud(){try{const res=await fetch(`${SUPABASE_URL}/rest/v1/bloom_crm_backups?id=eq.${CLOUD_ID}&select=data`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!res.ok)throw new Error(await res.text());const rows=await res.json();if(rows[0]?.data){state=rows[0].data;localStorage.setItem(KEY,JSON.stringify(state));render();toast("Nube cargada 🌸")}else toast("No hay copia en nube")}catch(e){alert("Error Supabase: "+e.message)}} function downloadSQL(){const sql=`create table if not exists bloom_crm_backups (id text primary key,data jsonb not null,updated_at timestamptz default now());\nalter table bloom_crm_backups enable row level security;\ncreate policy "public read bloom crm backup" on bloom_crm_backups for select to anon using (true);\ncreate policy "public insert bloom crm backup" on bloom_crm_backups for insert to anon with check (true);\ncreate policy "public update bloom crm backup" on bloom_crm_backups for update to anon using (true) with check (true);`;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([sql],{type:"text/sql"}));a.download="bloom-crm-supabase.sql";a.click()} function downloadBackup(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));a.download="bloom-crm-backup.json";a.click()} function restoreBackup(ev){const f=ev.target.files[0];const r=new FileReader();r.onload=()=>{state=JSON.parse(r.result);save();render()};r.readAsText(f)}
 function init(){$$("[data-view]").forEach(b=>b.onclick=()=>show(b.dataset.view));$("#globalSearch").addEventListener("input",globalSearch);$("#menuBtn").onclick=()=>$("#sidebar").classList.add("open");$("#notificationsBtn").onclick=openDrawer;$("#closeDrawer").onclick=closeDrawer;$("#overlay").onclick=closeDrawer;$("#quickBtn").onclick=()=>quickEvent(today());render();setTimeout(()=>{if(state.actividad.length===0)loadCloud().catch(()=>{})},600)} init();
 
@@ -608,6 +608,243 @@ renderEmpresas = function(){
     templateBtn.type = "button";
     templateBtn.textContent = "Plantilla Excel";
     templateBtn.onclick = downloadEmpresaTemplate;
+
+    toolbar.appendChild(importBtn);
+    toolbar.appendChild(templateBtn);
+  }
+};
+
+
+/* =========================================================
+   Bloom CRM 3.4 — Importar alumnos desde Excel / CSV
+========================================================= */
+let pendingAlumnoImportRows = [];
+
+function normalizeStudentStatus(value){
+  const raw = String(value || "").trim();
+  if(!raw) return "sin asignar";
+  const key = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const allowed = ["sin asignar", "propuesta", "entrevista", "prácticas", "finalizado"];
+  if(key === "practicas") return "prácticas";
+  return allowed.find(x => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === key) || raw;
+}
+
+function normalizeDateValue(value){
+  if(value === undefined || value === null || value === "") return "";
+  if(value instanceof Date && !isNaN(value)) return value.toISOString().slice(0,10);
+  if(typeof value === "number"){
+    // Excel serial date. 25569 = 1970-01-01.
+    const d = new Date(Math.round((value - 25569) * 86400 * 1000));
+    return isNaN(d) ? "" : d.toISOString().slice(0,10);
+  }
+  const text = String(value).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const m = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(m){
+    const y = m[3].length === 2 ? `20${m[3]}` : m[3];
+    return `${y}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  }
+  return text;
+}
+
+function mapAlumnoImportRow(row){
+  const nombre = rowValue(row, ["nombre_alumno","alumno","nombre","nombre_completo","estudiante","student","name"]);
+  return {
+    id: uid(),
+    nombre,
+    telefono: rowValue(row, ["telefono","teléfono","movil","móvil","phone","contacto_telefono"]),
+    email: rowValue(row, ["email","correo","correo_electronico","correo electrónico","mail"]),
+    direccion: rowValue(row, ["direccion","dirección","domicilio","address"]),
+    nss: rowValue(row, ["nss","numero_seguridad_social","nº_seguridad_social","numero ss","seguridad_social"]),
+    estado: normalizeStudentStatus(rowValue(row, ["estado","estado_alumno","estado_practicas","status"])),
+    empresa: rowValue(row, ["empresa","empresa_asignada","centro_practicas","centro de prácticas","company"]),
+    inicio: normalizeDateValue(rowValue(row, ["inicio","fecha_inicio","inicio_practicas","fecha_inicio_practicas"])),
+    fin: normalizeDateValue(rowValue(row, ["fin","fecha_fin","fin_practicas","fecha_fin_practicas"])),
+    tutor: rowValue(row, ["tutor","tutor_empresa","tutor_practicas","responsable"]),
+    notas: rowValue(row, ["notas","observaciones","comentarios"]),
+    foto: null,
+    curriculum: null
+  };
+}
+
+function openAlumnoImport(){
+  modal("Importar alumnos desde Excel", `
+    <section class="import-panel">
+      <p>Sube un archivo <b>.xlsx</b>, <b>.xls</b> o <b>.csv</b>. Bloom leerá las columnas y las convertirá en fichas de alumnos.</p>
+      <div class="import-actions">
+        <label class="import-file-label">Seleccionar archivo
+          <input id="alumnoImportFile" type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+        </label>
+        <button type="button" class="soft-btn" onclick="downloadAlumnoTemplate()">Descargar plantilla</button>
+      </div>
+
+      <div class="import-help">
+        <b>Columnas recomendadas</b>
+        <span>nombre_alumno, telefono, email, direccion, nss, estado, empresa, inicio, fin, tutor, notas</span>
+      </div>
+
+      <label class="import-option">
+        <input id="alumnoImportUpdateExisting" type="checkbox" checked>
+        Actualizar alumnos existentes si el email o el nombre coincide
+      </label>
+
+      <div id="alumnoImportPreview" class="import-preview">
+        <p>Selecciona un archivo para ver la vista previa.</p>
+      </div>
+    </section>
+  `, () => confirmAlumnoImport());
+
+  const input = $("#alumnoImportFile");
+  if(input) input.addEventListener("change", handleAlumnoImportFile);
+}
+
+async function handleAlumnoImportFile(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+
+  const ext = file.name.toLowerCase().split(".").pop();
+  try{
+    let rows = [];
+    if(ext === "csv"){
+      const text = await file.text();
+      rows = parseCSVRows(text);
+    }else{
+      if(!window.XLSX){
+        $("#alumnoImportPreview").innerHTML = `<div class="import-error">No se pudo cargar el lector Excel. Revisa la conexión o usa CSV.</div>`;
+        return;
+      }
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+    }
+
+    pendingAlumnoImportRows = rows.map(mapAlumnoImportRow).filter(r => r.nombre);
+    renderAlumnoImportPreview(pendingAlumnoImportRows, rows.length);
+  }catch(error){
+    console.error(error);
+    $("#alumnoImportPreview").innerHTML = `<div class="import-error">No se pudo leer el archivo. Comprueba que el formato sea correcto.</div>`;
+  }
+}
+
+function sameAlumno(a, row){
+  const aEmail = String(a.email || "").trim().toLowerCase();
+  const rEmail = String(row.email || "").trim().toLowerCase();
+  if(aEmail && rEmail && aEmail === rEmail) return true;
+  return String(a.nombre || "").trim().toLowerCase() === String(row.nombre || "").trim().toLowerCase();
+}
+
+function renderAlumnoImportPreview(rows, rawCount){
+  const preview = $("#alumnoImportPreview");
+  if(!preview) return;
+
+  const duplicates = rows.filter(r => state.alumnos.some(a => sameAlumno(a, r))).length;
+  preview.innerHTML = `
+    <div class="import-summary">
+      <article><b>${rawCount}</b><span>Filas leídas</span></article>
+      <article><b>${rows.length}</b><span>Alumnos válidos</span></article>
+      <article><b>${duplicates}</b><span>Coincidencias existentes</span></article>
+    </div>
+    <div class="import-table-wrap">
+      <table>
+        <thead><tr><th>Alumno</th><th>Contacto</th><th>Empresa</th><th>Estado</th><th>Fechas</th><th>Tutor</th></tr></thead>
+        <tbody>
+          ${rows.slice(0,10).map(r=>`
+            <tr>
+              <td><b>${esc(r.nombre)}</b><br><small>NSS: ${esc(r.nss)}</small></td>
+              <td>${esc(r.telefono)}<br><small>${esc(r.email)}</small></td>
+              <td>${esc(r.empresa || "Sin empresa")}</td>
+              <td><span class="badge">${esc(r.estado)}</span></td>
+              <td>${esc(r.inicio)}${r.fin ? ` → ${esc(r.fin)}` : ""}</td>
+              <td>${esc(r.tutor)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    ${rows.length > 10 ? `<p class="import-note">Mostrando 10 de ${rows.length} alumnos.</p>` : ""}
+  `;
+}
+
+function confirmAlumnoImport(){
+  if(!pendingAlumnoImportRows.length){
+    toast("No hay alumnos válidos para importar");
+    return;
+  }
+
+  const updateExisting = $("#alumnoImportUpdateExisting")?.checked;
+  let created = 0;
+  let updated = 0;
+
+  pendingAlumnoImportRows.forEach(row => {
+    const existing = state.alumnos.find(a => sameAlumno(a, row));
+    if(existing && updateExisting){
+      Object.assign(existing, {
+        nombre: row.nombre || existing.nombre,
+        telefono: row.telefono || existing.telefono,
+        email: row.email || existing.email,
+        direccion: row.direccion || existing.direccion,
+        nss: row.nss || existing.nss,
+        estado: row.estado || existing.estado,
+        empresa: row.empresa || existing.empresa,
+        inicio: row.inicio || existing.inicio,
+        fin: row.fin || existing.fin,
+        tutor: row.tutor || existing.tutor,
+        notas: row.notas || existing.notas
+      });
+      updated++;
+    }else if(!existing){
+      state.alumnos.unshift(row);
+      created++;
+    }
+  });
+
+  log(`Importación Excel: ${created} alumnos añadidos, ${updated} actualizados`);
+  pendingAlumnoImportRows = [];
+  save();
+  closeModal();
+  dashboardFilters.alumnos = "all";
+  show("alumnos");
+  toast(`${created} añadidos · ${updated} actualizados 🌸`);
+}
+
+function downloadAlumnoTemplate(){
+  const headers = ["nombre_alumno","telefono","email","direccion","nss","estado","empresa","inicio","fin","tutor","notas"];
+  const example = ["Alumno Ejemplo","600000000","alumno@email.com","Las Palmas de Gran Canaria","123456789012","sin asignar","","2026-03-01","2026-06-15","Tutor/a","Notas internas"];
+
+  if(window.XLSX){
+    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
+    XLSX.writeFile(wb, "plantilla_alumnos_bloom_crm.xlsx");
+  }else{
+    const csv = [headers, example].map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+    a.download = "plantilla_alumnos_bloom_crm.csv";
+    a.click();
+  }
+}
+
+/* Añade botones de importación a Alumnos */
+const renderAlumnosImportBase34 = renderAlumnos;
+renderAlumnos = function(){
+  renderAlumnosImportBase34();
+  const toolbar = document.querySelector("#alumnos .toolbar");
+  if(toolbar && !document.querySelector("#importAlumnosBtn")){
+    const importBtn = document.createElement("button");
+    importBtn.id = "importAlumnosBtn";
+    importBtn.className = "soft-btn";
+    importBtn.type = "button";
+    importBtn.textContent = "Importar Excel/CSV";
+    importBtn.onclick = openAlumnoImport;
+
+    const templateBtn = document.createElement("button");
+    templateBtn.id = "templateAlumnosBtn";
+    templateBtn.className = "soft-btn";
+    templateBtn.type = "button";
+    templateBtn.textContent = "Plantilla Excel";
+    templateBtn.onclick = downloadAlumnoTemplate;
 
     toolbar.appendChild(importBtn);
     toolbar.appendChild(templateBtn);

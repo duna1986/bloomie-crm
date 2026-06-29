@@ -78,3 +78,16 @@ En la pestaña Alumnos se añade:
 ## v3.5 — Limpiar centro de notificaciones
 
 En el centro de notificaciones se añade el botón “Limpiar” para ocultar las revisiones actuales. Las nuevas revisiones o cambios volverán a aparecer automáticamente.
+
+
+## v4.0 — Modificar y eliminar en todos los apartados
+
+Se añaden controles de modificación y eliminación a los apartados donde todavía faltaban acciones completas:
+- Documentos: modificar metadatos, reemplazar archivo y eliminar.
+- Seguimiento: añadir, modificar y eliminar llamadas, emails, visitas, reuniones y tareas.
+- Emails/plantillas: añadir, copiar, modificar y eliminar.
+- Agenda: modificar o eliminar pendientes, seguimientos, convenios, documentos y expedientes asociados al día.
+- Expedientes: acceso directo a ficha, modificación y eliminación del expediente/alumno.
+- Reportes: guardar reportes, modificar nombre y eliminar reportes guardados.
+- Notificaciones: marcar individualmente como resuelta y limpiar el centro completo.
+- Ajustes: restaurar datos de ejemplo además de backup y nube.

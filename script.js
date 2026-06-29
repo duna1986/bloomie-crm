@@ -850,3 +850,125 @@ renderAlumnos = function(){
     toolbar.appendChild(templateBtn);
   }
 };
+
+/* =========================================================
+   Bloom CRM 4.0 — Modificar y eliminar en todos los apartados
+========================================================= */
+if(!Array.isArray(state.reportes)) state.reportes = [];
+
+function optionList(values, selected){return values.map(v=>`<option ${String(selected||"")===String(v)?"selected":""}>${esc(v)}</option>`).join("")}
+function empresaOptions(selected=""){return `<option value="">Sin empresa</option>`+state.empresas.map(e=>`<option value="${esc(e.nombre)}" ${selected===e.nombre?"selected":""}>${esc(e.nombre)}</option>`).join("")}
+function alumnoOptions(selected=""){return `<option value="">Sin alumno</option>`+state.alumnos.map(a=>`<option value="${esc(a.nombre)}" ${selected===a.nombre?"selected":""}>${esc(a.nombre)}</option>`).join("")}
+function carpetaOptions(selected=""){return `<option value="">Sin carpeta</option>`+state.carpetas.filter(f=>!["all","sin"].includes(String(f.id))).map(f=>`<option value="${esc(f.id)}" ${String(selected)===String(f.id)?"selected":""}>${esc(f.nombre)}</option>`).join("")}
+
+function editDoc(id){
+  const d = state.documentos.find(x=>Number(x.id)===Number(id));
+  if(!d) return;
+  modal("Modificar documento",`<form id="docEditForm" class="form-grid">
+    <input name="nombre" value="${esc(d.nombre)}" placeholder="Nombre visible" required>
+    <select name="carpeta">${carpetaOptions(d.carpeta||"")}</select>
+    <select name="tipo">${optionList(["convenio firmado","DNI/NIF","seguro","acuerdo formativo","evaluación","anexo de prácticas","cv","otro"],d.tipo)}</select>
+    <select name="empresa">${empresaOptions(d.empresa||"")}</select>
+    <select name="alumno">${alumnoOptions(d.alumno||"")}</select>
+    <select name="estado">${optionList(["pendiente","para enviar","enviado","firmado","caducado"],d.estado)}</select>
+    <input name="fecha" type="date" value="${esc(d.fecha||today())}">
+    <input name="subidoPor" value="${esc(d.subidoPor||"")}" placeholder="Subido por">
+    <textarea name="notas" placeholder="Notas">${esc(d.notas||"")}</textarea>
+  </form>`,()=>{
+    Object.assign(d,Object.fromEntries(new FormData($("#docEditForm")).entries()));
+    log(`Documento modificado: ${d.nombre}`);
+    save(); closeModal(); render(); toast("Documento modificado 🌸");
+  });
+}
+const docCardBase40 = docCard;
+docCard = function(d){return `<article class="card doc-card"><h3>${esc(d.nombre)}</h3><p>${esc(d.tipo)} · ${esc(d.estado)}</p><p>${esc(d.empresa||d.alumno||"General")} · ${esc(d.fecha)}</p><p>${esc(d.notas||"")}</p><div class="doc-actions"><button onclick="previewAnyFile(state.documentos.find(x=>x.id===${d.id}).file,'${esc(d.nombre)}')">Previsualizar</button><a href="${d.file?.data||"#"}" download="${esc(d.file?.name||d.nombre)}">Descargar</a><button onclick="editDoc(${d.id})">Modificar</button><button onclick="replaceDoc(${d.id})">Reemplazar archivo</button><button onclick="delDoc(${d.id})">Eliminar</button></div></article>`}
+const delDocBase40 = delDoc;
+delDoc = function(id){if(confirm("¿Eliminar documento?")){state.documentos=state.documentos.filter(d=>Number(d.id)!==Number(id));log("Documento eliminado");save();render();toast("Documento eliminado 🌸")}}
+
+function openSeguimiento(id=null, defaultDate=today()){
+  const s = state.seguimientos.find(x=>Number(x.id)===Number(id)) || {fecha:defaultDate,empresa:"",tipo:"llamada",resultado:"",proxima:"",fechaProxima:defaultDate,responsable:""};
+  modal(id?"Modificar seguimiento":"Añadir seguimiento",`<form id="seguimientoForm" class="form-grid">
+    <input name="fecha" type="date" value="${esc(s.fecha||today())}">
+    <select name="empresa">${empresaOptions(s.empresa||"")}</select>
+    <select name="tipo">${optionList(["llamada","email","visita","reunión","LinkedIn","tarea"],s.tipo)}</select>
+    <input name="resultado" value="${esc(s.resultado||"")}" placeholder="Resultado / nota">
+    <input name="proxima" value="${esc(s.proxima||"")}" placeholder="Próxima acción">
+    <input name="fechaProxima" type="date" value="${esc(s.fechaProxima||s.fecha||today())}">
+    <input name="responsable" value="${esc(s.responsable||"")}" placeholder="Responsable">
+  </form>`,()=>{
+    Object.assign(s,Object.fromEntries(new FormData($("#seguimientoForm")).entries()));
+    if(!id){s.id=uid();state.seguimientos.unshift(s)}
+    selectedDate=s.fechaProxima||s.fecha||selectedDate;
+    log(`${id?"Seguimiento modificado":"Seguimiento registrado"}: ${s.empresa||s.proxima}`);
+    save(); closeModal(); render(); toast(id?"Seguimiento modificado 🌸":"Seguimiento guardado 🌸");
+  });
+}
+function delSeguimiento(id){if(confirm("¿Eliminar seguimiento o pendiente?")){state.seguimientos=state.seguimientos.filter(s=>Number(s.id)!==Number(id));log("Seguimiento eliminado");save();render();toast("Seguimiento eliminado 🌸")}}
+renderSeguimiento = function(){
+  const rows = state.seguimientos.map(s=>`<article class="item"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")}</p></div><div class="row-actions"><button onclick="openSeguimiento(${s.id})">Modificar</button><button onclick="delSeguimiento(${s.id})">Eliminar</button></div></article>`).join("")||"<p>No hay seguimientos.</p>";
+  $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Llamadas, emails, visitas, reuniones y tareas")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Usa “Añadir” para crear y los botones de cada fila para modificar o eliminar.</p></div><div class="card table-card"><div class="list">${rows}</div></div></section>`;
+}
+addSeguimiento = function(ev){ev.preventDefault();openSeguimiento(null,today())}
+quickEvent = function(date){openSeguimiento(null,date)}
+
+function openEmailTemplate(id=null){
+  const t = state.emails.find(x=>Number(x.id)===Number(id)) || {nombre:"",asunto:"",cuerpo:""};
+  modal(id?"Modificar plantilla":"Nueva plantilla",`<form id="emailTemplateForm" class="form-grid">
+    <input name="nombre" value="${esc(t.nombre)}" placeholder="Nombre plantilla" required>
+    <input name="asunto" value="${esc(t.asunto||"")}" placeholder="Asunto">
+    <textarea name="cuerpo" placeholder="Cuerpo">${esc(t.cuerpo||"")}</textarea>
+  </form>`,()=>{
+    Object.assign(t,Object.fromEntries(new FormData($("#emailTemplateForm")).entries()));
+    if(!id){t.id=uid();state.emails.unshift(t)}
+    log(`${id?"Plantilla modificada":"Plantilla creada"}: ${t.nombre}`);
+    save(); closeModal(); render(); toast(id?"Plantilla modificada 🌸":"Plantilla guardada 🌸");
+  });
+}
+renderEmails = function(){
+  $("#emails").innerHTML=pageHead("Emails","Emails","Plantillas reutilizables")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Plantillas</p><h3>Crear nueva plantilla</h3></div><button class="primary" onclick="openEmailTemplate()">Añadir plantilla</button></div><p>Todas las plantillas se pueden copiar, modificar y eliminar.</p></div><div class="card table-card"><div class="list">${state.emails.map(t=>`<article class="item"><div><b>${esc(t.nombre)}</b><p>${esc(t.asunto)}</p></div><div class="row-actions"><button onclick="copyEmail(${t.id})">Copiar</button><button onclick="openEmailTemplate(${t.id})">Modificar</button><button onclick="delEmail(${t.id})">Eliminar</button></div></article>`).join("")||"<p>No hay plantillas.</p>"}</div></div></section>`
+}
+addEmail = function(ev){ev.preventDefault();openEmailTemplate()}
+delEmail = function(id){if(confirm("¿Eliminar plantilla?")){state.emails=state.emails.filter(e=>Number(e.id)!==Number(id));log("Plantilla eliminada");save();render();toast("Plantilla eliminada 🌸")}}
+
+const dayEventsBase40 = dayEvents;
+dayEvents = function(date){
+  const ev=[];
+  state.seguimientos.forEach(s=>{if(s.fecha===date||s.fechaProxima===date)ev.push({id:s.id,kind:"Seguimiento",title:s.proxima||s.resultado||s.tipo,sub:`${s.empresa||"Sin empresa"} · ${s.tipo}`,view:"seguimiento",edit:`openSeguimiento(${s.id})`,del:`delSeguimiento(${s.id})`})});
+  state.convenios.forEach(c=>{if(c.inicio===date||c.fin===date)ev.push({id:c.id,kind:c.inicio===date?"Inicio convenio":"Fin convenio",title:c.empresa,sub:`${c.estado}`,view:"convenios",edit:`openConvenio(${c.id})`,del:`delConvenio(${c.id})`})});
+  state.alumnos.forEach(a=>{if(a.inicio===date||a.fin===date)ev.push({id:a.id,kind:a.inicio===date?"Inicio prácticas":"Fin prácticas",title:a.nombre,sub:a.empresa||"Sin empresa",view:"alumnos",edit:`openAlumno(${a.id})`,del:`delAlumno(${a.id})`})});
+  state.documentos.forEach(d=>{if(d.fecha===date)ev.push({id:d.id,kind:"Documento",title:d.nombre,sub:`${d.tipo} · ${d.estado}`,view:"documentos",edit:`editDoc(${d.id})`,del:`delDoc(${d.id})`})});
+  return ev;
+}
+renderAgenda = function(){
+  const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${ev.length}</b><span>Pendientes</span></article><article><b>${ev.filter(e=>e.kind==='Seguimiento').length}</b><span>Seguimientos</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions"><button onclick="${e.edit}">Modificar</button><button onclick="${e.del}">Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
+}
+
+renderExpedientes = function(){
+  const rows=state.alumnos.map(a=>{const e=state.empresas.find(x=>x.nombre===a.empresa),c=state.convenios.find(x=>x.empresa===a.empresa),docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa);return `<article class="card table-card"><div class="section-head"><div><p>Expediente</p><h3>${esc(a.nombre)}</h3></div><span class="badge">${esc(a.estado)}</span></div><div class="grid-2"><div><b>Empresa</b><p>${esc(a.empresa||"Sin empresa")}</p><b>Contacto</b><p>${esc(e?.contacto||"")}</p><b>Fechas</b><p>${esc(a.inicio||"")} → ${esc(a.fin||"")}</p></div><div><b>Convenio</b><p>${esc(c?.estado||"Sin convenio")}</p><b>Documentos</b><p>${docs.length} asociados</p><b>Próxima acción</b><p>${esc(state.seguimientos.find(s=>s.empresa===a.empresa)?.proxima||"Sin acción")}</p></div></div><div class="row-actions"><button class="primary" onclick="openStudentProfile(${a.id})">Ver ficha</button><button onclick="openAlumno(${a.id})">Modificar</button><button onclick="delAlumno(${a.id})">Eliminar</button></div></article>`}).join("");
+  $("#expedientes").innerHTML=pageHead("Expedientes","Expedientes","Vista completa por alumno")+`<section class="grid-2">${rows||"<p>No hay expedientes.</p>"}</section>`
+}
+
+function reportSnapshot(){return {empresas:state.empresas.length,alumnos:state.alumnos.length,convenios:state.convenios.length,documentos:state.documentos.length,fecha:new Date().toLocaleString("es-ES")}}
+function saveReporte(){const name=prompt("Nombre del reporte guardado:",`Reporte ${new Date().toLocaleDateString("es-ES")}`);if(!name)return;state.reportes.unshift({id:uid(),nombre:name,...reportSnapshot()});log(`Reporte guardado: ${name}`);save();render();toast("Reporte guardado 🌸")}
+function editReporte(id){const r=state.reportes.find(x=>Number(x.id)===Number(id));if(!r)return;const name=prompt("Nuevo nombre del reporte:",r.nombre);if(!name)return;r.nombre=name;save();render();toast("Reporte modificado 🌸")}
+function delReporte(id){if(confirm("¿Eliminar reporte guardado?")){state.reportes=state.reportes.filter(r=>Number(r.id)!==Number(id));save();render();toast("Reporte eliminado 🌸")}}
+const renderReportesBase40 = renderReportes;
+renderReportes = function(){
+  const group=(arr,fn)=>arr.reduce((a,x)=>{const k=fn(x)||"Sin dato";a[k]=(a[k]||0)+1;return a},{});
+  $("#reportes").innerHTML=pageHead("Reportes","Reportes","Estadísticas, exportación y reportes guardados")+`<section class="kpi-grid">${kpi("Empresas",state.empresas.length,"empresas","pink","building")}${kpi("Alumnos",state.alumnos.length,"alumnos","blue","student")}${kpi("Convenios",state.convenios.length,"convenios","orange","file")}${kpi("Documentos",state.documentos.length,"documentos","green","archive")}</section><section class="report-grid"><div class="card table-card"><h3>Empresas por sector</h3>${bars(group(state.empresas,e=>e.sector))}</div><div class="card table-card"><h3>Estados CRM</h3>${bars(group(state.empresas,e=>e.estado))}</div><div class="card table-card"><h3>Convenios</h3>${bars(group(state.convenios,c=>c.estado))}</div><div class="card table-card"><h3>Alumnos</h3>${bars(group(state.alumnos,a=>a.estado))}</div><div class="card table-card"><button class="primary" onclick="exportCSV()">Exportar CSV</button><button class="soft-btn" onclick="window.print()">Exportar PDF</button><button class="soft-btn" onclick="saveReporte()">Guardar reporte</button></div><div class="card table-card"><h3>Reportes guardados</h3><div class="list">${(state.reportes||[]).map(r=>`<article class="item"><div><b>${esc(r.nombre)}</b><p>${esc(r.fecha)} · ${r.empresas} empresas · ${r.alumnos} alumnos · ${r.convenios} convenios · ${r.documentos} docs.</p></div><div class="row-actions"><button onclick="editReporte(${r.id})">Modificar</button><button onclick="delReporte(${r.id})">Eliminar</button></div></article>`).join("")||"<p>No hay reportes guardados.</p>"}</div></div></section>`
+}
+
+function hideNotification(id){state.dismissedNotifications=[...new Set([...(state.dismissedNotifications||[]),id])];save();renderNotifications();toast("Notificación ocultada 🌸")}
+renderNotifications = function(){
+  const n=buildNotifications();$("#alertCount").textContent=n.length;const clearBtn=$("#clearNotifications");if(clearBtn)clearBtn.disabled=!n.length;
+  $("#drawerList").innerHTML=n.length?n.map(x=>`<article class="notification" onclick="show('${x.v}');closeDrawer()"><b>${esc(x.h)}</b><p>${esc(x.t)} · ${esc(x.p)}</p><div class="row-actions"><button onclick="event.stopPropagation();hideNotification('${esc(x.id)}')">Marcar resuelta</button></div></article>`).join(""):`<article class="notification"><b>Todo tranquilo</b><p>No hay revisiones urgentes.</p></article>`
+}
+
+function resetDemoData(){if(confirm("¿Restaurar datos de ejemplo? Se reemplazarán los datos actuales.")){state=JSON.parse(JSON.stringify(seed));state.dismissedNotifications=[];state.reportes=[];save();render();toast("Datos restaurados 🌸")}}
+const renderAjustesBase40 = renderAjustes;
+renderAjustes = function(){
+  $("#ajustes").innerHTML=pageHead("Ajustes","Ajustes","Supabase, backup, restauración y mantenimiento")+`<section class="grid-2"><div class="card table-card"><h3>Supabase</h3><p>Usa la tabla <b>bloom_crm_backups</b>.</p><button class="primary" onclick="saveCloud()">Guardar nube</button><button class="soft-btn" onclick="loadCloud()">Cargar nube</button><button class="soft-btn" onclick="downloadSQL()">Descargar SQL</button></div><div class="card table-card"><h3>Backup local</h3><button class="primary" onclick="downloadBackup()">Descargar JSON</button><label class="soft-btn">Restaurar JSON<input type="file" onchange="restoreBackup(event)" hidden></label><button class="soft-btn" onclick="resetDemoData()">Restaurar demo</button></div></section>`
+}
+
+render();

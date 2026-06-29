@@ -116,3 +116,12 @@ En la pestaña Convenios se añade:
 - Resumen de datos del convenio, empresa, contacto, alumnado vinculado y seguimientos relacionados.
 - Listado de documentos adjuntos con previsualización, descarga, modificación y opción de quitar del convenio.
 - Adjuntar documentos existentes del archivo documental al convenio.
+
+
+## v4.6 — Pestaña Prácticas
+
+Se añade una pestaña independiente **Prácticas** con:
+- Listado de alumnos actualmente en prácticas.
+- KPIs de prácticas activas, empresas, documentos y tareas pendientes.
+- Ficha rápida de cada alumno en prácticas con empresa, tutor, fechas, documentos y tareas.
+- Acción para marcar las prácticas como finalizadas.

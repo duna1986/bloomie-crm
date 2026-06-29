@@ -1304,3 +1304,65 @@ dayEvents = function(date){
 
 /* v4.5 — refresco final */
 render();
+
+
+/* v4.6 — Pestaña Alumnos en prácticas */
+function parseDateSafe(v){
+  if(!v) return null;
+  const d=new Date(String(v)+'T12:00:00');
+  return isNaN(d.getTime())?null:d;
+}
+function alumnoEnPracticas(a){
+  const estado=String(a.estado||'').toLowerCase();
+  if(estado.includes('práctica') || estado.includes('practica')) return true;
+  const hasEmpresa=!!String(a.empresa||'').trim();
+  const ini=parseDateSafe(a.inicio), fin=parseDateSafe(a.fin), now=new Date();
+  if(hasEmpresa && ini && fin) return ini<=now && now<=fin;
+  return false;
+}
+function practicasDaysLeft(a){
+  const fin=parseDateSafe(a.fin);
+  if(!fin) return 'Sin fecha fin';
+  const todayD=new Date(); todayD.setHours(0,0,0,0);
+  fin.setHours(0,0,0,0);
+  const days=Math.ceil((fin-todayD)/(1000*60*60*24));
+  if(days<0) return 'Finalizada por fecha';
+  if(days===0) return 'Termina hoy';
+  return `${days} día${days===1?'':'s'} restantes`;
+}
+function renderPracticas(){
+  const el=$('#practicas'); if(!el) return;
+  const q=($('#practicasSearch')?.value||'').toLowerCase();
+  const alumnos=state.alumnos.filter(alumnoEnPracticas).filter(a=>!q || JSON.stringify(a).toLowerCase().includes(q));
+  const sinDocs=alumnos.filter(a=>!state.documentos.some(d=>d.alumno===a.nombre||d.empresa===a.empresa)).length;
+  el.innerHTML=pageHead('Prácticas','Alumnos en prácticas','Seguimiento específico del alumnado actualmente en empresa')+`
+    <section class="kpi-grid">
+      <article class="kpi card"><div class="kpi-icon green">${icons.calendar}</div><strong>${alumnos.length}</strong><span>En prácticas</span></article>
+      <article class="kpi card"><div class="kpi-icon blue">${icons.building}</div><strong>${new Set(alumnos.map(a=>a.empresa).filter(Boolean)).size}</strong><span>Empresas activas</span></article>
+      <article class="kpi card"><div class="kpi-icon orange">${icons.archive}</div><strong>${sinDocs}</strong><span>Sin documentos asociados</span></article>
+      <article class="kpi card"><div class="kpi-icon pink">${icons.phone}</div><strong>${alumnos.filter(a=>state.seguimientos.some(s=>s.empresa===a.empresa && !isTaskCompleted(s))).length}</strong><span>Con tareas pendientes</span></article>
+    </section>
+    <section class="card table-card">
+      <div class="toolbar"><input id="practicasSearch" placeholder="Buscar alumno, empresa, curso..." oninput="renderPracticas()" value="${esc(q)}"><button class="primary" onclick="openAlumno()">Añadir alumno</button><button class="soft-btn" onclick="show('alumnos')">Ver todos los alumnos</button></div>
+      <table><thead><tr><th>Alumno</th><th>Curso</th><th>Empresa</th><th>Tutor</th><th>Fechas</th><th>Estado</th><th></th></tr></thead><tbody>${alumnos.map(a=>{const docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa).length;return `<tr class="student-row" onclick="openPracticasProfile(${a.id})"><td><div class="student-cell"><div class="student-avatar">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||'A')[0])}</span>`}</div><div><b>${esc(a.nombre)}</b><br><small>${esc(a.telefono||'')} · ${esc(a.email||'')}</small></div></div></td><td>${esc(a.curso||'Sin dato')}</td><td>${esc(a.empresa||'Sin empresa')}</td><td>${esc(a.tutor||'Sin dato')}</td><td>${esc(a.inicio||'')} → ${esc(a.fin||'')}<br><small>${esc(practicasDaysLeft(a))}</small></td><td><span class="badge">${esc(a.estado||'prácticas')}</span><br><small>${docs} doc.</small></td><td class="row-actions" onclick="event.stopPropagation()"><button onclick="openPracticasProfile(${a.id})">Ver</button><button onclick="openAlumno(${a.id})">Modificar</button><button onclick="finalizarPracticas(${a.id})">Finalizar</button></td></tr>`}).join('')||'<tr><td colspan="7">No hay alumnos en prácticas.</td></tr>'}</tbody></table>
+    </section>`;
+}
+function openPracticasProfile(aid){
+  const a=state.alumnos.find(x=>Number(x.id)===Number(aid)); if(!a) return;
+  const e=state.empresas.find(x=>x.nombre===a.empresa)||{};
+  const c=state.convenios.find(x=>x.empresa===a.empresa)||{};
+  const docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa);
+  const tareas=state.seguimientos.filter(s=>s.empresa===a.empresa);
+  modal('Alumno en prácticas',`<section class="student-profile"><aside class="student-profile-side"><div class="student-profile-photo">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||'A')[0])}</span>`}</div><h2>${esc(a.nombre)}</h2><p>${esc(a.empresa||'Sin empresa')}</p><span class="badge">${esc(practicasDaysLeft(a))}</span><button class="primary" onclick="openAlumno(${a.id})">Modificar alumno</button><button class="task-btn complete big" onclick="finalizarPracticas(${a.id});closeModal()"><span>✓</span> Finalizar prácticas</button></aside><main class="student-profile-main"><section class="student-profile-section"><div class="section-head"><div><p>Información de prácticas</p><h3>Resumen</h3></div></div><div class="student-profile-grid">${[['Alumno',a.nombre],['Curso',a.curso],['Empresa',a.empresa],['Tutor alumno',a.tutor],['Inicio',a.inicio],['Fin',a.fin],['Estado',a.estado],['Convenio',c.estado||'Sin convenio']].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Contacto empresa</p><h3>Datos útiles</h3></div></div><div class="student-profile-grid">${[['Contacto',e.contacto],['Teléfono',e.telefono],['Email',e.email],['Ciudad',e.ciudad],['Web',e.web]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Documentos</p><h3>Adjuntos relacionados</h3></div><button class="soft-btn" onclick="show('documentos');closeModal()">Ir a documentos</button></div><div class="list">${docs.map(d=>`<article class="item"><div><b>${esc(d.nombre)}</b><p>${esc(d.tipo)} · ${esc(d.estado)}</p></div><button onclick="previewAnyFile(state.documentos.find(x=>Number(x.id)===Number(${d.id})).file,'${esc(d.nombre)}')">Ver</button></article>`).join('')||'<p>No hay documentos relacionados.</p>'}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Tareas y seguimiento</p><h3>Acciones vinculadas</h3></div><button class="soft-btn" onclick="openSeguimiento()">Añadir tarea</button></div><div class="list">${tareas.map(s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.proxima||s.resultado||'Tarea')}</b><p>${esc(s.fechaProxima||s.fecha||'')} · ${isTaskCompleted(s)?'Completada':'Pendiente'}</p></div><div class="row-actions"><button onclick="openTaskContext(${s.id})">Ver</button><button onclick="openSeguimiento(${s.id})">Modificar</button></div></article>`).join('')||'<p>No hay tareas vinculadas a esta empresa.</p>'}</div></section></main></section>`,()=>closeModal());
+}
+function finalizarPracticas(aid){
+  const a=state.alumnos.find(x=>Number(x.id)===Number(aid)); if(!a) return;
+  if(!confirm(`¿Marcar como finalizadas las prácticas de ${a.nombre}?`)) return;
+  a.estado='finalizado';
+  if(!a.fin) a.fin=today();
+  log(`Prácticas finalizadas: ${a.nombre}`);
+  save(); render(); toast('Prácticas finalizadas 🌸');
+}
+const renderBase46 = render;
+render = function(){ renderBase46(); renderPracticas(); }
+render();

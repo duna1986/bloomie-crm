@@ -262,3 +262,26 @@ dialog{border:0;border-radius:28px;max-width:980px;width:calc(100% - 28px);paddi
 .task-done{opacity:.72;background:rgba(22,156,100,.05)}
 .task-done b{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(22,156,100,.45)}
 .muted-small{color:var(--muted);font-size:12px;margin:8px 0}
+
+/* v4.3 — Detalle contextual de tareas */
+.task-action-modal .student-profile-side .student-cv-actions,
+.task-quick-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.task-action-modal .student-profile-grid article span{word-break:break-word}
+.item > div[onclick]{border-radius:16px;padding:4px 6px;margin:-4px 0}
+.item > div[onclick]:hover{background:rgba(255,231,240,.45)}
+
+
+/* v4.4 — botones de tareas con iconos integrados, sin imágenes externas */
+.task-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);padding:7px 11px;font-weight:900;font-size:12px;line-height:1;box-shadow:0 8px 22px rgba(188,86,122,.07);white-space:nowrap}
+.task-btn span{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:999px;font-size:12px;line-height:1;background:var(--rose);color:var(--pink);font-weight:1000;flex:0 0 18px}
+.task-btn.complete{background:linear-gradient(135deg,var(--green),#36c486);border-color:rgba(22,156,100,.25);color:#fff}
+.task-btn.complete span{background:#fff;color:var(--green)}
+.task-btn.reopen span{background:var(--orangeSoft);color:var(--orange)}
+.task-btn.edit span{background:var(--blueSoft);color:var(--blue)}
+.task-btn.delete span{background:#fff1f1;color:#d33}
+.task-btn.view span{background:var(--purpleSoft);color:var(--purple)}
+.task-btn.big{width:100%;min-height:42px;margin-top:8px;border-radius:15px;font-size:13px}
+.task-btn:hover{transform:translateY(-1px);filter:brightness(.99)}
+.task-done{opacity:.78;background:rgba(22,156,100,.06)}
+.task-done b{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(22,156,100,.48)}
+.row-actions{align-items:center;flex-wrap:wrap}

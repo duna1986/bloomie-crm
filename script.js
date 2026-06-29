@@ -905,7 +905,7 @@ function openSeguimiento(id=null, defaultDate=today()){
 }
 function delSeguimiento(id){if(confirm("¿Eliminar seguimiento o pendiente?")){state.seguimientos=state.seguimientos.filter(s=>Number(s.id)!==Number(id));log("Seguimiento eliminado");save();render();toast("Seguimiento eliminado 🌸")}}
 renderSeguimiento = function(){
-  const rows = state.seguimientos.map(s=>`<article class="item"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")}</p></div><div class="row-actions"><button onclick="openSeguimiento(${s.id})">Modificar</button><button onclick="delSeguimiento(${s.id})">Eliminar</button></div></article>`).join("")||"<p>No hay seguimientos.</p>";
+  const rows = state.seguimientos.map(s=>`<article class="item"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")}</p></div><div class="row-actions"><button class="task-btn edit" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="delSeguimiento(${s.id})"><span>🗑️</span> Eliminar</button></div></article>`).join("")||"<p>No hay seguimientos.</p>";
   $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Llamadas, emails, visitas, reuniones y tareas")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Usa “Añadir” para crear y los botones de cada fila para modificar o eliminar.</p></div><div class="card table-card"><div class="list">${rows}</div></div></section>`;
 }
 addSeguimiento = function(ev){ev.preventDefault();openSeguimiento(null,today())}
@@ -941,7 +941,7 @@ dayEvents = function(date){
 }
 renderAgenda = function(){
   const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${ev.length}</b><span>Pendientes</span></article><article><b>${ev.filter(e=>e.kind==='Seguimiento').length}</b><span>Seguimientos</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions"><button onclick="${e.edit}">Modificar</button><button onclick="${e.del}">Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
+  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${ev.length}</b><span>Pendientes</span></article><article><b>${ev.filter(e=>e.kind==='Seguimiento').length}</b><span>Seguimientos</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions"><button class="task-btn edit" onclick="${e.edit}"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="${e.del}"><span>🗑️</span> Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
 }
 
 renderExpedientes = function(){
@@ -1041,7 +1041,7 @@ dashboardData = function(){
   return d;
 }
 
-actionItem = function(s){return `<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.proxima||s.resultado)}</b><p>${esc(s.empresa||'Sin empresa')} · ${esc(s.tipo)} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><span>${esc(s.fechaProxima||'')}</span>${isTaskCompleted(s)?`<button onclick="reopenTask(${s.id})">Reabrir</button>`:`<button onclick="completeTask(${s.id})">Completar</button>`}</div></article>`}
+actionItem = function(s){return `<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.proxima||s.resultado)}</b><p>${esc(s.empresa||'Sin empresa')} · ${esc(s.tipo)} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><span>${esc(s.fechaProxima||'')}</span>${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}</div></article>`}
 
 openSeguimiento = function(id=null, defaultDate=today()){
   const s = state.seguimientos.find(x=>Number(x.id)===Number(id)) || {fecha:defaultDate,empresa:"",tipo:"llamada",resultado:"",proxima:"",fechaProxima:defaultDate,responsable:"",completada:false,fechaCompletada:""};
@@ -1071,7 +1071,7 @@ renderSeguimiento = function(){
   ensureTaskFields();
   const pendientes=state.seguimientos.filter(s=>!isTaskCompleted(s));
   const completadas=state.seguimientos.filter(isTaskCompleted);
-  const row=s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions">${isTaskCompleted(s)?`<button onclick="reopenTask(${s.id})">Reabrir</button>`:`<button class="primary" onclick="completeTask(${s.id})">Completar</button>`}<button onclick="openSeguimiento(${s.id})">Modificar</button><button onclick="delSeguimiento(${s.id})">Eliminar</button></div></article>`;
+  const row=s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions">${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}<button class="task-btn edit" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="delSeguimiento(${s.id})"><span>🗑️</span> Eliminar</button></div></article>`;
   $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Llamadas, emails, visitas, reuniones y tareas")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Ahora puedes marcar cada tarea como completada o reabrirla.</p><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${state.seguimientos.length}</b><span>Total</span></article></div></div><div class="card table-card"><h3>Pendientes</h3><div class="list">${pendientes.map(row).join("")||"<p>No hay pendientes.</p>"}</div><h3 style="margin-top:18px">Completadas</h3><div class="list">${completadas.map(row).join("")||"<p>No hay tareas completadas.</p>"}</div></div></section>`;
 }
 
@@ -1088,7 +1088,7 @@ dayEvents = function(date){
 renderAgenda = function(){
   const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const pendientes=ev.filter(e=>!e.done), completadas=ev.filter(e=>e.done);
-  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item ${e.done?'task-done':''}"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions">${e.id&&e.view==='seguimiento'?(e.done?`<button onclick="reopenTask(${e.id})">Reabrir</button>`:`<button class="primary" onclick="completeTask(${e.id})">Completar</button>`):''}<button onclick="${e.edit}">Modificar</button><button onclick="${e.del}">Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
+  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item ${e.done?'task-done':''}"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions">${e.id&&e.view==='seguimiento'?(e.done?`<button class="task-btn reopen" onclick="reopenTask(${e.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${e.id})"><span>✓</span> Completar</button>`):''}<button class="task-btn edit" onclick="${e.edit}"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="${e.del}"><span>🗑️</span> Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
 }
 
 openAlumno = function(aid=null){
@@ -1130,4 +1130,177 @@ downloadAlumnoTemplate = function(){
   if(window.XLSX){const ws=XLSX.utils.aoa_to_sheet([headers,example]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Alumnos");XLSX.writeFile(wb,"plantilla_alumnos_bloom_crm.xlsx");}else{const csv=[headers,example].map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="plantilla_alumnos_bloom_crm.csv";a.click();}
 }
 
+render();
+
+/* v4.4 — Botones de tareas con iconos integrados */
+function findEmpresaByName(name){return state.empresas.find(e=>(e.nombre||'').toLowerCase()===(name||'').toLowerCase())||null}
+function taskActionLabel(tipo=''){
+  const t=String(tipo).toLowerCase();
+  if(t.includes('email')||t.includes('correo')) return 'Enviar correo';
+  if(t.includes('visita')) return 'Preparar visita';
+  if(t.includes('llamada')) return 'Llamar';
+  if(t.includes('reun')) return 'Reunión';
+  return 'Ver tarea';
+}
+function taskActionIcon(tipo=''){
+  const t=String(tipo).toLowerCase();
+  if(t.includes('email')||t.includes('correo')) return '✉️';
+  if(t.includes('visita')) return '📍';
+  if(t.includes('llamada')) return '📞';
+  if(t.includes('reun')) return '🤝';
+  return '✅';
+}
+function companyContactBlock(e){
+  if(!e) return `<article><b>Empresa</b><span>No hay empresa vinculada.</span></article>`;
+  const tel=e.telefono||e.contacto_telefono||'';
+  const email=e.email||e.contacto_email||'';
+  const web=e.web||'';
+  const lugar=[e.direccion,e.ciudad,e.isla].filter(Boolean).join(', ');
+  return `${[
+    ['Empresa',e.nombre],['Sector',e.sector],['Contacto',e.contacto||e.contacto_nombre],['Teléfono',tel],['Email',email],['Web',web],['Ubicación',lugar],['Estado CRM',e.estado],['Prioridad',e.prioridad],['Notas empresa',e.notas]
+  ].map(([b,v])=>`<article><b>${b}</b><span>${v?esc(v):'Sin dato'}</span></article>`).join('')}`;
+}
+function openTaskAction(id){
+  const s=state.seguimientos.find(x=>Number(x.id)===Number(id));
+  if(!s) return;
+  const e=findEmpresaByName(s.empresa);
+  const relatedStudents=state.alumnos.filter(a=>a.empresa===s.empresa);
+  const relatedDocs=state.documentos.filter(d=>d.empresa===s.empresa || relatedStudents.some(a=>a.nombre===d.alumno));
+  const conv=state.convenios.find(c=>c.empresa===s.empresa);
+  const lastFollow=state.seguimientos.filter(x=>x.id!==s.id && x.empresa===s.empresa).slice(0,4);
+  const tipo=String(s.tipo||'').toLowerCase();
+  const tel=e?.telefono||e?.contacto_telefono||'';
+  const email=e?.email||e?.contacto_email||'';
+  const location=[e?.direccion,e?.ciudad,e?.isla].filter(Boolean).join(', ');
+  const subject=encodeURIComponent(s.proxima||'Seguimiento de prácticas');
+  const body=encodeURIComponent(`Buenos días,\n\n${s.proxima||s.resultado||''}\n\nUn saludo.`);
+  let quick='';
+  if(tipo.includes('llamada')) quick=`${tel?`<a class="primary" href="tel:${esc(tel)}">Llamar ahora</a>`:''}${email?`<a class="soft-btn" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Enviar email</a>`:''}`;
+  else if(tipo.includes('email')||tipo.includes('correo')) quick=`${email?`<a class="primary" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Abrir correo</a>`:'<span class="badge">Sin email confirmado</span>'}${tel?`<a class="soft-btn" href="tel:${esc(tel)}">Llamar</a>`:''}`;
+  else if(tipo.includes('visita')) quick=`${location?`<a class="primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}">Abrir mapa</a>`:'<span class="badge">Sin ubicación completa</span>'}${tel?`<a class="soft-btn" href="tel:${esc(tel)}">Avisar por teléfono</a>`:''}${email?`<a class="soft-btn" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Avisar por email</a>`:''}`;
+  else quick=`${tel?`<a class="soft-btn" href="tel:${esc(tel)}">Llamar</a>`:''}${email?`<a class="soft-btn" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Enviar email</a>`:''}${location?`<a class="soft-btn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}">Mapa</a>`:''}`;
+  modal(`${taskActionIcon(s.tipo)} ${taskActionLabel(s.tipo)}`,`<section class="student-profile task-action-modal"><aside class="student-profile-side"><h2>${esc(s.proxima||s.resultado||s.tipo)}</h2><p>${esc(s.tipo)} · ${isTaskCompleted(s)?'Completada':'Pendiente'}</p><div class="student-cv-actions task-quick-actions">${quick||'<span class="badge">No hay acción directa disponible</span>'}</div>${isTaskCompleted(s)?`<button class="task-btn reopen big" onclick="reopenTask(${s.id});closeModal()"><span>↩️</span> Reabrir tarea</button>`:`<button class="task-btn complete big" onclick="completeTask(${s.id});closeModal()"><span>✓</span> Marcar como completada</button>`}<button class="task-btn edit big" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar tarea</button></aside><main class="student-profile-main"><section class="student-profile-section"><div class="section-head"><div><p>Acción pendiente</p><h3>Qué hay que hacer</h3></div></div><div class="student-profile-grid">${[['Tipo',s.tipo],['Fecha registro',s.fecha],['Fecha prevista',s.fechaProxima],['Responsable',s.responsable],['Resultado / nota',s.resultado],['Próxima acción',s.proxima]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Información relevante</p><h3>Empresa y contacto</h3></div></div><div class="student-profile-grid">${companyContactBlock(e)}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Alumnado vinculado</p><h3>${relatedStudents.length} alumno(s)</h3></div></div><div class="list">${relatedStudents.map(a=>`<article class="item"><div><b>${esc(a.nombre)}</b><p>${esc(a.curso||'Sin curso')} · ${esc(a.estado||'Sin estado')} · ${esc(a.telefono||'Sin teléfono')} · ${esc(a.email||'Sin email')}</p></div><button onclick="openStudentProfile(${a.id})">Ficha</button></article>`).join('')||'<p>No hay alumnos vinculados a esta empresa.</p>'}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Contexto</p><h3>Convenio, documentos y últimos contactos</h3></div></div><div class="student-profile-grid">${[['Convenio',conv?`${conv.estado||''} · ${conv.inicio||''} → ${conv.fin||''}`:'Sin convenio'],['Documentos asociados',relatedDocs.length],['Últimos seguimientos',lastFollow.length]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div><div class="list" style="margin-top:12px">${lastFollow.map(f=>`<article class="item"><div><b>${esc(f.tipo)} · ${esc(f.fecha||'')}</b><p>${esc(f.resultado||f.proxima||'Sin nota')}</p></div></article>`).join('')||'<p>No hay seguimientos anteriores.</p>'}</div></section></main></section>`,()=>closeModal());
+}
+
+actionItem = function(s){return `<article class="item ${isTaskCompleted(s)?'task-done':''}"><div onclick="openTaskAction(${s.id})" style="cursor:pointer"><b>${taskActionIcon(s.tipo)} ${esc(s.proxima||s.resultado||taskActionLabel(s.tipo))}</b><p>${esc(s.empresa||'Sin empresa')} · ${esc(s.tipo)} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><span>${esc(s.fechaProxima||'')}</span><button class="task-btn view" onclick="openTaskAction(${s.id})"><span>👁️</span> Ver acción</button>${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}</div></article>`}
+
+renderSeguimiento = function(){
+  ensureTaskFields();
+  const pendientes=state.seguimientos.filter(s=>!isTaskCompleted(s));
+  const completadas=state.seguimientos.filter(isTaskCompleted);
+  const row=s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div onclick="openTaskAction(${s.id})" style="cursor:pointer"><b>${taskActionIcon(s.tipo)} ${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><button class="task-btn view" onclick="openTaskAction(${s.id})"><span>👁️</span> Ver acción</button>${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}<button class="task-btn edit" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="delSeguimiento(${s.id})"><span>🗑️</span> Eliminar</button></div></article>`;
+  $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Clica en una llamada, email o visita para ver la información útil de esa acción")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Las tareas de llamar, enviar correo o visitar muestran contacto, alumnado, convenio, documentos y accesos rápidos.</p><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${state.seguimientos.length}</b><span>Total</span></article></div></div><div class="card table-card"><h3>Pendientes</h3><div class="list">${pendientes.map(row).join("")||"<p>No hay pendientes.</p>"}</div><h3 style="margin-top:18px">Completadas</h3><div class="list">${completadas.map(row).join("")||"<p>No hay tareas completadas.</p>"}</div></div></section>`;
+}
+
+const dayEventsBase43 = dayEvents;
+dayEvents = function(date){
+  const ev=[];
+  state.seguimientos.forEach(s=>{if(s.fecha===date||s.fechaProxima===date)ev.push({id:s.id,kind:isTaskCompleted(s)?"Tarea completada":"Seguimiento",title:s.proxima||s.resultado||taskActionLabel(s.tipo),sub:`${s.empresa||"Sin empresa"} · ${s.tipo}`,view:"seguimiento",edit:`openSeguimiento(${s.id})`,del:`delSeguimiento(${s.id})`,detail:`openTaskAction(${s.id})`,done:isTaskCompleted(s)})});
+  state.convenios.forEach(c=>{if(c.inicio===date||c.fin===date)ev.push({id:c.id,kind:c.inicio===date?"Inicio convenio":"Fin convenio",title:c.empresa,sub:`${c.estado}`,view:"convenios",edit:`openConvenio(${c.id})`,del:`delConvenio(${c.id})`})});
+  state.alumnos.forEach(a=>{if(a.inicio===date||a.fin===date)ev.push({id:a.id,kind:a.inicio===date?"Inicio prácticas":"Fin prácticas",title:a.nombre,sub:a.empresa||"Sin empresa",view:"alumnos",edit:`openAlumno(${a.id})`,del:`delAlumno(${a.id})`})});
+  state.documentos.forEach(d=>{if(d.fecha===date)ev.push({id:d.id,kind:"Documento",title:d.nombre,sub:`${d.tipo} · ${d.estado}`,view:"documentos",edit:`editDoc(${d.id})`,del:`delDoc(${d.id})`})});
+  return ev;
+}
+
+renderAgenda = function(){
+  const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const pendientes=ev.filter(e=>!e.done), completadas=ev.filter(e=>e.done);
+  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Clica en una tarea para ver contacto, alumnado y accesos rápidos")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item ${e.done?'task-done':''}"><div onclick="${e.detail||`show('${e.view}')`}" style="cursor:pointer"><b>${e.view==='seguimiento'?taskActionIcon(e.sub):''} ${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions">${e.id&&e.view==='seguimiento'?`<button class="task-btn view" onclick="openTaskAction(${e.id})"><span>👁️</span> Ver acción</button>${e.done?`<button class="task-btn reopen" onclick="reopenTask(${e.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${e.id})"><span>✓</span> Completar</button>`}`:''}<button class="task-btn edit" onclick="${e.edit}"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="${e.del}"><span>🗑️</span> Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
+}
+
+
+/* v4.4 — refresco final */
+render();
+
+/* v4.5 — Convenios con previsualización de información y documentos adjuntos */
+function convenioDocuments(c){
+  const ids=(c?.anexos||[]).map(x=>String(x));
+  const docs=state.documentos.filter(d=>ids.includes(String(d.id)) || (c?.empresa && d.empresa===c.empresa));
+  const seen=new Set();
+  return docs.filter(d=>{const k=String(d.id); if(seen.has(k)) return false; seen.add(k); return true;});
+}
+function convenioStatusText(c){
+  const docs=convenioDocuments(c);
+  if((c?.anexos||[]).length>=3 || docs.length>=3) return 'Completo';
+  if((c?.anexos||[]).length || docs.length) return 'Incompleto';
+  return 'Pendiente';
+}
+function detachDocFromConvenio(cid,did){
+  const c=state.convenios.find(x=>Number(x.id)===Number(cid));
+  if(!c) return;
+  c.anexos=(c.anexos||[]).filter(x=>String(x)!==String(did));
+  log(`Documento desvinculado de convenio: ${c.empresa}`);
+  save(); render(); previewConvenio(cid); toast('Documento desvinculado 🌸');
+}
+function previewConvenio(cid){
+  const c=state.convenios.find(x=>Number(x.id)===Number(cid));
+  if(!c) return;
+  const e=state.empresas.find(x=>x.nombre===c.empresa)||{};
+  const docs=convenioDocuments(c);
+  const alumnos=state.alumnos.filter(a=>a.empresa===c.empresa);
+  const follows=state.seguimientos.filter(s=>s.empresa===c.empresa).slice(0,6);
+  modal('Previsualización del convenio',`<section class="student-profile convenio-preview">
+    <aside class="student-profile-side">
+      <h2>${esc(c.empresa||'Convenio')}</h2>
+      <p>${esc(c.estado||'Sin estado')}</p>
+      <span class="badge">${esc(convenioStatusText(c))}</span>
+      <button class="primary" onclick="openConvenio(${c.id})">Modificar convenio</button>
+      <button class="task-btn view big" onclick="attachDoc(${c.id})"><span>📎</span> Adjuntar documento</button>
+      <button class="task-btn delete big" onclick="delConvenio(${c.id});closeModal()"><span>🗑️</span> Eliminar convenio</button>
+    </aside>
+    <main class="student-profile-main">
+      <section class="student-profile-section">
+        <div class="section-head"><div><p>Información del convenio</p><h3>Resumen</h3></div></div>
+        <div class="student-profile-grid">${[
+          ['Empresa',c.empresa],['Centro',c.centro],['Inicio',c.inicio],['Fin',c.fin],['Tutor empresa',c.tutorEmpresa],['Tutor centro',c.tutorCentro],['Estado',c.estado],['Documentos adjuntos',docs.length]
+        ].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div>
+      </section>
+      <section class="student-profile-section">
+        <div class="section-head"><div><p>Contacto de empresa</p><h3>Datos útiles</h3></div></div>
+        <div class="student-profile-grid">${[
+          ['Contacto',e.contacto],['Teléfono',e.telefono],['Email',e.email],['Web',e.web],['Ciudad',e.ciudad],['Isla',e.isla]
+        ].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div>
+      </section>
+      <section class="student-profile-section">
+        <div class="section-head"><div><p>Documentos adjuntos</p><h3>Previsualización y descarga</h3></div><button class="soft-btn" onclick="attachDoc(${c.id})">Añadir</button></div>
+        <div class="doc-grid">${docs.map(d=>`<article class="card doc-card"><h3>${esc(d.nombre)}</h3><p>${esc(d.tipo)} · ${esc(d.estado)}</p><p>${esc(d.fecha||'')} · ${esc(d.subidoPor||'')}</p><p>${esc(d.notas||'')}</p><div class="doc-actions"><button onclick="previewAnyFile(state.documentos.find(x=>Number(x.id)===Number(${d.id})).file,'${esc(d.nombre)}')">Previsualizar</button><a href="${d.file?.data||'#'}" download="${esc(d.file?.name||d.nombre)}">Descargar</a><button onclick="editDoc(${d.id})">Modificar</button><button onclick="detachDocFromConvenio(${c.id},${d.id})">Quitar del convenio</button></div></article>`).join('')||'<p>No hay documentos adjuntos todavía. Puedes añadirlos desde “Adjuntar documento”.</p>'}</div>
+      </section>
+      <section class="student-profile-section">
+        <div class="section-head"><div><p>Alumnado vinculado</p><h3>${alumnos.length} alumno(s)</h3></div></div>
+        <div class="list">${alumnos.map(a=>`<article class="item"><div><b>${esc(a.nombre)}</b><p>${esc(a.curso||'Sin curso')} · ${esc(a.estado||'Sin estado')} · ${esc(a.inicio||'')} → ${esc(a.fin||'')}</p></div><button onclick="openStudentProfile(${a.id})">Ficha</button></article>`).join('')||'<p>No hay alumnado vinculado a esta empresa.</p>'}</div>
+      </section>
+      <section class="student-profile-section">
+        <div class="section-head"><div><p>Seguimiento relacionado</p><h3>Últimos contactos</h3></div></div>
+        <div class="list">${follows.map(s=>`<article class="item"><div><b>${esc(s.tipo)} · ${esc(s.fecha||'')}</b><p>${esc(s.resultado||s.proxima||'Sin nota')}</p></div><button onclick="openSeguimiento(${s.id})">Modificar</button></article>`).join('')||'<p>No hay seguimientos relacionados.</p>'}</div>
+      </section>
+    </main>
+  </section>`,()=>closeModal());
+}
+
+attachDoc = function(cid){
+  const c=state.convenios.find(x=>Number(x.id)===Number(cid));
+  if(!c) return;
+  const already=(c.anexos||[]).map(x=>String(x));
+  const options=state.documentos.map(d=>`<option value="${d.id}" ${already.includes(String(d.id))?'disabled':''}>${esc(d.nombre)} · ${esc(d.tipo)} · ${esc(d.empresa||d.alumno||'General')}</option>`).join('');
+  modal('Adjuntar documento al convenio',`<section><p>Selecciona un documento del archivo documental para vincularlo a <b>${esc(c.empresa)}</b>.</p>${state.documentos.length?`<select id="docToAttach">${options}</select>`:'<p>No hay documentos subidos todavía. Súbelos primero desde la pestaña Documentos.</p>'}</section>`,()=>{
+    const did=Number($('#docToAttach')?.value||0);
+    c.anexos=c.anexos||[];
+    if(did && !c.anexos.map(x=>String(x)).includes(String(did))) c.anexos.push(did);
+    log(`Documento adjuntado a convenio: ${c.empresa}`); save(); closeModal(); render(); toast('Documento adjuntado 🌸');
+  });
+}
+
+renderConvenios = function(){
+  const list=(dashboardFilters?.convenios==='pendientes'?state.convenios.filter(c=>c.estado!=='firmado'):state.convenios);
+  $('#convenios').innerHTML=pageHead('Convenios','Convenios',dashboardFilters?.convenios==='pendientes'?'Convenios pendientes de completar':'Previsualiza información, anexos y documentos adjuntos')+`<section class="grid-2"><div class="card table-card"><div class="toolbar">${typeof filterPill==='function'?filterPill('convenios','Filtro Dashboard'):''}<button class="primary" onclick="openConvenio()">Nuevo convenio</button><button class="soft-btn" onclick="show('documentos')">Archivo documental</button></div><table><thead><tr><th>Empresa</th><th>Fechas</th><th>Estado</th><th>Documentos</th><th></th></tr></thead><tbody>${list.map(c=>{const docs=convenioDocuments(c);return `<tr><td onclick="previewConvenio(${c.id})" style="cursor:pointer"><b>${esc(c.empresa)}</b><br><small>${esc(c.centro)}</small></td><td>${esc(c.inicio)} → ${esc(c.fin)}</td><td><span class="badge">${esc(c.estado)}</span></td><td>${docs.length}</td><td class="row-actions"><button onclick="previewConvenio(${c.id})">Ver</button><button onclick="openConvenio(${c.id})">Modificar</button><button onclick="attachDoc(${c.id})">Adjuntar</button><button onclick="delConvenio(${c.id})">Eliminar</button></td></tr>`}).join('')||`<tr><td colspan="5">No hay resultados.</td></tr>`}</tbody></table></div><div class="card table-card"><div class="section-head"><div><p>Estado documental</p><h3>Checklist</h3></div></div><div class="list">${list.map(c=>`<article class="item" onclick="previewConvenio(${c.id})" style="cursor:pointer"><div><b>${esc(c.empresa)}</b><p>${esc(convenioStatusText(c))} · ${convenioDocuments(c).length} documento(s)</p></div><span>${esc(c.estado)}</span></article>`).join('')||'<p>No hay convenios.</p>'}</div></div></section>`;
+}
+
+const dayEventsBase45 = dayEvents;
+dayEvents = function(date){
+  const ev=dayEventsBase45(date);
+  ev.forEach(e=>{ if(e.view==='convenios' && e.id) e.detail=`previewConvenio(${e.id})`; });
+  return ev;
+}
+
+/* v4.5 — refresco final */
 render();

@@ -95,3 +95,24 @@ En la pestaña Emails se añade:
 - El contador de recordatorios activos solo cuenta pendientes no completados.
 - En la ficha de Alumnos se añade el campo **Curso de procedencia**.
 - La importación y la plantilla Excel de Alumnos incluyen la columna `curso`.
+
+## v4.3 — Detalle contextual de tareas
+
+En Seguimiento y Agenda ahora las tareas de llamada, email o visita son clicables.
+Al abrir una tarea se muestra la información relevante para actuar: empresa, contacto, teléfono, email, ubicación, alumnado vinculado, convenio, documentos y últimos seguimientos.
+También se añaden accesos rápidos para llamar, enviar correo o abrir la ubicación en Google Maps cuando existen datos suficientes.
+
+
+## v4.4 — Botones de tareas corregidos
+
+- El botón Completar ya no depende de imágenes externas ni queda como rectángulo blanco.
+- Se añaden iconos integrados a Ver acción, Completar, Reabrir, Modificar y Eliminar.
+- Las tareas completadas se muestran tachadas y con estado visual verde.
+
+## v4.5 — Previsualización de convenios y documentos adjuntos
+
+En la pestaña Convenios se añade:
+- Botón “Ver” para abrir una previsualización completa del convenio.
+- Resumen de datos del convenio, empresa, contacto, alumnado vinculado y seguimientos relacionados.
+- Listado de documentos adjuntos con previsualización, descarga, modificación y opción de quitar del convenio.
+- Adjuntar documentos existentes del archivo documental al convenio.

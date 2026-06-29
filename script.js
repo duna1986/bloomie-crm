@@ -1005,3 +1005,129 @@ renderEmails = function(){
   const rows=state.emails.map(t=>`<article class="item"><div><b>${esc(t.nombre)}</b><p>${esc(t.asunto)} ${(t.adjuntos||[]).length?`· ${(t.adjuntos||[]).length} adjunto(s)`:''}</p></div><div class="row-actions"><button onclick="previewEmailTemplate(${t.id})">Previsualizar</button><button onclick="copyEmail(${t.id})">Copiar</button><button onclick="openEmailTemplate(${t.id})">Modificar</button><button onclick="delEmail(${t.id})">Eliminar</button></div></article>`).join('')||"<p>No hay plantillas.</p>";
   $("#emails").innerHTML=pageHead("Emails","Emails","Plantillas reutilizables con previsualización y adjuntos")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Plantillas</p><h3>Crear mensaje</h3></div><button class="primary" onclick="openEmailTemplate()">Añadir plantilla</button></div><p>Ahora puedes previsualizar el mensaje y guardar imágenes o documentos junto a cada plantilla.</p></div><div class="card table-card"><div class="list">${rows}</div></div></section>`
 }
+
+/* v4.2 — Tareas completables y curso de procedencia del alumno */
+function ensureTaskFields(){
+  if(!Array.isArray(state.seguimientos)) state.seguimientos=[];
+  state.seguimientos.forEach(s=>{ if(typeof s.completada==='undefined') s.completada=false; });
+  if(!Array.isArray(state.alumnos)) state.alumnos=[];
+  state.alumnos.forEach(a=>{ if(typeof a.curso==='undefined') a.curso=''; });
+}
+ensureTaskFields();
+
+function isTaskCompleted(s){return !!s.completada}
+function completeTask(id){
+  const s=state.seguimientos.find(x=>Number(x.id)===Number(id));
+  if(!s) return;
+  s.completada=true;
+  s.fechaCompletada=new Date().toISOString();
+  log(`Tarea completada: ${s.proxima||s.resultado||s.tipo}`);
+  save(); render(); toast('Tarea completada 🌸');
+}
+function reopenTask(id){
+  const s=state.seguimientos.find(x=>Number(x.id)===Number(id));
+  if(!s) return;
+  s.completada=false;
+  s.fechaCompletada='';
+  log(`Tarea reabierta: ${s.proxima||s.resultado||s.tipo}`);
+  save(); render(); toast('Tarea reabierta 🌸');
+}
+
+const dashboardDataBase42 = dashboardData;
+dashboardData = function(){
+  const d=dashboardDataBase42();
+  d.recordatorios=state.seguimientos.filter(s=>!isTaskCompleted(s) && s.fechaProxima>=today()).length;
+  d.tareasCompletadas=state.seguimientos.filter(isTaskCompleted).length;
+  return d;
+}
+
+actionItem = function(s){return `<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.proxima||s.resultado)}</b><p>${esc(s.empresa||'Sin empresa')} · ${esc(s.tipo)} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><span>${esc(s.fechaProxima||'')}</span>${isTaskCompleted(s)?`<button onclick="reopenTask(${s.id})">Reabrir</button>`:`<button onclick="completeTask(${s.id})">Completar</button>`}</div></article>`}
+
+openSeguimiento = function(id=null, defaultDate=today()){
+  const s = state.seguimientos.find(x=>Number(x.id)===Number(id)) || {fecha:defaultDate,empresa:"",tipo:"llamada",resultado:"",proxima:"",fechaProxima:defaultDate,responsable:"",completada:false,fechaCompletada:""};
+  modal(id?"Modificar seguimiento":"Añadir seguimiento",`<form id="seguimientoForm" class="form-grid">
+    <input name="fecha" type="date" value="${esc(s.fecha||today())}">
+    <select name="empresa">${empresaOptions(s.empresa||"")}</select>
+    <select name="tipo">${optionList(["llamada","email","visita","reunión","LinkedIn","tarea"],s.tipo)}</select>
+    <input name="resultado" value="${esc(s.resultado||"")}" placeholder="Resultado / nota">
+    <input name="proxima" value="${esc(s.proxima||"")}" placeholder="Tarea / próxima acción">
+    <input name="fechaProxima" type="date" value="${esc(s.fechaProxima||s.fecha||today())}">
+    <input name="responsable" value="${esc(s.responsable||"")}" placeholder="Responsable">
+    <label class="import-option" style="grid-column:1/-1"><input id="seguimientoCompletada" type="checkbox" ${isTaskCompleted(s)?'checked':''}> Tarea completada</label>
+  </form>`,()=>{
+    Object.assign(s,Object.fromEntries(new FormData($("#seguimientoForm")).entries()));
+    s.completada=!!$("#seguimientoCompletada")?.checked;
+    if(s.completada && !s.fechaCompletada) s.fechaCompletada=new Date().toISOString();
+    if(!s.completada) s.fechaCompletada='';
+    if(!id){s.id=uid();state.seguimientos.unshift(s)}
+    selectedDate=s.fechaProxima||s.fecha||selectedDate;
+    log(`${id?"Seguimiento modificado":"Seguimiento registrado"}: ${s.empresa||s.proxima}`);
+    save(); closeModal(); render(); toast(id?"Seguimiento modificado 🌸":"Seguimiento guardado 🌸");
+  });
+}
+quickEvent = function(date){openSeguimiento(null,date)}
+
+renderSeguimiento = function(){
+  ensureTaskFields();
+  const pendientes=state.seguimientos.filter(s=>!isTaskCompleted(s));
+  const completadas=state.seguimientos.filter(isTaskCompleted);
+  const row=s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions">${isTaskCompleted(s)?`<button onclick="reopenTask(${s.id})">Reabrir</button>`:`<button class="primary" onclick="completeTask(${s.id})">Completar</button>`}<button onclick="openSeguimiento(${s.id})">Modificar</button><button onclick="delSeguimiento(${s.id})">Eliminar</button></div></article>`;
+  $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Llamadas, emails, visitas, reuniones y tareas")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Ahora puedes marcar cada tarea como completada o reabrirla.</p><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${state.seguimientos.length}</b><span>Total</span></article></div></div><div class="card table-card"><h3>Pendientes</h3><div class="list">${pendientes.map(row).join("")||"<p>No hay pendientes.</p>"}</div><h3 style="margin-top:18px">Completadas</h3><div class="list">${completadas.map(row).join("")||"<p>No hay tareas completadas.</p>"}</div></div></section>`;
+}
+
+const dayEventsBase42 = dayEvents;
+dayEvents = function(date){
+  const ev=[];
+  state.seguimientos.forEach(s=>{if(s.fecha===date||s.fechaProxima===date)ev.push({id:s.id,kind:isTaskCompleted(s)?"Tarea completada":"Seguimiento",title:s.proxima||s.resultado||s.tipo,sub:`${s.empresa||"Sin empresa"} · ${s.tipo}`,view:"seguimiento",edit:`openSeguimiento(${s.id})`,del:`delSeguimiento(${s.id})`,done:isTaskCompleted(s)})});
+  state.convenios.forEach(c=>{if(c.inicio===date||c.fin===date)ev.push({id:c.id,kind:c.inicio===date?"Inicio convenio":"Fin convenio",title:c.empresa,sub:`${c.estado}`,view:"convenios",edit:`openConvenio(${c.id})`,del:`delConvenio(${c.id})`})});
+  state.alumnos.forEach(a=>{if(a.inicio===date||a.fin===date)ev.push({id:a.id,kind:a.inicio===date?"Inicio prácticas":"Fin prácticas",title:a.nombre,sub:a.empresa||"Sin empresa",view:"alumnos",edit:`openAlumno(${a.id})`,del:`delAlumno(${a.id})`})});
+  state.documentos.forEach(d=>{if(d.fecha===date)ev.push({id:d.id,kind:"Documento",title:d.nombre,sub:`${d.tipo} · ${d.estado}`,view:"documentos",edit:`editDoc(${d.id})`,del:`delDoc(${d.id})`})});
+  return ev;
+}
+
+renderAgenda = function(){
+  const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const pendientes=ev.filter(e=>!e.done), completadas=ev.filter(e=>e.done);
+  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item ${e.done?'task-done':''}"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions">${e.id&&e.view==='seguimiento'?(e.done?`<button onclick="reopenTask(${e.id})">Reabrir</button>`:`<button class="primary" onclick="completeTask(${e.id})">Completar</button>`):''}<button onclick="${e.edit}">Modificar</button><button onclick="${e.del}">Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
+}
+
+openAlumno = function(aid=null){
+  const a=state.alumnos.find(x=>Number(x.id)===Number(aid))||{nombre:"",telefono:"",email:"",direccion:"",nss:"",curso:"",estado:"sin asignar",empresa:"",inicio:"",fin:"",tutor:"",notas:"",foto:null,curriculum:null};
+  modal("Alumno",`<form id="alumnoForm" class="form-grid"><div class="student-photo-preview">${a.foto?.data?`<img src="${a.foto.data}">`:"Foto"}</div><input name="nombre" value="${esc(a.nombre)}" placeholder="Nombre" required><input name="telefono" value="${esc(a.telefono)}" placeholder="Teléfono"><input name="email" value="${esc(a.email)}" placeholder="Correo"><input name="direccion" value="${esc(a.direccion)}" placeholder="Dirección"><input name="nss" value="${esc(a.nss)}" placeholder="Nº Seguridad Social"><input name="curso" value="${esc(a.curso||"")}" placeholder="Curso de procedencia"><label class="student-files">Foto<input id="alumnoFoto" type="file" accept="image/*"></label><label class="student-files">Currículum<input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></label><select name="empresa">${empresaOptions(a.empresa||"")}</select><select name="estado">${optionList(["sin asignar","propuesta","entrevista","prácticas","finalizado"],a.estado)}</select><input name="inicio" type="date" value="${esc(a.inicio)}"><input name="fin" type="date" value="${esc(a.fin)}"><input name="tutor" value="${esc(a.tutor)}" placeholder="Tutor"><textarea name="notas">${esc(a.notas)}</textarea></form>`,async()=>{Object.assign(a,Object.fromEntries(new FormData($("#alumnoForm")).entries()));const foto=$("#alumnoFoto").files[0],cv=$("#alumnoCV").files[0];if(foto)a.foto=await fileToData(foto);if(cv)a.curriculum=await fileToData(cv);if(!aid){a.id=uid();state.alumnos.unshift(a)}log(`Alumno guardado: ${a.nombre}`);save();closeModal();render()})
+}
+
+renderAlumnos = function(){
+  ensureTaskFields();
+  const list=(dashboardFilters?.alumnos==="sinEmpresa"?state.alumnos.filter(a=>!a.empresa):state.alumnos);
+  const toolbar=document.createElement('div');
+  $("#alumnos").innerHTML=pageHead("Alumnos","Alumnos",dashboardFilters?.alumnos==="sinEmpresa"?"Alumnos sin empresa asignada":"Ficha completa del alumnado")+`<section class="card table-card"><div class="toolbar">${typeof filterPill==='function'?filterPill("alumnos","Filtro Dashboard"):''}<button class="primary" onclick="openAlumno()">Añadir alumno</button><button class="soft-btn" id="alumnoImportBtn">Importar Excel/CSV</button><button class="soft-btn" onclick="downloadAlumnoTemplate()">Plantilla Excel</button></div><table><thead><tr><th>Alumno</th><th>Curso</th><th>Contacto</th><th>Empresa</th><th>Estado</th><th>Archivos</th><th></th></tr></thead><tbody>${list.map(a=>`<tr class="student-row" onclick="openStudentProfile(${a.id})"><td><div class="student-cell"><div class="student-avatar">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||"A")[0])}</span>`}</div><div><b>${esc(a.nombre)}</b><br><small>NSS: ${esc(a.nss||"")}</small></div></div></td><td>${esc(a.curso||"Sin dato")}</td><td>${esc(a.telefono)}<br><small>${esc(a.email)}</small></td><td>${esc(a.empresa||"Sin empresa")}</td><td><span class="badge">${esc(a.estado)}</span></td><td onclick="event.stopPropagation()"><div class="student-files">${a.foto?.data?`<button onclick="previewAnyFile(state.alumnos.find(x=>x.id===${a.id}).foto,'Foto')">Foto</button>`:`<span>Sin foto</span>`}${a.curriculum?.data?`<button onclick="previewAnyFile(state.alumnos.find(x=>x.id===${a.id}).curriculum,'CV')">CV</button>`:`<span>Sin CV</span>`}</div></td><td class="row-actions" onclick="event.stopPropagation()"><button onclick="openAlumno(${a.id})">Modificar</button><button onclick="delAlumno(${a.id})">Eliminar</button></td></tr>`).join("")||`<tr><td colspan="7">No hay resultados.</td></tr>`}</tbody></table></section>`;
+  const btn=$("#alumnoImportBtn"); if(btn) btn.onclick=openAlumnoImport;
+}
+
+openStudentProfile = function(aid){
+  const a=state.alumnos.find(x=>Number(x.id)===Number(aid));if(!a)return;const empresa=state.empresas.find(e=>e.nombre===a.empresa),conv=state.convenios.find(c=>c.empresa===a.empresa),docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa),follows=state.seguimientos.filter(s=>s.empresa===a.empresa);
+  modal("Ficha del alumno",`<section class="student-profile"><aside class="student-profile-side"><div class="student-profile-photo">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||"A")[0])}</span>`}</div><h2>${esc(a.nombre)}</h2><p>${esc(a.estado)}</p><button class="primary" onclick="openAlumno(${a.id})">Editar ficha</button></aside><main class="student-profile-main"><section class="student-profile-grid">${[["Teléfono",a.telefono],["Correo",a.email],["Dirección",a.direccion],["NSS",a.nss],["Curso de procedencia",a.curso],["Empresa",a.empresa||"Sin empresa"],["Tutor",a.tutor||empresa?.contacto||""],["Inicio",a.inicio||conv?.inicio||""],["Fin",a.fin||conv?.fin||""]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||"Sin dato")}</span></article>`).join("")}</section><section class="student-profile-section"><div class="section-head"><div><p>Currículum</p><h3>Vista previa</h3></div></div>${filePreviewHTML(a.curriculum,a.id)}</section><section class="student-profile-section"><div class="section-head"><div><p>Documentos</p><h3>Relacionados</h3></div></div><div class="list">${docs.map(d=>`<article class="item"><div><b>${esc(d.nombre)}</b><p>${esc(d.tipo)} · ${esc(d.estado)}</p></div><button onclick="previewAnyFile(state.documentos.find(x=>x.id===${d.id}).file,'${esc(d.nombre)}')">Ver</button></article>`).join("")||"<p>No hay documentos asociados.</p>"}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Seguimiento</p><h3>Actividad</h3></div></div><div class="list">${follows.map(s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.empresa)}</b><p>${esc(s.fecha)} · ${esc(s.resultado||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div></article>`).join("")||"<p>Sin seguimientos asociados.</p>"}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Observaciones</p><h3>Notas</h3></div></div><p>${esc(a.notas||"Sin observaciones.")}</p></section></main></section>`,()=>closeModal())
+}
+
+const mapAlumnoImportRowBase42 = mapAlumnoImportRow;
+mapAlumnoImportRow = function(row){const r=mapAlumnoImportRowBase42(row);r.curso=rowValue(row,["curso","curso_procedencia","curso de procedencia","grupo","clase","programa_formativo","formacion","formación"]);return r}
+const renderAlumnoImportPreviewBase42 = renderAlumnoImportPreview;
+renderAlumnoImportPreview = function(rows, rawCount){
+  const preview=$("#alumnoImportPreview"); if(!preview) return;
+  const duplicates=rows.filter(r=>state.alumnos.some(a=>sameAlumno(a,r))).length;
+  preview.innerHTML=`<div class="import-summary"><article><b>${rawCount}</b><span>Filas leídas</span></article><article><b>${rows.length}</b><span>Alumnos válidos</span></article><article><b>${duplicates}</b><span>Coincidencias existentes</span></article></div><div class="import-table-wrap"><table><thead><tr><th>Alumno</th><th>Curso</th><th>Contacto</th><th>Empresa</th><th>Estado</th><th>Fechas</th><th>Tutor</th></tr></thead><tbody>${rows.slice(0,10).map(r=>`<tr><td><b>${esc(r.nombre)}</b><br><small>NSS: ${esc(r.nss)}</small></td><td>${esc(r.curso||"")}</td><td>${esc(r.telefono)}<br><small>${esc(r.email)}</small></td><td>${esc(r.empresa||"Sin empresa")}</td><td><span class="badge">${esc(r.estado)}</span></td><td>${esc(r.inicio)}${r.fin?` → ${esc(r.fin)}`:""}</td><td>${esc(r.tutor)}</td></tr>`).join("")}</tbody></table></div>${rows.length>10?`<p class="import-note">Mostrando 10 de ${rows.length} alumnos.</p>`:""}`;
+}
+const confirmAlumnoImportBase42 = confirmAlumnoImport;
+confirmAlumnoImport = function(){
+  if(!pendingAlumnoImportRows.length){toast("No hay alumnos válidos para importar");return;}
+  const updateExisting=$("#alumnoImportUpdateExisting")?.checked;let created=0,updated=0;
+  pendingAlumnoImportRows.forEach(row=>{const existing=state.alumnos.find(a=>sameAlumno(a,row));if(existing&&updateExisting){Object.assign(existing,{nombre:row.nombre||existing.nombre,telefono:row.telefono||existing.telefono,email:row.email||existing.email,direccion:row.direccion||existing.direccion,nss:row.nss||existing.nss,curso:row.curso||existing.curso,estado:row.estado||existing.estado,empresa:row.empresa||existing.empresa,inicio:row.inicio||existing.inicio,fin:row.fin||existing.fin,tutor:row.tutor||existing.tutor,notas:row.notas||existing.notas});updated++;}else if(!existing){state.alumnos.unshift(row);created++;}});
+  log(`Importación Excel: ${created} alumnos añadidos, ${updated} actualizados`);pendingAlumnoImportRows=[];save();closeModal();dashboardFilters.alumnos="all";show("alumnos");toast(`${created} añadidos · ${updated} actualizados 🌸`);
+}
+downloadAlumnoTemplate = function(){
+  const headers=["nombre_alumno","telefono","email","direccion","nss","curso","estado","empresa","inicio","fin","tutor","notas"];
+  const example=["Alumno Ejemplo","600000000","alumno@email.com","Las Palmas de Gran Canaria","123456789012","2º CFGM Gestión Administrativa","sin asignar","","2026-03-01","2026-06-15","Tutor/a","Notas internas"];
+  if(window.XLSX){const ws=XLSX.utils.aoa_to_sheet([headers,example]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Alumnos");XLSX.writeFile(wb,"plantilla_alumnos_bloom_crm.xlsx");}else{const csv=[headers,example].map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="plantilla_alumnos_bloom_crm.csv";a.click();}
+}
+
+render();

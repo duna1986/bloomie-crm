@@ -87,3 +87,11 @@ En la pestaña Emails se añade:
 - Campo para adjuntar imágenes y documentos a cada plantilla.
 - Descarga y vista previa de adjuntos desde la plantilla.
 - Modificación y eliminación de adjuntos guardados.
+
+## v4.2 — Tareas completables y curso del alumno
+
+- En Seguimiento y Agenda se añade la opción **Completar** tarea.
+- Las tareas completadas pueden **reabrirse**.
+- El contador de recordatorios activos solo cuenta pendientes no completados.
+- En la ficha de Alumnos se añade el campo **Curso de procedencia**.
+- La importación y la plantilla Excel de Alumnos incluyen la columna `curso`.

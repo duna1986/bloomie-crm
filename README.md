@@ -166,3 +166,22 @@ Cambios principales:
 2. Ejecuta `supabase/schema.sql` en SQL Editor.
 
 3. Sube los archivos del ZIP a GitHub Pages.
+
+
+## Mejora funcional consolidada — empresas y alumnos
+
+Aplicada sobre los archivos subidos en esta conversación.
+
+Incluye:
+- Edición real de empresas sin tener que reescribir todos los campos.
+- Carga correcta de datos importados desde Excel y datos guardados en `data`.
+- Eliminación del campo “ciclos recomendados” del formulario de empresas.
+- Clic sobre una empresa para abrir ficha 360 completa.
+- Clic sobre un alumno para abrir ficha completa.
+- DNI/NIE en alumnos:
+  - tabla,
+  - formulario,
+  - ficha completa,
+  - búsqueda,
+  - exportación/importación cuando las funciones están disponibles.
+- Fichas completas con empresa, documentos, seguimiento y observaciones.

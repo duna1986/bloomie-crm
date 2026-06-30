@@ -2029,3 +2029,604 @@ async function bloom3Boot(){
 document.addEventListener("DOMContentLoaded", () => setTimeout(bloom3Boot, 60));
 if(document.readyState !== "loading") setTimeout(bloom3Boot, 60);
 
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — Mejoras funcionales sobre archivos actuales
+   Incluye:
+   1) Empresas: edición real sin reescribir todo y sin valores null.
+   2) Empresas: clic en fila abre ficha 360 completa.
+   3) Empresas: eliminado campo ciclos recomendados del formulario.
+   4) Alumnos: clic en fila abre ficha completa con todos los datos.
+   5) Alumnos: DNI/NIE visible en tabla, formulario, ficha, búsqueda y Excel.
+========================================================= */
+
+function bloomClean(value, fallback=""){
+  if(value === null || value === undefined) return fallback;
+  const text = String(value);
+  if(text.toLowerCase() === "null" || text.toLowerCase() === "undefined" || text.trim() === "") return fallback;
+  return text;
+}
+
+function bloomPick(source, keys, fallback=""){
+  if(!source) return fallback;
+  for(const key of keys){
+    const value = source[key];
+    if(bloomClean(value, "") !== "") return bloomClean(value);
+  }
+  const data = source.data || {};
+  for(const key of keys){
+    const value = data[key];
+    if(bloomClean(value, "") !== "") return bloomClean(value);
+  }
+  return fallback;
+}
+
+function bloomEmpresaHydrate(source){
+  const e = source || {};
+  return Object.assign({}, e, {
+    id: e.id || uid(),
+    nombre: bloomPick(e, ["nombre","nombre_empresa","empresa","company","name"]),
+    sector: bloomPick(e, ["sector","actividad","categoria"]),
+    subsector: bloomPick(e, ["subsector","sub_sector"]),
+    ciudad: bloomPick(e, ["ciudad","localidad","municipio"], "Las Palmas"),
+    isla: bloomPick(e, ["isla"], "Gran Canaria"),
+    web: bloomPick(e, ["web","website","url"]),
+    fuente: bloomPick(e, ["fuente","origen"]),
+    acepta_practicas: bloomPick(e, ["acepta_practicas","acepta","practicas"]),
+    tipo_practicas: bloomPick(e, ["tipo_practicas","tipo"]),
+    contacto: bloomPick(e, ["contacto","contacto_nombre","persona_contacto","responsable"]),
+    telefono: bloomPick(e, ["telefono","contacto_telefono","phone","teléfono"]),
+    email: bloomPick(e, ["email","correo","contacto_email","mail"]),
+    estado: bloomPick(e, ["estado","estado_crm"], "nueva"),
+    prioridad: bloomPick(e, ["prioridad"], "media"),
+    notas: bloomPick(e, ["notas","observaciones","comentarios"])
+  });
+}
+
+function bloomAlumnoHydrate(source){
+  const a = source || {};
+  return Object.assign({}, a, {
+    id: a.id || uid(),
+    nombre: bloomPick(a, ["nombre","nombre_alumno","alumno","name"]),
+    dni: bloomPick(a, ["dni","nif","nie","documento","documento_identidad"]),
+    telefono: bloomPick(a, ["telefono","phone","teléfono"]),
+    email: bloomPick(a, ["email","correo","mail"]),
+    direccion: bloomPick(a, ["direccion","dirección","address"]),
+    nss: bloomPick(a, ["nss","seguridad_social","numero_seguridad_social"]),
+    curso: bloomPick(a, ["curso","curso_procedencia"]),
+    estado: bloomPick(a, ["estado"], "sin asignar"),
+    empresa: bloomPick(a, ["empresa","empresa_nombre"]),
+    inicio: bloomPick(a, ["inicio","fecha_inicio"]),
+    fin: bloomPick(a, ["fin","fecha_fin"]),
+    tutor: bloomPick(a, ["tutor","tutor_centro"]),
+    tutor_empresa: bloomPick(a, ["tutor_empresa","tutorEmpresa"]),
+    horas: bloomPick(a, ["horas","horas_fct"]),
+    evaluacion: bloomPick(a, ["evaluacion","evaluación"]),
+    notas: bloomPick(a, ["notas","observaciones"])
+  });
+}
+
+function bloomInfo(label, value){
+  return `<article><b>${esc(label)}</b><span>${esc(bloomClean(value, "Sin dato"))}</span></article>`;
+}
+
+function bloomDniOk(value){
+  const dni = bloomClean(value, "").toUpperCase();
+  if(!dni) return true;
+  return /^(\d{8}[A-Z]|[XYZ]\d{7}[A-Z])$/.test(dni);
+}
+
+function bloomDniBadge(value){
+  const dni = bloomClean(value, "");
+  if(!dni) return `<span class="dni-badge empty">Sin DNI</span>`;
+  return `<span class="dni-badge ${bloomDniOk(dni) ? "ok" : "warn"}">${esc(dni)}</span>`;
+}
+
+function bloomListHTML(items, empty){
+  return items.length ? `<div class="list">${items.join("")}</div>` : `<p class="empty-text">${esc(empty)}</p>`;
+}
+
+function bloomEmpresaById(id){
+  const idx = state.empresas.findIndex(x => String(x.id) === String(id));
+  if(idx < 0) return null;
+  state.empresas[idx] = bloomEmpresaHydrate(state.empresas[idx]);
+  return state.empresas[idx];
+}
+
+function bloomAlumnoById(id){
+  const idx = state.alumnos.findIndex(x => String(x.id) === String(id));
+  if(idx < 0) return null;
+  state.alumnos[idx] = bloomAlumnoHydrate(state.alumnos[idx]);
+  return state.alumnos[idx];
+}
+
+function bloomInput(name, label, value, placeholder=label){
+  return `
+    <label class="field-label">
+      ${esc(label)}
+      <input name="${esc(name)}" value="${esc(bloomClean(value))}" placeholder="${esc(placeholder)}">
+    </label>
+  `;
+}
+
+/* ---------- Empresas: tabla clicable, edición parcial, sin ciclos ---------- */
+
+renderEmpresas = function(){
+  state.empresas = state.empresas.map(bloomEmpresaHydrate);
+
+  const q = ($("#empresaSearch")?.value || "").toLowerCase();
+  let list = state.empresas.filter(e => !q || JSON.stringify(e).toLowerCase().includes(q));
+
+  $("#empresas").innerHTML = pageHead("Empresas", "Empresas", "CRM de empresas colaboradoras") + `
+    <section class="card table-card">
+      <div class="toolbar">
+        <input id="empresaSearch" placeholder="Buscar empresa..." oninput="renderEmpresas()" value="${esc(q)}">
+        <button class="primary" onclick="openEmpresa()">Añadir empresa</button>
+        ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('empresas')">Importar Excel/CSV</button>` : ""}
+        ${typeof exportExcel41 === "function" ? `<button class="soft-btn" onclick="exportExcel41('empresas')">Exportar Excel</button>` : ""}
+        ${typeof downloadTemplateExcel41 === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel41('empresas')">Plantilla Excel</button>` : ""}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Empresa</th><th>Sector</th><th>Contacto</th><th>Estado</th><th>Prioridad</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(e => `
+            <tr class="clickable-row" data-empresa-id="${esc(e.id)}" onclick="openEmpresaFicha('${e.id}')">
+              <td><b>${esc(e.nombre || "Sin nombre")}</b><br><small>${esc(e.ciudad || "")}${e.isla ? " · " + esc(e.isla) : ""}</small></td>
+              <td>${esc(e.sector || "")}</td>
+              <td>${esc(e.contacto || "Sin contacto")}<br><small>${esc(e.telefono || "")}${e.email ? " · " + esc(e.email) : ""}</small></td>
+              <td><span class="badge">${esc(e.estado || "nueva")}</span></td>
+              <td>${esc(e.prioridad || "media")}</td>
+              <td class="row-actions" onclick="event.stopPropagation()">
+                <button onclick="openEmpresa('${e.id}')">Editar</button>
+                <button onclick="delEmpresa('${e.id}')">Eliminar</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="6">No hay empresas.</td></tr>`}
+        </tbody>
+      </table>
+      <p class="hint-click">Haz clic sobre una empresa para abrir su ficha completa.</p>
+    </section>
+  `;
+};
+
+openEmpresa = function(eid=null){
+  const isEdit = eid !== null && eid !== undefined;
+  const e = isEdit ? bloomEmpresaById(eid) : bloomEmpresaHydrate({
+    nombre:"", sector:"", subsector:"", ciudad:"Las Palmas", isla:"Gran Canaria", web:"",
+    fuente:"", acepta_practicas:"", tipo_practicas:"", contacto:"", telefono:"",
+    email:"", estado:"nueva", prioridad:"media", notas:""
+  });
+
+  if(isEdit && !e){
+    alert("No se encontró la empresa para editar.");
+    return;
+  }
+
+  modal(isEdit ? "Editar empresa" : "Añadir empresa", `
+    <form id="empresaForm" class="form-grid empresa-form-fixed">
+      ${bloomInput("nombre", "Nombre", e.nombre, "Nombre de la empresa")}
+      ${bloomInput("sector", "Sector", e.sector)}
+      ${bloomInput("subsector", "Subsector", e.subsector)}
+      ${bloomInput("ciudad", "Ciudad", e.ciudad)}
+      ${bloomInput("isla", "Isla", e.isla)}
+      ${bloomInput("web", "Web", e.web)}
+      ${bloomInput("fuente", "Fuente", e.fuente)}
+      ${bloomInput("acepta_practicas", "Acepta prácticas", e.acepta_practicas)}
+      ${bloomInput("tipo_practicas", "Tipo prácticas", e.tipo_practicas)}
+      ${bloomInput("contacto", "Contacto", e.contacto, "Persona de contacto")}
+      ${bloomInput("telefono", "Teléfono", e.telefono)}
+      ${bloomInput("email", "Email", e.email)}
+
+      <label class="field-label">Estado
+        <select name="estado">
+          ${["nueva","contactada","interesada","convenio","activa","descartada"].map(x => `<option value="${x}" ${e.estado === x ? "selected" : ""}>${x}</option>`).join("")}
+        </select>
+      </label>
+
+      <label class="field-label">Prioridad
+        <select name="prioridad">
+          ${["alta","media","baja"].map(x => `<option value="${x}" ${e.prioridad === x ? "selected" : ""}>${x}</option>`).join("")}
+        </select>
+      </label>
+
+      <label class="field-label full">Notas
+        <textarea name="notas" placeholder="Notas">${esc(e.notas || "")}</textarea>
+      </label>
+    </form>
+  `, async () => {
+    const form = Object.fromEntries(new FormData($("#empresaForm")).entries());
+    Object.keys(form).forEach(k => form[k] = bloomClean(form[k]).trim());
+
+    if(!form.nombre){
+      alert("El nombre de la empresa es obligatorio.");
+      return;
+    }
+
+    let empresa;
+    if(isEdit){
+      const idx = state.empresas.findIndex(x => String(x.id) === String(eid));
+      empresa = Object.assign({}, state.empresas[idx], form, {
+        id: state.empresas[idx].id,
+        ciclos_recomendados: "",
+        data: Object.assign({}, state.empresas[idx].data || {}, form, { ciclos_recomendados:"" })
+      });
+      state.empresas[idx] = empresa;
+    }else{
+      empresa = Object.assign({ id: uid() }, form, {
+        ciclos_recomendados:"",
+        data: Object.assign({}, form, { ciclos_recomendados:"" })
+      });
+      state.empresas.unshift(empresa);
+    }
+
+    try{
+      if(typeof bloom3Client !== "undefined" && bloom3Client && typeof bloom3PublicRow === "function" && typeof bloom3Tables !== "undefined"){
+        const row = bloom3PublicRow("empresas", empresa);
+        row.ciclos_recomendados = "";
+        row.data = Object.assign({}, row.data || {}, empresa.data || {});
+        const { error } = await bloom3Client.from(bloom3Tables.empresas).upsert(row, { onConflict:"id" });
+        if(error) throw error;
+      }
+      log(`Empresa guardada: ${empresa.nombre}`);
+      save();
+      closeModal();
+      if(typeof loadCloud === "function") await loadCloud();
+      render();
+      toast(isEdit ? "Empresa modificada 🌸" : "Empresa creada 🌸");
+    }catch(error){
+      alert("No se pudo guardar la empresa:\n\n" + error.message);
+    }
+  });
+};
+
+function openEmpresaFicha(id){
+  const e = bloomEmpresaById(id);
+  if(!e) return;
+
+  const alumnos = state.alumnos.map(bloomAlumnoHydrate).filter(a => a.empresa === e.nombre);
+  const convenios = state.convenios.filter(c => c.empresa === e.nombre);
+  const documentos = state.documentos.filter(d => d.empresa === e.nombre);
+  const seguimientos = state.seguimientos.filter(s => s.empresa === e.nombre);
+
+  modal("Ficha completa de empresa", `
+    <section class="profile360 empresa360">
+      <aside class="profile360-side">
+        <div class="profile360-logo">${esc((e.nombre || "E")[0])}</div>
+        <h2>${esc(e.nombre || "Empresa")}</h2>
+        <p>${esc(e.sector || "Sin sector")}</p>
+        <span class="badge">${esc(e.estado || "nueva")}</span>
+        <button class="primary" onclick="openEmpresa('${e.id}')">Editar empresa</button>
+      </aside>
+
+      <main class="profile360-main">
+        <section class="profile360-section">
+          <div class="section-head"><div><p>Datos</p><h3>Información general</h3></div></div>
+          <div class="profile360-grid">
+            ${bloomInfo("Nombre", e.nombre)}
+            ${bloomInfo("Sector", e.sector)}
+            ${bloomInfo("Subsector", e.subsector)}
+            ${bloomInfo("Contacto", e.contacto)}
+            ${bloomInfo("Teléfono", e.telefono)}
+            ${bloomInfo("Email", e.email)}
+            ${bloomInfo("Web", e.web)}
+            ${bloomInfo("Ciudad", e.ciudad)}
+            ${bloomInfo("Isla", e.isla)}
+            ${bloomInfo("Fuente", e.fuente)}
+            ${bloomInfo("Acepta prácticas", e.acepta_practicas)}
+            ${bloomInfo("Tipo prácticas", e.tipo_practicas)}
+            ${bloomInfo("Prioridad", e.prioridad)}
+          </div>
+        </section>
+
+        <section class="profile360-section">
+          <div class="section-head"><div><p>Alumnos</p><h3>Asignados</h3></div></div>
+          ${bloomListHTML(alumnos.map(a => `
+            <article class="item clickable-row" onclick="openAlumnoFichaCompleta('${a.id}')">
+              <div><b>${esc(a.nombre)}</b><p>DNI: ${esc(a.dni || "Sin DNI")} · ${esc(a.estado || "")}</p></div><span>Ver</span>
+            </article>
+          `), "No hay alumnos asignados.")}
+        </section>
+
+        <section class="profile360-section">
+          <div class="section-head"><div><p>Convenios</p><h3>Relacionados</h3></div></div>
+          ${bloomListHTML(convenios.map(c => `
+            <article class="item"><div><b>${esc(c.empresa || e.nombre)}</b><p>${esc(c.inicio || "")} → ${esc(c.fin || "")} · ${esc(c.estado || "")}</p></div></article>
+          `), "No hay convenios relacionados.")}
+        </section>
+
+        <section class="profile360-section">
+          <div class="section-head"><div><p>Seguimiento</p><h3>Historial CRM</h3></div></div>
+          ${bloomListHTML(seguimientos.map(s => `
+            <article class="item"><div><b>${esc(s.tipo || "Seguimiento")} · ${esc(s.fecha || "")}</b><p>${esc(s.resultado || "")}${s.proxima ? " · Próxima: " + esc(s.proxima) : ""}</p></div></article>
+          `), "No hay seguimientos registrados.")}
+        </section>
+
+        <section class="profile360-section">
+          <div class="section-head"><div><p>Documentos</p><h3>Archivo documental</h3></div></div>
+          ${bloomListHTML(documentos.map(d => `
+            <article class="item clickable-row" onclick="previewAnyFile(state.documentos.find(x=>String(x.id)===String('${d.id}')).file,'${esc(d.nombre)}')">
+              <div><b>${esc(d.nombre)}</b><p>${esc(d.tipo || "")} · ${esc(d.estado || "")}</p></div><span>Ver</span>
+            </article>
+          `), "No hay documentos vinculados.")}
+        </section>
+
+        <section class="profile360-section">
+          <div class="section-head"><div><p>Notas</p><h3>Observaciones privadas</h3></div></div>
+          <p>${esc(e.notas || "Sin notas")}</p>
+        </section>
+      </main>
+    </section>
+  `, () => closeModal());
+}
+openEmpresa360 = openEmpresaFicha;
+
+/* ---------- Alumnos: DNI y ficha completa con clic funcional ---------- */
+
+function bloomAlumnoProgress(a){
+  if(!a.inicio || !a.fin) return 0;
+  const start = new Date(a.inicio), end = new Date(a.fin), now = new Date();
+  if(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return 0;
+  if(now <= start) return 0;
+  if(now >= end) return 100;
+  return Math.round(((now-start)/(end-start))*100);
+}
+
+function openAlumnoFichaCompleta(id){
+  const a = bloomAlumnoById(id);
+  if(!a) return;
+
+  const empresa = state.empresas.map(bloomEmpresaHydrate).find(e => e.nombre === a.empresa);
+  const convenio = state.convenios.find(c => c.empresa === a.empresa || c.alumno === a.nombre);
+  const docs = state.documentos.filter(d => d.alumno === a.nombre || d.empresa === a.empresa);
+  const segs = state.seguimientos.filter(s => s.empresa === a.empresa || s.alumno === a.nombre);
+  const progress = bloomAlumnoProgress(a);
+
+  modal("Ficha completa del alumno", `
+    <section class="student-full-card">
+      <aside class="student-full-side">
+        <div class="student-full-photo">
+          ${a.foto?.data ? `<img src="${a.foto.data}">` : a.foto?.url ? `<img src="${a.foto.url}">` : `<span>${esc((a.nombre || "A")[0])}</span>`}
+        </div>
+        <h2>${esc(a.nombre || "Alumno")}</h2>
+        <p>${esc(a.dni || "Sin DNI/NIE")}</p>
+        <span class="badge">${esc(a.estado || "sin asignar")}</span>
+        <div class="student-progress"><div><span>Progreso prácticas</span><b>${progress}%</b></div><i><em style="width:${progress}%"></em></i></div>
+        <button class="primary" onclick="openAlumno('${a.id}')">Editar alumno</button>
+        ${a.curriculum ? `<button class="soft-btn" onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).curriculum,'Currículum')">Ver currículum</button>` : ""}
+        ${a.foto ? `<button class="soft-btn" onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).foto,'Foto')">Ver foto</button>` : ""}
+      </aside>
+
+      <main class="student-full-main">
+        <section class="student-full-section">
+          <div class="section-head"><div><p>Datos personales</p><h3>Información del alumno</h3></div></div>
+          <div class="student-full-grid">
+            ${bloomInfo("Nombre", a.nombre)}
+            ${bloomInfo("DNI / NIE", a.dni)}
+            ${bloomInfo("Teléfono", a.telefono)}
+            ${bloomInfo("Correo", a.email)}
+            ${bloomInfo("Dirección", a.direccion)}
+            ${bloomInfo("Nº Seguridad Social", a.nss)}
+            ${bloomInfo("Curso", a.curso)}
+          </div>
+        </section>
+
+        <section class="student-full-section">
+          <div class="section-head"><div><p>Prácticas</p><h3>Datos académicos y FCT</h3></div></div>
+          <div class="student-full-grid">
+            ${bloomInfo("Estado", a.estado)}
+            ${bloomInfo("Empresa", a.empresa)}
+            ${bloomInfo("Tutor centro", a.tutor)}
+            ${bloomInfo("Tutor empresa", a.tutor_empresa)}
+            ${bloomInfo("Inicio", a.inicio)}
+            ${bloomInfo("Fin", a.fin)}
+            ${bloomInfo("Horas", a.horas)}
+            ${bloomInfo("Evaluación", a.evaluacion)}
+            ${bloomInfo("Convenio", convenio ? convenio.estado : "")}
+          </div>
+        </section>
+
+        <section class="student-full-section">
+          <div class="section-head"><div><p>Empresa</p><h3>Empresa asignada</h3></div></div>
+          ${empresa ? `
+            <article class="item clickable-row" onclick="openEmpresaFicha('${empresa.id}')">
+              <div><b>${esc(empresa.nombre)}</b><p>${esc(empresa.contacto || "Sin contacto")} · ${esc(empresa.telefono || "")} ${empresa.email ? "· " + esc(empresa.email) : ""}</p></div>
+              <span>Ver empresa</span>
+            </article>` : `<p class="empty-text">Sin empresa asignada.</p>`}
+        </section>
+
+        <section class="student-full-section">
+          <div class="section-head"><div><p>Documentación</p><h3>Archivos del alumno</h3></div></div>
+          <div class="student-doc-grid">
+            ${a.curriculum ? `<article class="student-doc-card" onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).curriculum,'Currículum')"><b>📄 Currículum</b><span>Ver / descargar</span></article>` : `<article class="student-doc-card muted"><b>📄 Currículum</b><span>No adjuntado</span></article>`}
+            ${a.foto ? `<article class="student-doc-card" onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).foto,'Foto')"><b>🖼 Foto</b><span>Ver / descargar</span></article>` : `<article class="student-doc-card muted"><b>🖼 Foto</b><span>No adjuntada</span></article>`}
+            ${docs.map(d => `<article class="student-doc-card" onclick="previewAnyFile(state.documentos.find(x=>String(x.id)===String('${d.id}')).file,'${esc(d.nombre)}')"><b>📎 ${esc(d.nombre || "Documento")}</b><span>${esc(d.tipo || "Documento")} · ${esc(d.estado || "")}</span></article>`).join("")}
+          </div>
+        </section>
+
+        <section class="student-full-section">
+          <div class="section-head"><div><p>Seguimiento</p><h3>Historial relacionado</h3></div></div>
+          ${bloomListHTML(segs.map(s => `<article class="item"><div><b>${esc(s.tipo || "Seguimiento")} · ${esc(s.fecha || "")}</b><p>${esc(s.resultado || "")}${s.proxima ? " · Próxima: " + esc(s.proxima) : ""}</p></div></article>`), "No hay seguimientos relacionados.")}
+        </section>
+
+        <section class="student-full-section">
+          <div class="section-head"><div><p>Observaciones</p><h3>Notas privadas</h3></div></div>
+          <p>${esc(a.notas || "Sin observaciones")}</p>
+        </section>
+      </main>
+    </section>
+  `, () => closeModal());
+}
+openStudentProfile = openAlumnoFichaCompleta;
+
+renderAlumnos = function(){
+  state.alumnos = state.alumnos.map(bloomAlumnoHydrate);
+
+  const q = ($("#studentSearch")?.value || "").toLowerCase();
+  let list = state.alumnos.filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+
+  $("#alumnos").innerHTML = pageHead("Alumnos", "Alumnos", "Ficha completa del alumnado") + `
+    <section class="card table-card">
+      <div class="toolbar">
+        <input id="studentSearch" placeholder="Buscar por nombre, DNI, empresa, teléfono..." value="${esc(q)}" oninput="renderAlumnos()">
+        <button class="primary" onclick="openAlumno()">Añadir alumno</button>
+        ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel/CSV</button>` : ""}
+        ${typeof exportExcel41 === "function" ? `<button class="soft-btn" onclick="exportExcel41('alumnos')">Exportar Excel</button>` : ""}
+        ${typeof downloadTemplateExcel41 === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel41('alumnos')">Plantilla</button>` : ""}
+      </div>
+      <table>
+        <thead>
+          <tr><th>Alumno</th><th>DNI / NIE</th><th>Contacto</th><th>Empresa</th><th>Estado</th><th>Archivos</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${list.map(a => `
+            <tr class="student-row clickable-row" data-alumno-id="${esc(a.id)}" onclick="openAlumnoFichaCompleta('${a.id}')">
+              <td><div class="student-cell"><div class="student-avatar">${a.foto?.data ? `<img src="${a.foto.data}">` : a.foto?.url ? `<img src="${a.foto.url}">` : `<span>${esc((a.nombre || "A")[0])}</span>`}</div><div><b>${esc(a.nombre)}</b><br><small>NSS: ${esc(a.nss || "Sin NSS")}</small></div></div></td>
+              <td>${bloomDniBadge(a.dni)}</td>
+              <td>${esc(a.telefono || "")}<br><small>${esc(a.email || "")}</small></td>
+              <td>${esc(a.empresa || "Sin empresa")}</td>
+              <td><span class="badge">${esc(a.estado || "sin asignar")}</span></td>
+              <td onclick="event.stopPropagation()"><div class="student-files">${a.foto ? `<button onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).foto,'Foto')">Foto</button>` : `<span>Sin foto</span>`}${a.curriculum ? `<button onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).curriculum,'CV')">CV</button>` : `<span>Sin CV</span>`}</div></td>
+              <td class="row-actions" onclick="event.stopPropagation()"><button onclick="openAlumno('${a.id}')">Editar</button><button onclick="delAlumno('${a.id}')">Eliminar</button></td>
+            </tr>
+          `).join("") || `<tr><td colspan="7">No hay alumnos.</td></tr>`}
+        </tbody>
+      </table>
+      <p class="hint-click">Haz clic sobre cualquier alumno para abrir su ficha completa.</p>
+    </section>
+  `;
+};
+
+openAlumno = function(aid=null){
+  const isEdit = aid !== null && aid !== undefined;
+  const a = isEdit ? bloomAlumnoById(aid) : bloomAlumnoHydrate({nombre:"",dni:"",telefono:"",email:"",direccion:"",nss:"",curso:"",estado:"sin asignar",empresa:"",inicio:"",fin:"",tutor:"",tutor_empresa:"",horas:"",evaluacion:"",notas:"",foto:null,curriculum:null});
+
+  if(isEdit && !a){
+    alert("No se encontró el alumno para editar.");
+    return;
+  }
+
+  modal(isEdit ? "Editar alumno" : "Añadir alumno", `
+    <form id="alumnoForm" class="form-grid alumno-form-dni">
+      <div class="student-photo-preview">${a.foto?.data ? `<img src="${a.foto.data}">` : a.foto?.url ? `<img src="${a.foto.url}">` : "Foto"}</div>
+      ${bloomInput("nombre", "Nombre completo", a.nombre, "Nombre")}
+      ${bloomInput("dni", "DNI / NIE", a.dni, "12345678Z o X1234567L")}
+      ${bloomInput("telefono", "Teléfono", a.telefono)}
+      ${bloomInput("email", "Correo", a.email)}
+      ${bloomInput("direccion", "Dirección", a.direccion)}
+      ${bloomInput("nss", "Nº Seguridad Social", a.nss)}
+      ${bloomInput("curso", "Curso", a.curso)}
+      <label class="student-files">Foto<input id="alumnoFoto" type="file" accept="image/*"></label>
+      <label class="student-files">Currículum<input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></label>
+      <label class="field-label">Empresa
+        <select name="empresa"><option value="">Sin empresa</option>${state.empresas.map(e => `<option ${a.empresa === e.nombre ? "selected" : ""}>${esc(e.nombre)}</option>`).join("")}</select>
+      </label>
+      <label class="field-label">Estado
+        <select name="estado">${["sin asignar","propuesta","entrevista","prácticas","finalizado"].map(x => `<option ${a.estado === x ? "selected" : ""}>${x}</option>`).join("")}</select>
+      </label>
+      ${bloomInput("inicio", "Inicio prácticas", a.inicio)}
+      ${bloomInput("fin", "Fin prácticas", a.fin)}
+      ${bloomInput("tutor", "Tutor centro", a.tutor)}
+      ${bloomInput("tutor_empresa", "Tutor empresa", a.tutor_empresa)}
+      ${bloomInput("horas", "Horas", a.horas)}
+      ${bloomInput("evaluacion", "Evaluación", a.evaluacion)}
+      <label class="field-label full">Notas<textarea name="notas">${esc(a.notas || "")}</textarea></label>
+    </form>
+  `, async () => {
+    const form = Object.fromEntries(new FormData($("#alumnoForm")).entries());
+    Object.keys(form).forEach(k => form[k] = bloomClean(form[k]).trim());
+    form.dni = String(form.dni || "").toUpperCase();
+
+    if(form.dni && !bloomDniOk(form.dni) && !confirm("El DNI/NIE no parece válido. ¿Guardar igualmente?")) return;
+
+    let alumno;
+    if(isEdit){
+      const idx = state.alumnos.findIndex(x => String(x.id) === String(aid));
+      alumno = Object.assign({}, state.alumnos[idx], form, { id: state.alumnos[idx].id, data: Object.assign({}, state.alumnos[idx].data || {}, form) });
+      state.alumnos[idx] = alumno;
+    }else{
+      alumno = Object.assign({ id: uid() }, form, { foto:null, curriculum:null, data:Object.assign({}, form) });
+      state.alumnos.unshift(alumno);
+    }
+
+    const foto = $("#alumnoFoto").files[0], cv = $("#alumnoCV").files[0];
+    if(foto) alumno.foto = await fileToData(foto);
+    if(cv) alumno.curriculum = await fileToData(cv);
+
+    log(`Alumno guardado: ${alumno.nombre}`);
+    save();
+    closeModal();
+    render();
+    toast(isEdit ? "Alumno modificado 🌸" : "Alumno creado 🌸");
+  });
+};
+
+/* Delegación de seguridad: si algún render antiguo se ejecuta, los clics siguen funcionando */
+document.addEventListener("click", function(event){
+  const alumnoRow = event.target.closest("#alumnos tbody tr");
+  if(alumnoRow && !event.target.closest("button, a, input, select, textarea, label")){
+    const id = alumnoRow.dataset.alumnoId || (alumnoRow.getAttribute("onclick") || "").match(/['"]([^'"]+)['"]/)?.[1];
+    if(id){
+      event.preventDefault();
+      event.stopPropagation();
+      openAlumnoFichaCompleta(id);
+    }
+  }
+
+  const empresaRow = event.target.closest("#empresas tbody tr");
+  if(empresaRow && !event.target.closest("button, a, input, select, textarea, label")){
+    const id = empresaRow.dataset.empresaId || (empresaRow.getAttribute("onclick") || "").match(/['"]([^'"]+)['"]/)?.[1];
+    if(id){
+      event.preventDefault();
+      event.stopPropagation();
+      openEmpresaFicha(id);
+    }
+  }
+}, true);
+
+/* Refuerzo importación/exportación Excel alumnos con DNI si existen funciones v4 */
+if(typeof mapAlumnoRow41 === "function"){
+  const _mapAlumnoRow41 = mapAlumnoRow41;
+  mapAlumnoRow41 = function(row){
+    const a = _mapAlumnoRow41(row);
+    if(typeof getRow41 === "function"){
+      a.dni = getRow41(row, ["dni","nif","nie","documento","documento_identidad"]);
+    }
+    return a;
+  };
+}
+
+if(typeof exportExcel41 === "function"){
+  const _exportExcel41 = exportExcel41;
+  exportExcel41 = function(type){
+    if(type !== "alumnos") return _exportExcel41(type);
+    const rows = state.alumnos.map(bloomAlumnoHydrate).map(a => ({
+      nombre_alumno:a.nombre || "",
+      dni:a.dni || "",
+      telefono:a.telefono || "",
+      email:a.email || "",
+      direccion:a.direccion || "",
+      nss:a.nss || "",
+      curso:a.curso || "",
+      estado:a.estado || "",
+      empresa:a.empresa || "",
+      inicio:a.inicio || "",
+      fin:a.fin || "",
+      tutor:a.tutor || "",
+      tutor_empresa:a.tutor_empresa || "",
+      horas:a.horas || "",
+      evaluacion:a.evaluacion || "",
+      notas:a.notas || ""
+    }));
+    if(window.XLSX){
+      const ws = XLSX.utils.json_to_sheet(rows), wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
+      XLSX.writeFile(wb, "bloom_alumnos.xlsx");
+    }
+  };
+}

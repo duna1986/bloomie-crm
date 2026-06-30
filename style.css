@@ -253,35 +253,162 @@ dialog{border:0;border-radius:28px;max-width:980px;width:calc(100% - 28px);paddi
   font-size:13px;
 }
 
-.drawer-actions{display:flex;align-items:center;gap:8px}.drawer-actions .soft-btn:disabled{opacity:.45;cursor:not-allowed}
 
-/* v4.1 emails */
-.email-preview{max-width:860px}.email-preview h2{margin:0 0 14px}.email-message{border:1px solid var(--line);border-radius:22px;background:#fff;padding:18px;line-height:1.65;white-space:normal;margin-bottom:16px}.email-image-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}.email-image-grid figure{margin:0;border:1px solid var(--line);border-radius:18px;background:#fff;padding:10px}.email-image-grid img{width:100%;height:150px;object-fit:contain;border-radius:14px;background:var(--rose)}.email-image-grid figcaption{font-size:12px;color:var(--muted);margin-top:6px}.email-attachments{display:grid;gap:8px;margin-top:10px}.email-attachments article{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:10px}.email-attachments span,.muted-small{color:var(--muted);font-size:12px}
-
-/* v4.2 */
-.task-done{opacity:.72;background:rgba(22,156,100,.05)}
-.task-done b{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(22,156,100,.45)}
-.muted-small{color:var(--muted);font-size:12px;margin:8px 0}
-
-/* v4.3 — Detalle contextual de tareas */
-.task-action-modal .student-profile-side .student-cv-actions,
-.task-quick-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.task-action-modal .student-profile-grid article span{word-break:break-word}
-.item > div[onclick]{border-radius:16px;padding:4px 6px;margin:-4px 0}
-.item > div[onclick]:hover{background:rgba(255,231,240,.45)}
+/* v3.4 Supabase Storage */
+#storageSettingsCard p{color:var(--muted);line-height:1.55}.student-cv-empty b{color:var(--ink)}
 
 
-/* v4.4 — botones de tareas con iconos integrados, sin imágenes externas */
-.task-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);padding:7px 11px;font-weight:900;font-size:12px;line-height:1;box-shadow:0 8px 22px rgba(188,86,122,.07);white-space:nowrap}
-.task-btn span{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:999px;font-size:12px;line-height:1;background:var(--rose);color:var(--pink);font-weight:1000;flex:0 0 18px}
-.task-btn.complete{background:linear-gradient(135deg,var(--green),#36c486);border-color:rgba(22,156,100,.25);color:#fff}
-.task-btn.complete span{background:#fff;color:var(--green)}
-.task-btn.reopen span{background:var(--orangeSoft);color:var(--orange)}
-.task-btn.edit span{background:var(--blueSoft);color:var(--blue)}
-.task-btn.delete span{background:#fff1f1;color:#d33}
-.task-btn.view span{background:var(--purpleSoft);color:var(--purple)}
-.task-btn.big{width:100%;min-height:42px;margin-top:8px;border-radius:15px;font-size:13px}
-.task-btn:hover{transform:translateY(-1px);filter:brightness(.99)}
-.task-done{opacity:.78;background:rgba(22,156,100,.06)}
-.task-done b{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(22,156,100,.48)}
-.row-actions{align-items:center;flex-wrap:wrap}
+/* v3.5 Privacidad por usuario */
+.privacy-card{
+  grid-column:1/-1;
+}
+
+.auth-ok,
+.auth-warn{
+  display:grid;
+  gap:4px;
+  padding:13px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(255,231,240,.28);
+  margin:10px 0;
+}
+
+.auth-ok b{
+  color:var(--green);
+}
+
+.auth-warn b{
+  color:var(--orange);
+}
+
+.auth-ok span,
+.auth-warn span,
+.privacy-card p{
+  color:var(--muted);
+  line-height:1.55;
+}
+
+.settings-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+}
+
+
+/* Bloom CRM 4.0 — login privado */
+body.locked{
+  overflow:hidden;
+}
+
+body.locked .sidebar,
+body.locked .main,
+body.locked .drawer,
+body.locked .overlay{
+  display:none!important;
+}
+
+.auth-gate{
+  position:fixed;
+  inset:0;
+  z-index:999;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 20% 10%,rgba(255,213,228,.8),transparent 30%),
+    radial-gradient(circle at 82% 22%,rgba(255,240,222,.85),transparent 30%),
+    linear-gradient(135deg,#fffafd,#fff5ef 54%,#fff);
+}
+
+body:not(.locked) .auth-gate{
+  display:none;
+}
+
+.auth-card{
+  width:min(460px,100%);
+  padding:34px;
+  border:1px solid var(--line);
+  border-radius:38px;
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(24px);
+  box-shadow:var(--shadow);
+  text-align:center;
+}
+
+.auth-flower{
+  font-size:54px;
+  color:var(--pink);
+}
+
+.auth-card h1{
+  margin:6px 0 8px;
+  font-family:Georgia,serif;
+  font-weight:500;
+  font-size:48px;
+  color:var(--pink);
+}
+
+.auth-card p,
+.auth-card small{
+  color:var(--muted);
+  line-height:1.55;
+}
+
+.auth-status{
+  margin:18px 0;
+  padding:12px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(255,231,240,.35);
+  color:var(--muted);
+  font-weight:750;
+}
+
+.auth-status.ok{
+  color:var(--green);
+}
+
+.auth-status.error{
+  color:#b4234c;
+  background:#fff0f5;
+}
+
+.auth-form{
+  display:grid;
+  gap:10px;
+  margin:18px 0;
+}
+
+.auth-form input{
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:13px 14px;
+  background:#fff;
+}
+
+.privacy-card{
+  grid-column:1/-1;
+}
+
+.auth-ok,
+.auth-warn{
+  display:grid;
+  gap:4px;
+  padding:13px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(255,231,240,.28);
+  margin:10px 0;
+}
+
+.auth-ok b{color:var(--green)}
+.auth-warn b{color:var(--orange)}
+
+.settings-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+}

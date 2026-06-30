@@ -1,127 +1,25 @@
-# Bloom CRM 3.0 reparado
+# Bloom CRM 4.0 — Profesional privado
 
-Versión reconstruida desde cero para eliminar conflictos de parches anteriores.
+Esta versión migra Bloom CRM hacia una arquitectura profesional:
 
-Incluye:
-- Dashboard completo.
-- Pipeline de empresas con drag & drop y botones de movimiento.
-- Calendario clicable con detalle por día.
-- Empresas CRUD.
-- Alumnos con foto, CV y ficha completa.
-- Previsualización PDF, imagen y DOCX/Word.
-- Convenios con anexos.
-- Expedientes.
-- Documentos con carpetas, subida, descarga, preview, reemplazo y eliminación.
-- Seguimiento.
-- Emails/plantillas.
-- Reportes.
-- Notificaciones.
-- Supabase.
-- Backup JSON.
+- Pantalla de login obligatoria antes de acceder al CRM.
+- Registro e inicio de sesión con Supabase Auth.
+- Datos separados por tablas: empresas, alumnos, convenios, documentos, carpetas, seguimientos, emails y actividad.
+- RLS por `owner_id = auth.uid()`.
+- Bucket de Storage privado.
+- Documentos con Signed URLs temporales.
+- Sin usar `localStorage` como origen principal de datos.
+- Sin JSON gigante único.
+- Cada entidad se guarda por separado.
 
-Abre `index.html`.
+## Pasos obligatorios en Supabase
 
+1. Ve a Authentication > Providers > Email y activa Email.
+2. Abre la app, entra en Ajustes y descarga `bloom-crm-4-schema-privado.sql`.
+3. Ejecuta ese SQL en Supabase SQL Editor.
+4. Vuelve a la app, crea cuenta o inicia sesión.
+5. A partir de ahí los datos y documentos se guardan de forma privada por usuario.
 
-## v3.1 — Carpetas editables en Documentos
+## Importante
 
-En la pestaña Documentos ahora puedes:
-- Modificar el nombre de una carpeta.
-- Eliminar carpetas.
-- Si una carpeta eliminada contiene documentos, los documentos pasan automáticamente a “Sin carpeta”.
-- Las carpetas del sistema “Todas” y “Sin carpeta” no se pueden eliminar.
-
-
-## v3.2 — Dashboard totalmente navegable
-
-- Empresas sin contactar → Empresas filtradas.
-- Convenios pendientes → Convenios filtrados.
-- Alumnos sin empresa → Alumnos filtrados.
-- Prácticas activas → Expedientes filtrados.
-- Llamadas → Seguimiento filtrado por llamadas.
-- Reuniones → Seguimiento filtrado por reuniones.
-- Recordatorios → Agenda en el día correspondiente.
-- Pipeline: clic en empresa abre Empresa 360.
-- Calendario: clic en día abre agenda del día.
-- Actividad reciente: abre empresa/alumno/sección relacionada.
-- Documentos pendientes: abre previsualización del documento.
-
-
-## v3.3 — Importar empresas desde Excel/CSV
-
-En la pestaña Empresas se añade:
-- Botón “Importar Excel/CSV”.
-- Botón “Plantilla Excel”.
-- Lectura de .xlsx, .xls y .csv.
-- Vista previa antes de importar.
-- Detección de empresas existentes por nombre.
-- Opción para actualizar empresas existentes.
-- Importación de campos:
-  nombre_empresa, sector, subsector, ciudad, isla, web, fuente,
-  acepta_practicas, tipo_practicas, ciclos_recomendados,
-  contacto_nombre, contacto_email, contacto_telefono,
-  estado_crm, prioridad y notas.
-
-
-## v3.4 — Importar alumnos desde Excel/CSV
-
-En la pestaña Alumnos se añade:
-- Botón “Importar Excel/CSV”.
-- Botón “Plantilla Excel”.
-- Lectura de .xlsx, .xls y .csv.
-- Vista previa antes de importar.
-- Detección de alumnos existentes por email o nombre.
-- Opción para actualizar alumnos existentes.
-- Importación de campos:
-  nombre_alumno, telefono, email, direccion, nss, estado, empresa, inicio, fin, tutor y notas.
-
-
-## v3.5 — Limpiar centro de notificaciones
-
-En el centro de notificaciones se añade el botón “Limpiar” para ocultar las revisiones actuales. Las nuevas revisiones o cambios volverán a aparecer automáticamente.
-
-
-## v4.1 — Emails con previsualización y adjuntos
-
-En la pestaña Emails se añade:
-- Botón “Previsualizar” para ver asunto, cuerpo e imágenes antes de copiar o enviar manualmente.
-- Campo para adjuntar imágenes y documentos a cada plantilla.
-- Descarga y vista previa de adjuntos desde la plantilla.
-- Modificación y eliminación de adjuntos guardados.
-
-## v4.2 — Tareas completables y curso del alumno
-
-- En Seguimiento y Agenda se añade la opción **Completar** tarea.
-- Las tareas completadas pueden **reabrirse**.
-- El contador de recordatorios activos solo cuenta pendientes no completados.
-- En la ficha de Alumnos se añade el campo **Curso de procedencia**.
-- La importación y la plantilla Excel de Alumnos incluyen la columna `curso`.
-
-## v4.3 — Detalle contextual de tareas
-
-En Seguimiento y Agenda ahora las tareas de llamada, email o visita son clicables.
-Al abrir una tarea se muestra la información relevante para actuar: empresa, contacto, teléfono, email, ubicación, alumnado vinculado, convenio, documentos y últimos seguimientos.
-También se añaden accesos rápidos para llamar, enviar correo o abrir la ubicación en Google Maps cuando existen datos suficientes.
-
-
-## v4.4 — Botones de tareas corregidos
-
-- El botón Completar ya no depende de imágenes externas ni queda como rectángulo blanco.
-- Se añaden iconos integrados a Ver acción, Completar, Reabrir, Modificar y Eliminar.
-- Las tareas completadas se muestran tachadas y con estado visual verde.
-
-## v4.5 — Previsualización de convenios y documentos adjuntos
-
-En la pestaña Convenios se añade:
-- Botón “Ver” para abrir una previsualización completa del convenio.
-- Resumen de datos del convenio, empresa, contacto, alumnado vinculado y seguimientos relacionados.
-- Listado de documentos adjuntos con previsualización, descarga, modificación y opción de quitar del convenio.
-- Adjuntar documentos existentes del archivo documental al convenio.
-
-
-## v4.6 — Pestaña Prácticas
-
-Se añade una pestaña independiente **Prácticas** con:
-- Listado de alumnos actualmente en prácticas.
-- KPIs de prácticas activas, empresas, documentos y tareas pendientes.
-- Ficha rápida de cada alumno en prácticas con empresa, tutor, fechas, documentos y tareas.
-- Acción para marcar las prácticas como finalizadas.
+GitHub Pages solo sirve la app. La privacidad real la garantiza Supabase con Auth + RLS + Storage privado.

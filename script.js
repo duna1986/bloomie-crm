@@ -4,7 +4,7 @@ const KEY="bloom_crm_3_state"; const SUPABASE_URL="https://wmvalzkkoivfwhhwhplw.
 const icons={home:'<svg viewBox="0 0 24 24"><path d="M4 10.6 12 4l8 6.6V20h-6v-5h-4v5H4Z"/></svg>',building:'<svg viewBox="0 0 24 24"><path d="M5 21V5h14v16M8 9h2M14 9h2M8 13h2M14 13h2M3 21h18"/></svg>',student:'<svg viewBox="0 0 24 24"><path d="M12 4 3 8.5 12 13l9-4.5Z"/><path d="M6 11v5c2 2 10 2 12 0v-5"/></svg>',file:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',folder:'<svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10H3Z"/></svg>',archive:'<svg viewBox="0 0 24 24"><path d="M3 7h18v4H3Z"/><path d="M5 11h14l-2 8H7Z"/></svg>',phone:'<svg viewBox="0 0 24 24"><path d="M6 4l4 4-2 2c1.5 3 3.5 5 6.5 6.5l2-2 4 4-2 3C10 20 4 14 3 6Z"/></svg>',mail:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 8 8 5 8-5"/></svg>',calendar:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',chart:'<svg viewBox="0 0 24 24"><path d="M4 20h16M7 17V9M12 17V5M17 17v-6"/></svg>',settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4"/></svg>',search:'<svg viewBox="0 0 24 24"><path d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>',users:'<svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><path d="M3 20c1-4 11-4 12 0"/><circle cx="17" cy="10" r="2"/><path d="M15 16c2 0 4 1 5 4"/></svg>'};
 function uid(){return Date.now()+Math.floor(Math.random()*9999)} function today(){return new Date().toISOString().slice(0,10)} function datePlus(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)} function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))} function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)} function fileToData(file){return new Promise(res=>{if(!file)return res(null);const r=new FileReader();r.onload=()=>res({name:file.name,type:file.type,size:file.size,data:r.result});r.readAsDataURL(file)})}
 const seed={empresas:[{id:uid(),nombre:"Deloitte",sector:"Consultoría",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"nueva",prioridad:"alta",contacto:"Laura Pérez",telefono:"928000001",email:"rrhh@deloitte.es",notas:"Potencial para administración y finanzas"},{id:uid()+1,nombre:"AON",sector:"Seguros",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"contactada",prioridad:"alta",contacto:"Marta Sosa",telefono:"928000002",email:"canarias@aon.es",notas:"Enviar convenio"},{id:uid()+2,nombre:"EY",sector:"Consultoría",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"interesada",prioridad:"media",contacto:"Javier Martín",telefono:"928000003",email:"talent@ey.es",notas:"Interesados"},{id:uid()+3,nombre:"Domingo Alonso",sector:"Automoción",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"convenio",prioridad:"alta",contacto:"Beatriz Vega",telefono:"928000005",email:"personas@domingoalonso.com",notas:"Convenio enviado"},{id:uid()+4,nombre:"Clínica Dental",sector:"Salud",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"activa",prioridad:"baja",contacto:"Sara González",telefono:"928000006",email:"info@clinicadental.es",notas:"Prácticas activas"}],alumnos:[{id:uid()+10,nombre:"María López",telefono:"600000001",email:"maria@email.com",direccion:"Las Palmas",nss:"123456789012",estado:"sin asignar",empresa:"",inicio:"",fin:"",tutor:"",notas:"",foto:null,curriculum:null},{id:uid()+11,nombre:"Juan Pérez",telefono:"600000002",email:"juan@email.com",direccion:"Telde",nss:"223456789012",estado:"prácticas",empresa:"Clínica Dental",inicio:today(),fin:datePlus(60),tutor:"Sara González",notas:"Buen progreso",foto:null,curriculum:null}],convenios:[{id:uid()+20,empresa:"AON",centro:"Centro educativo",inicio:today(),fin:datePlus(90),tutorEmpresa:"Marta Sosa",tutorCentro:"María García",estado:"pendiente",anexos:[]},{id:uid()+21,empresa:"Domingo Alonso",centro:"Centro educativo",inicio:today(),fin:datePlus(100),tutorEmpresa:"Beatriz Vega",tutorCentro:"María García",estado:"enviado",anexos:[]}],documentos:[],carpetas:[{id:"all",nombre:"Todas"},{id:"sin",nombre:"Sin carpeta"},{id:"curso",nombre:"Curso 2025/26"},{id:"conv",nombre:"Convenios"}],seguimientos:[{id:uid()+40,fecha:today(),empresa:"Deloitte",tipo:"llamada",resultado:"Pendiente respuesta",proxima:"Llamar a Deloitte",fechaProxima:today(),responsable:""},{id:uid()+41,fecha:today(),empresa:"AON",tipo:"email",resultado:"Convenio enviado",proxima:"Revisar firma",fechaProxima:datePlus(2),responsable:""}],emails:[{id:uid()+50,nombre:"Primer contacto",asunto:"Colaboración para prácticas",cuerpo:"Buenos días,\n\nNos gustaría valorar una posible colaboración para prácticas.\n\nUn saludo."}],actividad:[]};
-let state=JSON.parse(localStorage.getItem(KEY)||"null")||seed; if(!Array.isArray(state.dismissedNotifications)) state.dismissedNotifications=[]; let current="dashboard"; let activeFolder="all"; let selectedDate=today(); let draggedCompany=null; let cloudTimer=null;
+let state=JSON.parse(localStorage.getItem(KEY)||"null")||seed; let current="dashboard"; let activeFolder="all"; let selectedDate=today(); let draggedCompany=null; let cloudTimer=null;
 function save(){localStorage.setItem(KEY,JSON.stringify(state));setSync("Guardando...","saving");clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>saveCloud(true),1000);setTimeout(()=>setSync("Sincronizado","ok"),400)} function log(t){state.actividad.unshift({id:uid(),txt:t,fecha:new Date().toISOString()});state.actividad=state.actividad.slice(0,50)} function setSync(t,c="ok"){const el=$("#syncStatus");if(el){el.className="sync "+c;el.innerHTML=`<i></i> ${t}`}}
 function show(v){current=v;$$(".view").forEach(x=>x.classList.toggle("active",x.id===v));$$("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));render();if(innerWidth<820)$("#sidebar").classList.remove("open")} function pageHead(p,h,s){return `<div class="page-head"><div><p>${p}</p><h2>${h}</h2><span>${s}</span></div><button class="date-pill">${new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})}</button></div>`}
 function render(){updateIcons();updatePlant();renderDashboard();renderEmpresas();renderAlumnos();renderConvenios();renderExpedientes();renderDocumentos();renderSeguimiento();renderEmails();renderAgenda();renderReportes();renderAjustes();renderNotifications();setupPipeline()}
@@ -89,7 +89,7 @@ function quickEvent(date){modal("Añadir pendiente",`<form id="quickForm" class=
 function renderReportes(){const group=(arr,fn)=>arr.reduce((a,x)=>{const k=fn(x)||"Sin dato";a[k]=(a[k]||0)+1;return a},{});$("#reportes").innerHTML=pageHead("Reportes","Reportes","Estadísticas y exportación")+`<section class="kpi-grid">${kpi("Empresas",state.empresas.length,"empresas","pink","building")}${kpi("Alumnos",state.alumnos.length,"alumnos","blue","student")}${kpi("Convenios",state.convenios.length,"convenios","orange","file")}${kpi("Documentos",state.documentos.length,"documentos","green","archive")}</section><section class="report-grid"><div class="card table-card"><h3>Empresas por sector</h3>${bars(group(state.empresas,e=>e.sector))}</div><div class="card table-card"><h3>Estados CRM</h3>${bars(group(state.empresas,e=>e.estado))}</div><div class="card table-card"><h3>Convenios</h3>${bars(group(state.convenios,c=>c.estado))}</div><div class="card table-card"><h3>Alumnos</h3>${bars(group(state.alumnos,a=>a.estado))}</div><div class="card table-card"><button class="primary" onclick="exportCSV()">Exportar CSV</button><button class="soft-btn" onclick="window.print()">Exportar PDF</button></div></section>`} function bars(obj){const max=Math.max(1,...Object.values(obj));return Object.entries(obj).map(([k,v])=>`<div class="bar-row"><span>${esc(k)}</span><div class="bar"><i style="width:${v/max*100}%"></i></div><b>${v}</b></div>`).join("")||"<p>Sin datos.</p>"} function exportCSV(){const rows=[["tipo","nombre","estado"],...state.empresas.map(e=>["empresa",e.nombre,e.estado]),...state.alumnos.map(a=>["alumno",a.nombre,a.estado]),...state.convenios.map(c=>["convenio",c.empresa,c.estado])];const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"}));a.download="bloom-crm-reportes.csv";a.click()}
 function renderAjustes(){$("#ajustes").innerHTML=pageHead("Ajustes","Ajustes","Supabase, backup y restauración")+`<section class="grid-2"><div class="card table-card"><h3>Supabase</h3><p>Usa la tabla <b>bloom_crm_backups</b>.</p><button class="primary" onclick="saveCloud()">Guardar nube</button><button class="soft-btn" onclick="loadCloud()">Cargar nube</button><button class="soft-btn" onclick="downloadSQL()">Descargar SQL</button></div><div class="card table-card"><h3>Backup local</h3><button class="primary" onclick="downloadBackup()">Descargar JSON</button><label class="soft-btn">Restaurar JSON<input type="file" onchange="restoreBackup(event)" hidden></label></div></section>`}
 function modal(title,body,onSave){const m=$("#modal");m.innerHTML=`<div class="modal-body"><h2>${title}</h2>${body}<div class="modal-actions"><button class="soft-btn" onclick="closeModal()">Cerrar</button><button class="primary" id="modalSave">Guardar</button></div></div>`;m.showModal();$("#modalSave").onclick=onSave} function closeModal(){$("#modal").close()} function globalSearch(){const q=$("#globalSearch").value.toLowerCase(),box=$("#searchResults");if(!q){box.classList.add("hidden");return}const results=[...state.empresas.map(x=>({t:"Empresa",n:x.nombre,v:"empresas"})),...state.alumnos.map(x=>({t:"Alumno",n:x.nombre,v:"alumnos"})),...state.documentos.map(x=>({t:"Documento",n:x.nombre,v:"documentos"})),...state.convenios.map(x=>({t:"Convenio",n:x.empresa,v:"convenios"}))].filter(r=>r.n.toLowerCase().includes(q));box.classList.remove("hidden");box.innerHTML=results.slice(0,8).map(r=>`<article class="item" onclick="show('${r.v}');$('#globalSearch').value='';globalSearch()"><div><b>${esc(r.n)}</b><p>${r.t}</p></div></article>`).join("")||"<p>Sin resultados.</p>"}
-function buildAllNotifications(){const list=[];state.empresas.filter(e=>!state.seguimientos.some(s=>s.empresa===e.nombre)).forEach(e=>list.push({id:`empresa-sin-seguimiento-${e.id}-${e.nombre}`,t:"Empresa",h:`${e.nombre} sin seguimiento`,p:"No tiene interacción registrada.",v:"empresas"}));state.convenios.filter(c=>c.estado!=="firmado"&&c.estado!=="completo").forEach(c=>list.push({id:`convenio-pendiente-${c.id}-${c.estado}`,t:"Convenio",h:`Convenio pendiente · ${c.empresa}`,p:`Estado: ${c.estado}`,v:"convenios"}));state.alumnos.filter(a=>!a.empresa).forEach(a=>list.push({id:`alumno-sin-empresa-${a.id}-${a.nombre}`,t:"Alumno",h:`${a.nombre} sin empresa`,p:"Pendiente de asignación.",v:"alumnos"}));state.seguimientos.filter(s=>s.fechaProxima&&s.fechaProxima<=datePlus(2)).forEach(s=>list.push({id:`seguimiento-${s.id}-${s.fechaProxima}-${s.proxima||s.empresa}`,t:"Seguimiento",h:s.proxima||`Revisar ${s.empresa}`,p:`${s.empresa} · ${s.fechaProxima}`,v:"seguimiento"}));return list} function buildNotifications(){const hidden=new Set(state.dismissedNotifications||[]);return buildAllNotifications().filter(n=>!hidden.has(n.id))} function renderNotifications(){const n=buildNotifications();$("#alertCount").textContent=n.length;const clearBtn=$("#clearNotifications");if(clearBtn)clearBtn.disabled=!n.length;$("#drawerList").innerHTML=n.length?n.map(x=>`<article class="notification" onclick="show('${x.v}');closeDrawer()"><b>${esc(x.h)}</b><p>${esc(x.t)} · ${esc(x.p)}</p></article>`).join(""):`<article class="notification"><b>Todo tranquilo</b><p>No hay revisiones urgentes.</p></article>`} function clearNotifications(){const currentIds=buildNotifications().map(n=>n.id);state.dismissedNotifications=[...new Set([...(state.dismissedNotifications||[]),...currentIds])];save();renderNotifications();toast("Centro de notificaciones limpio 🌸")} function openDrawer(){renderNotifications();$("#drawer").classList.add("open");$("#overlay").classList.add("open")} function closeDrawer(){$("#drawer").classList.remove("open");$("#overlay").classList.remove("open")}
+function buildNotifications(){const list=[];state.empresas.filter(e=>!state.seguimientos.some(s=>s.empresa===e.nombre)).forEach(e=>list.push({t:"Empresa",h:`${e.nombre} sin seguimiento`,p:"No tiene interacción registrada.",v:"empresas"}));state.convenios.filter(c=>c.estado!=="firmado"&&c.estado!=="completo").forEach(c=>list.push({t:"Convenio",h:`Convenio pendiente · ${c.empresa}`,p:`Estado: ${c.estado}`,v:"convenios"}));state.alumnos.filter(a=>!a.empresa).forEach(a=>list.push({t:"Alumno",h:`${a.nombre} sin empresa`,p:"Pendiente de asignación.",v:"alumnos"}));state.seguimientos.filter(s=>s.fechaProxima&&s.fechaProxima<=datePlus(2)).forEach(s=>list.push({t:"Seguimiento",h:s.proxima||`Revisar ${s.empresa}`,p:`${s.empresa} · ${s.fechaProxima}`,v:"seguimiento"}));return list} function renderNotifications(){const n=buildNotifications();$("#alertCount").textContent=n.length;$("#drawerList").innerHTML=n.length?n.map(x=>`<article class="notification" onclick="show('${x.v}');closeDrawer()"><b>${esc(x.h)}</b><p>${esc(x.t)} · ${esc(x.p)}</p></article>`).join(""):`<article class="notification"><b>Todo tranquilo</b><p>No hay revisiones urgentes.</p></article>`} function openDrawer(){renderNotifications();$("#drawer").classList.add("open");$("#overlay").classList.add("open")} function closeDrawer(){$("#drawer").classList.remove("open");$("#overlay").classList.remove("open")}
 async function saveCloud(silent=false){try{setSync("Guardando...","saving");const res=await fetch(`${SUPABASE_URL}/rest/v1/bloom_crm_backups`,{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id:CLOUD_ID,data:state,updated_at:new Date().toISOString()})});if(!res.ok)throw new Error(await res.text());setSync("Sincronizado","ok");if(!silent)toast("Guardado en nube 🌸")}catch(e){console.error(e);setSync("Error nube","error");if(!silent)alert("Error Supabase: "+e.message)}} async function loadCloud(){try{const res=await fetch(`${SUPABASE_URL}/rest/v1/bloom_crm_backups?id=eq.${CLOUD_ID}&select=data`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!res.ok)throw new Error(await res.text());const rows=await res.json();if(rows[0]?.data){state=rows[0].data;localStorage.setItem(KEY,JSON.stringify(state));render();toast("Nube cargada 🌸")}else toast("No hay copia en nube")}catch(e){alert("Error Supabase: "+e.message)}} function downloadSQL(){const sql=`create table if not exists bloom_crm_backups (id text primary key,data jsonb not null,updated_at timestamptz default now());\nalter table bloom_crm_backups enable row level security;\ncreate policy "public read bloom crm backup" on bloom_crm_backups for select to anon using (true);\ncreate policy "public insert bloom crm backup" on bloom_crm_backups for insert to anon with check (true);\ncreate policy "public update bloom crm backup" on bloom_crm_backups for update to anon using (true) with check (true);`;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([sql],{type:"text/sql"}));a.download="bloom-crm-supabase.sql";a.click()} function downloadBackup(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));a.download="bloom-crm-backup.json";a.click()} function restoreBackup(ev){const f=ev.target.files[0];const r=new FileReader();r.onload=()=>{state=JSON.parse(r.result);save();render()};r.readAsText(f)}
 function init(){$$("[data-view]").forEach(b=>b.onclick=()=>show(b.dataset.view));$("#globalSearch").addEventListener("input",globalSearch);$("#menuBtn").onclick=()=>$("#sidebar").classList.add("open");$("#notificationsBtn").onclick=openDrawer;$("#closeDrawer").onclick=closeDrawer;$("#overlay").onclick=closeDrawer;$("#quickBtn").onclick=()=>quickEvent(today());render();setTimeout(()=>{if(state.actividad.length===0)loadCloud().catch(()=>{})},600)} init();
 
@@ -615,754 +615,1232 @@ renderEmpresas = function(){
 };
 
 
+
 /* =========================================================
-   Bloom CRM 3.4 — Importar alumnos desde Excel / CSV
+   Bloom CRM 3.4 — Supabase Storage para documentos
+   Evita guardar archivos base64 gigantes en el JSON principal.
 ========================================================= */
-let pendingAlumnoImportRows = [];
+const STORAGE_BUCKET = "bloom-crm-documents";
 
-function normalizeStudentStatus(value){
-  const raw = String(value || "").trim();
-  if(!raw) return "sin asignar";
-  const key = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const allowed = ["sin asignar", "propuesta", "entrevista", "prácticas", "finalizado"];
-  if(key === "practicas") return "prácticas";
-  return allowed.find(x => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === key) || raw;
+function safeFileName(name){
+  return String(name || "archivo")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120) || "archivo";
 }
 
-function normalizeDateValue(value){
-  if(value === undefined || value === null || value === "") return "";
-  if(value instanceof Date && !isNaN(value)) return value.toISOString().slice(0,10);
-  if(typeof value === "number"){
-    // Excel serial date. 25569 = 1970-01-01.
-    const d = new Date(Math.round((value - 25569) * 86400 * 1000));
-    return isNaN(d) ? "" : d.toISOString().slice(0,10);
-  }
-  const text = String(value).trim();
-  if(/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
-  const m = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
-  if(m){
-    const y = m[3].length === 2 ? `20${m[3]}` : m[3];
-    return `${y}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
-  }
-  return text;
+function storagePublicUrl(path){
+  return `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${path}`;
 }
 
-function mapAlumnoImportRow(row){
-  const nombre = rowValue(row, ["nombre_alumno","alumno","nombre","nombre_completo","estudiante","student","name"]);
-  return {
-    id: uid(),
-    nombre,
-    telefono: rowValue(row, ["telefono","teléfono","movil","móvil","phone","contacto_telefono"]),
-    email: rowValue(row, ["email","correo","correo_electronico","correo electrónico","mail"]),
-    direccion: rowValue(row, ["direccion","dirección","domicilio","address"]),
-    nss: rowValue(row, ["nss","numero_seguridad_social","nº_seguridad_social","numero ss","seguridad_social"]),
-    estado: normalizeStudentStatus(rowValue(row, ["estado","estado_alumno","estado_practicas","status"])),
-    empresa: rowValue(row, ["empresa","empresa_asignada","centro_practicas","centro de prácticas","company"]),
-    inicio: normalizeDateValue(rowValue(row, ["inicio","fecha_inicio","inicio_practicas","fecha_inicio_practicas"])),
-    fin: normalizeDateValue(rowValue(row, ["fin","fecha_fin","fin_practicas","fecha_fin_practicas"])),
-    tutor: rowValue(row, ["tutor","tutor_empresa","tutor_practicas","responsable"]),
-    notas: rowValue(row, ["notas","observaciones","comentarios"]),
-    foto: null,
-    curriculum: null
-  };
+function storageObjectUrl(path){
+  return `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
 }
 
-function openAlumnoImport(){
-  modal("Importar alumnos desde Excel", `
-    <section class="import-panel">
-      <p>Sube un archivo <b>.xlsx</b>, <b>.xls</b> o <b>.csv</b>. Bloom leerá las columnas y las convertirá en fichas de alumnos.</p>
-      <div class="import-actions">
-        <label class="import-file-label">Seleccionar archivo
-          <input id="alumnoImportFile" type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
-        </label>
-        <button type="button" class="soft-btn" onclick="downloadAlumnoTemplate()">Descargar plantilla</button>
-      </div>
+async function uploadFileToStorage(file, folder="general"){
+  if(!file) return null;
 
-      <div class="import-help">
-        <b>Columnas recomendadas</b>
-        <span>nombre_alumno, telefono, email, direccion, nss, estado, empresa, inicio, fin, tutor, notas</span>
-      </div>
+  const path = `${folder}/${new Date().getFullYear()}/${Date.now()}-${safeFileName(file.name)}`;
 
-      <label class="import-option">
-        <input id="alumnoImportUpdateExisting" type="checkbox" checked>
-        Actualizar alumnos existentes si el email o el nombre coincide
-      </label>
-
-      <div id="alumnoImportPreview" class="import-preview">
-        <p>Selecciona un archivo para ver la vista previa.</p>
-      </div>
-    </section>
-  `, () => confirmAlumnoImport());
-
-  const input = $("#alumnoImportFile");
-  if(input) input.addEventListener("change", handleAlumnoImportFile);
-}
-
-async function handleAlumnoImportFile(event){
-  const file = event.target.files?.[0];
-  if(!file) return;
-
-  const ext = file.name.toLowerCase().split(".").pop();
   try{
-    let rows = [];
-    if(ext === "csv"){
-      const text = await file.text();
-      rows = parseCSVRows(text);
-    }else{
-      if(!window.XLSX){
-        $("#alumnoImportPreview").innerHTML = `<div class="import-error">No se pudo cargar el lector Excel. Revisa la conexión o usa CSV.</div>`;
-        return;
-      }
-      const buffer = await file.arrayBuffer();
-      const wb = XLSX.read(buffer, { type: "array", cellDates: true });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+    setSync("Subiendo archivo...", "saving");
+    const res = await fetch(storageObjectUrl(path), {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": file.type || "application/octet-stream",
+        "x-upsert": "true"
+      },
+      body: file
+    });
+
+    if(!res.ok){
+      const text = await res.text();
+      throw new Error(text || `Storage HTTP ${res.status}`);
     }
 
-    pendingAlumnoImportRows = rows.map(mapAlumnoImportRow).filter(r => r.nombre);
-    renderAlumnoImportPreview(pendingAlumnoImportRows, rows.length);
+    setSync("Archivo subido", "ok");
+    return {
+      name: file.name,
+      type: file.type || "",
+      size: file.size || 0,
+      path,
+      url: storagePublicUrl(path),
+      storage: true
+    };
   }catch(error){
-    console.error(error);
-    $("#alumnoImportPreview").innerHTML = `<div class="import-error">No se pudo leer el archivo. Comprueba que el formato sea correcto.</div>`;
+    console.error("uploadFileToStorage", error);
+    alert(
+      "No se pudo subir el archivo a Supabase Storage.\n\n" +
+      "Revisa que exista el bucket público 'bloom-crm-documents' y sus policies.\n\n" +
+      "Detalle: " + (error.message || error)
+    );
+    setSync("Error Storage", "error");
+    return null;
   }
 }
 
-function sameAlumno(a, row){
-  const aEmail = String(a.email || "").trim().toLowerCase();
-  const rEmail = String(row.email || "").trim().toLowerCase();
-  if(aEmail && rEmail && aEmail === rEmail) return true;
-  return String(a.nombre || "").trim().toLowerCase() === String(row.nombre || "").trim().toLowerCase();
-}
-
-function renderAlumnoImportPreview(rows, rawCount){
-  const preview = $("#alumnoImportPreview");
-  if(!preview) return;
-
-  const duplicates = rows.filter(r => state.alumnos.some(a => sameAlumno(a, r))).length;
-  preview.innerHTML = `
-    <div class="import-summary">
-      <article><b>${rawCount}</b><span>Filas leídas</span></article>
-      <article><b>${rows.length}</b><span>Alumnos válidos</span></article>
-      <article><b>${duplicates}</b><span>Coincidencias existentes</span></article>
-    </div>
-    <div class="import-table-wrap">
-      <table>
-        <thead><tr><th>Alumno</th><th>Contacto</th><th>Empresa</th><th>Estado</th><th>Fechas</th><th>Tutor</th></tr></thead>
-        <tbody>
-          ${rows.slice(0,10).map(r=>`
-            <tr>
-              <td><b>${esc(r.nombre)}</b><br><small>NSS: ${esc(r.nss)}</small></td>
-              <td>${esc(r.telefono)}<br><small>${esc(r.email)}</small></td>
-              <td>${esc(r.empresa || "Sin empresa")}</td>
-              <td><span class="badge">${esc(r.estado)}</span></td>
-              <td>${esc(r.inicio)}${r.fin ? ` → ${esc(r.fin)}` : ""}</td>
-              <td>${esc(r.tutor)}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-    ${rows.length > 10 ? `<p class="import-note">Mostrando 10 de ${rows.length} alumnos.</p>` : ""}
-  `;
-}
-
-function confirmAlumnoImport(){
-  if(!pendingAlumnoImportRows.length){
-    toast("No hay alumnos válidos para importar");
-    return;
-  }
-
-  const updateExisting = $("#alumnoImportUpdateExisting")?.checked;
-  let created = 0;
-  let updated = 0;
-
-  pendingAlumnoImportRows.forEach(row => {
-    const existing = state.alumnos.find(a => sameAlumno(a, row));
-    if(existing && updateExisting){
-      Object.assign(existing, {
-        nombre: row.nombre || existing.nombre,
-        telefono: row.telefono || existing.telefono,
-        email: row.email || existing.email,
-        direccion: row.direccion || existing.direccion,
-        nss: row.nss || existing.nss,
-        estado: row.estado || existing.estado,
-        empresa: row.empresa || existing.empresa,
-        inicio: row.inicio || existing.inicio,
-        fin: row.fin || existing.fin,
-        tutor: row.tutor || existing.tutor,
-        notas: row.notas || existing.notas
-      });
-      updated++;
-    }else if(!existing){
-      state.alumnos.unshift(row);
-      created++;
+function stripHeavyFiles(value){
+  if(Array.isArray(value)) return value.map(stripHeavyFiles);
+  if(value && typeof value === "object"){
+    const out = {};
+    for(const [k,v] of Object.entries(value)){
+      if(k === "data" && typeof v === "string" && v.startsWith("data:")) continue;
+      out[k] = stripHeavyFiles(v);
     }
-  });
-
-  log(`Importación Excel: ${created} alumnos añadidos, ${updated} actualizados`);
-  pendingAlumnoImportRows = [];
-  save();
-  closeModal();
-  dashboardFilters.alumnos = "all";
-  show("alumnos");
-  toast(`${created} añadidos · ${updated} actualizados 🌸`);
-}
-
-function downloadAlumnoTemplate(){
-  const headers = ["nombre_alumno","telefono","email","direccion","nss","estado","empresa","inicio","fin","tutor","notas"];
-  const example = ["Alumno Ejemplo","600000000","alumno@email.com","Las Palmas de Gran Canaria","123456789012","sin asignar","","2026-03-01","2026-06-15","Tutor/a","Notas internas"];
-
-  if(window.XLSX){
-    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
-    XLSX.writeFile(wb, "plantilla_alumnos_bloom_crm.xlsx");
-  }else{
-    const csv = [headers, example].map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
-    a.download = "plantilla_alumnos_bloom_crm.csv";
-    a.click();
+    return out;
   }
+  return value;
 }
 
-/* Añade botones de importación a Alumnos */
-const renderAlumnosImportBase34 = renderAlumnos;
-renderAlumnos = function(){
-  renderAlumnosImportBase34();
-  const toolbar = document.querySelector("#alumnos .toolbar");
-  if(toolbar && !document.querySelector("#importAlumnosBtn")){
-    const importBtn = document.createElement("button");
-    importBtn.id = "importAlumnosBtn";
-    importBtn.className = "soft-btn";
-    importBtn.type = "button";
-    importBtn.textContent = "Importar Excel/CSV";
-    importBtn.onclick = openAlumnoImport;
-
-    const templateBtn = document.createElement("button");
-    templateBtn.id = "templateAlumnosBtn";
-    templateBtn.className = "soft-btn";
-    templateBtn.type = "button";
-    templateBtn.textContent = "Plantilla Excel";
-    templateBtn.onclick = downloadAlumnoTemplate;
-
-    toolbar.appendChild(importBtn);
-    toolbar.appendChild(templateBtn);
+saveCloud = async function(silent=false){
+  try{
+    setSync("Guardando...", "saving");
+    const lightState = stripHeavyFiles(state);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bloom_crm_backups`, {
+      method:"POST",
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:`Bearer ${SUPABASE_KEY}`,
+        "Content-Type":"application/json",
+        Prefer:"resolution=merge-duplicates,return=minimal"
+      },
+      body:JSON.stringify({ id:CLOUD_ID, data:lightState, updated_at:new Date().toISOString() })
+    });
+    if(!res.ok) throw new Error(await res.text());
+    setSync("Sincronizado", "ok");
+    if(!silent) toast("Guardado ligero en nube 🌸");
+  }catch(e){
+    console.error(e);
+    setSync("Error nube", "error");
+    if(!silent) alert("Error Supabase:\n\n" + e.message);
   }
 };
 
-/* =========================================================
-   Bloom CRM 4.0 — Modificar y eliminar en todos los apartados
-========================================================= */
-if(!Array.isArray(state.reportes)) state.reportes = [];
+const filePreviewHTMLBase34 = filePreviewHTML;
+filePreviewHTML = function(file, aid="x"){
+  if(file?.url){
+    const name = file.name || "archivo";
+    const type = file.type || "";
+    const pdf = type.includes("pdf") || name.toLowerCase().endsWith(".pdf");
+    const img = type.includes("image") || /\.(png|jpg|jpeg|webp)$/i.test(name);
+    const docx = name.toLowerCase().endsWith(".docx");
+    if(pdf) return `<div class="student-cv-preview"><iframe src="${file.url}"></iframe></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir</a><a href="${file.url}" download="${esc(name)}">Descargar</a></div>`;
+    if(img) return `<div class="student-cv-image"><img src="${file.url}"></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir</a><a href="${file.url}" download="${esc(name)}">Descargar</a></div>`;
+    if(docx) return `<div class="student-cv-empty"><b>${esc(name)}</b><span>Word guardado en Supabase Storage. Descárgalo o súbelo en PDF para vista previa directa.</span></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir/descargar Word</a></div>`;
+    return `<div class="student-cv-empty"><b>${esc(name)}</b><span>Archivo guardado en Storage.</span></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir/descargar</a></div>`;
+  }
+  return filePreviewHTMLBase34(file, aid);
+};
 
-function optionList(values, selected){return values.map(v=>`<option ${String(selected||"")===String(v)?"selected":""}>${esc(v)}</option>`).join("")}
-function empresaOptions(selected=""){return `<option value="">Sin empresa</option>`+state.empresas.map(e=>`<option value="${esc(e.nombre)}" ${selected===e.nombre?"selected":""}>${esc(e.nombre)}</option>`).join("")}
-function alumnoOptions(selected=""){return `<option value="">Sin alumno</option>`+state.alumnos.map(a=>`<option value="${esc(a.nombre)}" ${selected===a.nombre?"selected":""}>${esc(a.nombre)}</option>`).join("")}
-function carpetaOptions(selected=""){return `<option value="">Sin carpeta</option>`+state.carpetas.filter(f=>!["all","sin"].includes(String(f.id))).map(f=>`<option value="${esc(f.id)}" ${String(selected)===String(f.id)?"selected":""}>${esc(f.nombre)}</option>`).join("")}
-
-function editDoc(id){
-  const d = state.documentos.find(x=>Number(x.id)===Number(id));
-  if(!d) return;
-  modal("Modificar documento",`<form id="docEditForm" class="form-grid">
-    <input name="nombre" value="${esc(d.nombre)}" placeholder="Nombre visible" required>
-    <select name="carpeta">${carpetaOptions(d.carpeta||"")}</select>
-    <select name="tipo">${optionList(["convenio firmado","DNI/NIF","seguro","acuerdo formativo","evaluación","anexo de prácticas","cv","otro"],d.tipo)}</select>
-    <select name="empresa">${empresaOptions(d.empresa||"")}</select>
-    <select name="alumno">${alumnoOptions(d.alumno||"")}</select>
-    <select name="estado">${optionList(["pendiente","para enviar","enviado","firmado","caducado"],d.estado)}</select>
-    <input name="fecha" type="date" value="${esc(d.fecha||today())}">
-    <input name="subidoPor" value="${esc(d.subidoPor||"")}" placeholder="Subido por">
-    <textarea name="notas" placeholder="Notas">${esc(d.notas||"")}</textarea>
-  </form>`,()=>{
-    Object.assign(d,Object.fromEntries(new FormData($("#docEditForm")).entries()));
-    log(`Documento modificado: ${d.nombre}`);
-    save(); closeModal(); render(); toast("Documento modificado 🌸");
-  });
-}
-const docCardBase40 = docCard;
-docCard = function(d){return `<article class="card doc-card"><h3>${esc(d.nombre)}</h3><p>${esc(d.tipo)} · ${esc(d.estado)}</p><p>${esc(d.empresa||d.alumno||"General")} · ${esc(d.fecha)}</p><p>${esc(d.notas||"")}</p><div class="doc-actions"><button onclick="previewAnyFile(state.documentos.find(x=>x.id===${d.id}).file,'${esc(d.nombre)}')">Previsualizar</button><a href="${d.file?.data||"#"}" download="${esc(d.file?.name||d.nombre)}">Descargar</a><button onclick="editDoc(${d.id})">Modificar</button><button onclick="replaceDoc(${d.id})">Reemplazar archivo</button><button onclick="delDoc(${d.id})">Eliminar</button></div></article>`}
-const delDocBase40 = delDoc;
-delDoc = function(id){if(confirm("¿Eliminar documento?")){state.documentos=state.documentos.filter(d=>Number(d.id)!==Number(id));log("Documento eliminado");save();render();toast("Documento eliminado 🌸")}}
-
-function openSeguimiento(id=null, defaultDate=today()){
-  const s = state.seguimientos.find(x=>Number(x.id)===Number(id)) || {fecha:defaultDate,empresa:"",tipo:"llamada",resultado:"",proxima:"",fechaProxima:defaultDate,responsable:""};
-  modal(id?"Modificar seguimiento":"Añadir seguimiento",`<form id="seguimientoForm" class="form-grid">
-    <input name="fecha" type="date" value="${esc(s.fecha||today())}">
-    <select name="empresa">${empresaOptions(s.empresa||"")}</select>
-    <select name="tipo">${optionList(["llamada","email","visita","reunión","LinkedIn","tarea"],s.tipo)}</select>
-    <input name="resultado" value="${esc(s.resultado||"")}" placeholder="Resultado / nota">
-    <input name="proxima" value="${esc(s.proxima||"")}" placeholder="Próxima acción">
-    <input name="fechaProxima" type="date" value="${esc(s.fechaProxima||s.fecha||today())}">
-    <input name="responsable" value="${esc(s.responsable||"")}" placeholder="Responsable">
-  </form>`,()=>{
-    Object.assign(s,Object.fromEntries(new FormData($("#seguimientoForm")).entries()));
-    if(!id){s.id=uid();state.seguimientos.unshift(s)}
-    selectedDate=s.fechaProxima||s.fecha||selectedDate;
-    log(`${id?"Seguimiento modificado":"Seguimiento registrado"}: ${s.empresa||s.proxima}`);
-    save(); closeModal(); render(); toast(id?"Seguimiento modificado 🌸":"Seguimiento guardado 🌸");
-  });
-}
-function delSeguimiento(id){if(confirm("¿Eliminar seguimiento o pendiente?")){state.seguimientos=state.seguimientos.filter(s=>Number(s.id)!==Number(id));log("Seguimiento eliminado");save();render();toast("Seguimiento eliminado 🌸")}}
-renderSeguimiento = function(){
-  const rows = state.seguimientos.map(s=>`<article class="item"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")}</p></div><div class="row-actions"><button class="task-btn edit" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="delSeguimiento(${s.id})"><span>🗑️</span> Eliminar</button></div></article>`).join("")||"<p>No hay seguimientos.</p>";
-  $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Llamadas, emails, visitas, reuniones y tareas")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Usa “Añadir” para crear y los botones de cada fila para modificar o eliminar.</p></div><div class="card table-card"><div class="list">${rows}</div></div></section>`;
-}
-addSeguimiento = function(ev){ev.preventDefault();openSeguimiento(null,today())}
-quickEvent = function(date){openSeguimiento(null,date)}
-
-function openEmailTemplate(id=null){
-  const t = state.emails.find(x=>Number(x.id)===Number(id)) || {nombre:"",asunto:"",cuerpo:""};
-  modal(id?"Modificar plantilla":"Nueva plantilla",`<form id="emailTemplateForm" class="form-grid">
-    <input name="nombre" value="${esc(t.nombre)}" placeholder="Nombre plantilla" required>
-    <input name="asunto" value="${esc(t.asunto||"")}" placeholder="Asunto">
-    <textarea name="cuerpo" placeholder="Cuerpo">${esc(t.cuerpo||"")}</textarea>
-  </form>`,()=>{
-    Object.assign(t,Object.fromEntries(new FormData($("#emailTemplateForm")).entries()));
-    if(!id){t.id=uid();state.emails.unshift(t)}
-    log(`${id?"Plantilla modificada":"Plantilla creada"}: ${t.nombre}`);
-    save(); closeModal(); render(); toast(id?"Plantilla modificada 🌸":"Plantilla guardada 🌸");
-  });
-}
-renderEmails = function(){
-  $("#emails").innerHTML=pageHead("Emails","Emails","Plantillas reutilizables")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Plantillas</p><h3>Crear nueva plantilla</h3></div><button class="primary" onclick="openEmailTemplate()">Añadir plantilla</button></div><p>Todas las plantillas se pueden copiar, modificar y eliminar.</p></div><div class="card table-card"><div class="list">${state.emails.map(t=>`<article class="item"><div><b>${esc(t.nombre)}</b><p>${esc(t.asunto)}</p></div><div class="row-actions"><button onclick="copyEmail(${t.id})">Copiar</button><button onclick="openEmailTemplate(${t.id})">Modificar</button><button onclick="delEmail(${t.id})">Eliminar</button></div></article>`).join("")||"<p>No hay plantillas.</p>"}</div></div></section>`
-}
-addEmail = function(ev){ev.preventDefault();openEmailTemplate()}
-delEmail = function(id){if(confirm("¿Eliminar plantilla?")){state.emails=state.emails.filter(e=>Number(e.id)!==Number(id));log("Plantilla eliminada");save();render();toast("Plantilla eliminada 🌸")}}
-
-const dayEventsBase40 = dayEvents;
-dayEvents = function(date){
-  const ev=[];
-  state.seguimientos.forEach(s=>{if(s.fecha===date||s.fechaProxima===date)ev.push({id:s.id,kind:"Seguimiento",title:s.proxima||s.resultado||s.tipo,sub:`${s.empresa||"Sin empresa"} · ${s.tipo}`,view:"seguimiento",edit:`openSeguimiento(${s.id})`,del:`delSeguimiento(${s.id})`})});
-  state.convenios.forEach(c=>{if(c.inicio===date||c.fin===date)ev.push({id:c.id,kind:c.inicio===date?"Inicio convenio":"Fin convenio",title:c.empresa,sub:`${c.estado}`,view:"convenios",edit:`openConvenio(${c.id})`,del:`delConvenio(${c.id})`})});
-  state.alumnos.forEach(a=>{if(a.inicio===date||a.fin===date)ev.push({id:a.id,kind:a.inicio===date?"Inicio prácticas":"Fin prácticas",title:a.nombre,sub:a.empresa||"Sin empresa",view:"alumnos",edit:`openAlumno(${a.id})`,del:`delAlumno(${a.id})`})});
-  state.documentos.forEach(d=>{if(d.fecha===date)ev.push({id:d.id,kind:"Documento",title:d.nombre,sub:`${d.tipo} · ${d.estado}`,view:"documentos",edit:`editDoc(${d.id})`,del:`delDoc(${d.id})`})});
-  return ev;
-}
-renderAgenda = function(){
-  const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${ev.length}</b><span>Pendientes</span></article><article><b>${ev.filter(e=>e.kind==='Seguimiento').length}</b><span>Seguimientos</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions"><button class="task-btn edit" onclick="${e.edit}"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="${e.del}"><span>🗑️</span> Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
-}
-
-renderExpedientes = function(){
-  const rows=state.alumnos.map(a=>{const e=state.empresas.find(x=>x.nombre===a.empresa),c=state.convenios.find(x=>x.empresa===a.empresa),docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa);return `<article class="card table-card"><div class="section-head"><div><p>Expediente</p><h3>${esc(a.nombre)}</h3></div><span class="badge">${esc(a.estado)}</span></div><div class="grid-2"><div><b>Empresa</b><p>${esc(a.empresa||"Sin empresa")}</p><b>Contacto</b><p>${esc(e?.contacto||"")}</p><b>Fechas</b><p>${esc(a.inicio||"")} → ${esc(a.fin||"")}</p></div><div><b>Convenio</b><p>${esc(c?.estado||"Sin convenio")}</p><b>Documentos</b><p>${docs.length} asociados</p><b>Próxima acción</b><p>${esc(state.seguimientos.find(s=>s.empresa===a.empresa)?.proxima||"Sin acción")}</p></div></div><div class="row-actions"><button class="primary" onclick="openStudentProfile(${a.id})">Ver ficha</button><button onclick="openAlumno(${a.id})">Modificar</button><button onclick="delAlumno(${a.id})">Eliminar</button></div></article>`}).join("");
-  $("#expedientes").innerHTML=pageHead("Expedientes","Expedientes","Vista completa por alumno")+`<section class="grid-2">${rows||"<p>No hay expedientes.</p>"}</section>`
-}
-
-function reportSnapshot(){return {empresas:state.empresas.length,alumnos:state.alumnos.length,convenios:state.convenios.length,documentos:state.documentos.length,fecha:new Date().toLocaleString("es-ES")}}
-function saveReporte(){const name=prompt("Nombre del reporte guardado:",`Reporte ${new Date().toLocaleDateString("es-ES")}`);if(!name)return;state.reportes.unshift({id:uid(),nombre:name,...reportSnapshot()});log(`Reporte guardado: ${name}`);save();render();toast("Reporte guardado 🌸")}
-function editReporte(id){const r=state.reportes.find(x=>Number(x.id)===Number(id));if(!r)return;const name=prompt("Nuevo nombre del reporte:",r.nombre);if(!name)return;r.nombre=name;save();render();toast("Reporte modificado 🌸")}
-function delReporte(id){if(confirm("¿Eliminar reporte guardado?")){state.reportes=state.reportes.filter(r=>Number(r.id)!==Number(id));save();render();toast("Reporte eliminado 🌸")}}
-const renderReportesBase40 = renderReportes;
-renderReportes = function(){
-  const group=(arr,fn)=>arr.reduce((a,x)=>{const k=fn(x)||"Sin dato";a[k]=(a[k]||0)+1;return a},{});
-  $("#reportes").innerHTML=pageHead("Reportes","Reportes","Estadísticas, exportación y reportes guardados")+`<section class="kpi-grid">${kpi("Empresas",state.empresas.length,"empresas","pink","building")}${kpi("Alumnos",state.alumnos.length,"alumnos","blue","student")}${kpi("Convenios",state.convenios.length,"convenios","orange","file")}${kpi("Documentos",state.documentos.length,"documentos","green","archive")}</section><section class="report-grid"><div class="card table-card"><h3>Empresas por sector</h3>${bars(group(state.empresas,e=>e.sector))}</div><div class="card table-card"><h3>Estados CRM</h3>${bars(group(state.empresas,e=>e.estado))}</div><div class="card table-card"><h3>Convenios</h3>${bars(group(state.convenios,c=>c.estado))}</div><div class="card table-card"><h3>Alumnos</h3>${bars(group(state.alumnos,a=>a.estado))}</div><div class="card table-card"><button class="primary" onclick="exportCSV()">Exportar CSV</button><button class="soft-btn" onclick="window.print()">Exportar PDF</button><button class="soft-btn" onclick="saveReporte()">Guardar reporte</button></div><div class="card table-card"><h3>Reportes guardados</h3><div class="list">${(state.reportes||[]).map(r=>`<article class="item"><div><b>${esc(r.nombre)}</b><p>${esc(r.fecha)} · ${r.empresas} empresas · ${r.alumnos} alumnos · ${r.convenios} convenios · ${r.documentos} docs.</p></div><div class="row-actions"><button onclick="editReporte(${r.id})">Modificar</button><button onclick="delReporte(${r.id})">Eliminar</button></div></article>`).join("")||"<p>No hay reportes guardados.</p>"}</div></div></section>`
-}
-
-function hideNotification(id){state.dismissedNotifications=[...new Set([...(state.dismissedNotifications||[]),id])];save();renderNotifications();toast("Notificación ocultada 🌸")}
-renderNotifications = function(){
-  const n=buildNotifications();$("#alertCount").textContent=n.length;const clearBtn=$("#clearNotifications");if(clearBtn)clearBtn.disabled=!n.length;
-  $("#drawerList").innerHTML=n.length?n.map(x=>`<article class="notification" onclick="show('${x.v}');closeDrawer()"><b>${esc(x.h)}</b><p>${esc(x.t)} · ${esc(x.p)}</p><div class="row-actions"><button onclick="event.stopPropagation();hideNotification('${esc(x.id)}')">Marcar resuelta</button></div></article>`).join(""):`<article class="notification"><b>Todo tranquilo</b><p>No hay revisiones urgentes.</p></article>`
-}
-
-function resetDemoData(){if(confirm("¿Restaurar datos de ejemplo? Se reemplazarán los datos actuales.")){state=JSON.parse(JSON.stringify(seed));state.dismissedNotifications=[];state.reportes=[];save();render();toast("Datos restaurados 🌸")}}
-const renderAjustesBase40 = renderAjustes;
-renderAjustes = function(){
-  $("#ajustes").innerHTML=pageHead("Ajustes","Ajustes","Supabase, backup, restauración y mantenimiento")+`<section class="grid-2"><div class="card table-card"><h3>Supabase</h3><p>Usa la tabla <b>bloom_crm_backups</b>.</p><button class="primary" onclick="saveCloud()">Guardar nube</button><button class="soft-btn" onclick="loadCloud()">Cargar nube</button><button class="soft-btn" onclick="downloadSQL()">Descargar SQL</button></div><div class="card table-card"><h3>Backup local</h3><button class="primary" onclick="downloadBackup()">Descargar JSON</button><label class="soft-btn">Restaurar JSON<input type="file" onchange="restoreBackup(event)" hidden></label><button class="soft-btn" onclick="resetDemoData()">Restaurar demo</button></div></section>`
-}
-
-render();
-
-/* v4.1 — Emails con previsualización y adjuntos */
-function isImageAttachment(file){const n=(file?.name||'').toLowerCase(),t=(file?.type||'').toLowerCase();return t.startsWith('image/')||/\.(png|jpe?g|webp|gif|svg)$/i.test(n)}
-function filesToDataList(input){return Promise.all([...(input?.files||[])].map(fileToData))}
-function emailAttachmentList(files=[]){return files.length?`<div class="email-attachments">${files.map((f,i)=>`<article><b>${isImageAttachment(f)?'🖼️':'📎'} ${esc(f.name||'Adjunto')}</b><span>${f.size?Math.round(f.size/1024)+' KB':''}</span><div class="row-actions"><button onclick="previewAnyFile(state.emails.flatMap(e=>e.adjuntos||[]).find(x=>x.data==='${esc(f.data||'')}'),'${esc(f.name||'Adjunto')}')">Ver</button><a href="${f.data||'#'}" download="${esc(f.name||'adjunto')}">Descargar</a></div></article>`).join('')}</div>`:'<p class="muted-small">Sin imágenes ni documentos adjuntos.</p>'}
-function emailBodyHTML(text=''){return esc(text).replace(/\n/g,'<br>')}
-function previewEmailTemplate(id){const t=state.emails.find(x=>Number(x.id)===Number(id));if(!t)return;const imgs=(t.adjuntos||[]).filter(isImageAttachment),docs=(t.adjuntos||[]).filter(x=>!isImageAttachment(x));modal('Previsualizar mensaje',`<section class="email-preview"><p class="eyebrow">${esc(t.nombre||'Plantilla')}</p><h2>${esc(t.asunto||'Sin asunto')}</h2><article class="email-message">${emailBodyHTML(t.cuerpo||'')}</article>${imgs.length?`<h3>Imágenes</h3><div class="email-image-grid">${imgs.map(f=>`<figure><img src="${f.data}" alt="${esc(f.name||'Imagen')}"><figcaption>${esc(f.name||'Imagen')}</figcaption></figure>`).join('')}</div>`:''}${docs.length?`<h3>Documentos</h3>${emailAttachmentList(docs)}`:''}</section>`,()=>closeModal())}
-function removeEmailAttachment(id,index){const t=state.emails.find(x=>Number(x.id)===Number(id));if(!t||!Array.isArray(t.adjuntos))return;t.adjuntos.splice(index,1);save();closeModal();openEmailTemplate(id);toast('Adjunto eliminado 🌸')}
-openEmailTemplate = function(id=null){
-  const t = state.emails.find(x=>Number(x.id)===Number(id)) || {nombre:"",asunto:"",cuerpo:"",adjuntos:[]};
-  if(!Array.isArray(t.adjuntos)) t.adjuntos=[];
-  modal(id?"Modificar plantilla":"Nueva plantilla",`<form id="emailTemplateForm" class="form-grid">
-    <input name="nombre" value="${esc(t.nombre)}" placeholder="Nombre plantilla" required>
-    <input name="asunto" value="${esc(t.asunto||"")}" placeholder="Asunto">
-    <textarea name="cuerpo" placeholder="Cuerpo del mensaje">${esc(t.cuerpo||"")}</textarea>
-    <label class="student-files" style="grid-column:1/-1">Añadir imágenes o documentos
-      <input id="emailAdjuntos" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.odt">
-    </label>
-    <div style="grid-column:1/-1"><b>Adjuntos actuales</b>${(t.adjuntos||[]).length?`<div class="email-attachments">${t.adjuntos.map((f,i)=>`<article><b>${isImageAttachment(f)?'🖼️':'📎'} ${esc(f.name||'Adjunto')}</b><span>${f.size?Math.round(f.size/1024)+' KB':''}</span><div class="row-actions">${id?`<button type="button" onclick="removeEmailAttachment(${id},${i})">Eliminar</button>`:''}</div></article>`).join('')}</div>`:'<p class="muted-small">No hay adjuntos todavía.</p>'}</div>
-  </form>`,async()=>{
-    Object.assign(t,Object.fromEntries(new FormData($("#emailTemplateForm")).entries()));
-    const nuevos=await filesToDataList($("#emailAdjuntos"));
-    t.adjuntos=[...(t.adjuntos||[]),...nuevos.filter(Boolean)];
-    if(!id){t.id=uid();state.emails.unshift(t)}
-    log(`${id?"Plantilla modificada":"Plantilla creada"}: ${t.nombre}`);
-    save(); closeModal(); render(); toast(id?"Plantilla modificada 🌸":"Plantilla guardada 🌸");
-  });
-}
-copyEmail = function(id){const t=state.emails.find(x=>Number(x.id)===Number(id));if(!t)return;navigator.clipboard.writeText(`Asunto: ${t.asunto||''}\n\n${t.cuerpo||''}\n\nAdjuntos: ${(t.adjuntos||[]).map(f=>f.name).join(', ')||'Sin adjuntos'}`);toast('Mensaje copiado')}
-renderEmails = function(){
-  const rows=state.emails.map(t=>`<article class="item"><div><b>${esc(t.nombre)}</b><p>${esc(t.asunto)} ${(t.adjuntos||[]).length?`· ${(t.adjuntos||[]).length} adjunto(s)`:''}</p></div><div class="row-actions"><button onclick="previewEmailTemplate(${t.id})">Previsualizar</button><button onclick="copyEmail(${t.id})">Copiar</button><button onclick="openEmailTemplate(${t.id})">Modificar</button><button onclick="delEmail(${t.id})">Eliminar</button></div></article>`).join('')||"<p>No hay plantillas.</p>";
-  $("#emails").innerHTML=pageHead("Emails","Emails","Plantillas reutilizables con previsualización y adjuntos")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Plantillas</p><h3>Crear mensaje</h3></div><button class="primary" onclick="openEmailTemplate()">Añadir plantilla</button></div><p>Ahora puedes previsualizar el mensaje y guardar imágenes o documentos junto a cada plantilla.</p></div><div class="card table-card"><div class="list">${rows}</div></div></section>`
-}
-
-/* v4.2 — Tareas completables y curso de procedencia del alumno */
-function ensureTaskFields(){
-  if(!Array.isArray(state.seguimientos)) state.seguimientos=[];
-  state.seguimientos.forEach(s=>{ if(typeof s.completada==='undefined') s.completada=false; });
-  if(!Array.isArray(state.alumnos)) state.alumnos=[];
-  state.alumnos.forEach(a=>{ if(typeof a.curso==='undefined') a.curso=''; });
-}
-ensureTaskFields();
-
-function isTaskCompleted(s){return !!s.completada}
-function completeTask(id){
-  const s=state.seguimientos.find(x=>Number(x.id)===Number(id));
-  if(!s) return;
-  s.completada=true;
-  s.fechaCompletada=new Date().toISOString();
-  log(`Tarea completada: ${s.proxima||s.resultado||s.tipo}`);
-  save(); render(); toast('Tarea completada 🌸');
-}
-function reopenTask(id){
-  const s=state.seguimientos.find(x=>Number(x.id)===Number(id));
-  if(!s) return;
-  s.completada=false;
-  s.fechaCompletada='';
-  log(`Tarea reabierta: ${s.proxima||s.resultado||s.tipo}`);
-  save(); render(); toast('Tarea reabierta 🌸');
-}
-
-const dashboardDataBase42 = dashboardData;
-dashboardData = function(){
-  const d=dashboardDataBase42();
-  d.recordatorios=state.seguimientos.filter(s=>!isTaskCompleted(s) && s.fechaProxima>=today()).length;
-  d.tareasCompletadas=state.seguimientos.filter(isTaskCompleted).length;
-  return d;
-}
-
-actionItem = function(s){return `<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.proxima||s.resultado)}</b><p>${esc(s.empresa||'Sin empresa')} · ${esc(s.tipo)} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><span>${esc(s.fechaProxima||'')}</span>${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}</div></article>`}
-
-openSeguimiento = function(id=null, defaultDate=today()){
-  const s = state.seguimientos.find(x=>Number(x.id)===Number(id)) || {fecha:defaultDate,empresa:"",tipo:"llamada",resultado:"",proxima:"",fechaProxima:defaultDate,responsable:"",completada:false,fechaCompletada:""};
-  modal(id?"Modificar seguimiento":"Añadir seguimiento",`<form id="seguimientoForm" class="form-grid">
-    <input name="fecha" type="date" value="${esc(s.fecha||today())}">
-    <select name="empresa">${empresaOptions(s.empresa||"")}</select>
-    <select name="tipo">${optionList(["llamada","email","visita","reunión","LinkedIn","tarea"],s.tipo)}</select>
-    <input name="resultado" value="${esc(s.resultado||"")}" placeholder="Resultado / nota">
-    <input name="proxima" value="${esc(s.proxima||"")}" placeholder="Tarea / próxima acción">
-    <input name="fechaProxima" type="date" value="${esc(s.fechaProxima||s.fecha||today())}">
-    <input name="responsable" value="${esc(s.responsable||"")}" placeholder="Responsable">
-    <label class="import-option" style="grid-column:1/-1"><input id="seguimientoCompletada" type="checkbox" ${isTaskCompleted(s)?'checked':''}> Tarea completada</label>
-  </form>`,()=>{
-    Object.assign(s,Object.fromEntries(new FormData($("#seguimientoForm")).entries()));
-    s.completada=!!$("#seguimientoCompletada")?.checked;
-    if(s.completada && !s.fechaCompletada) s.fechaCompletada=new Date().toISOString();
-    if(!s.completada) s.fechaCompletada='';
-    if(!id){s.id=uid();state.seguimientos.unshift(s)}
-    selectedDate=s.fechaProxima||s.fecha||selectedDate;
-    log(`${id?"Seguimiento modificado":"Seguimiento registrado"}: ${s.empresa||s.proxima}`);
-    save(); closeModal(); render(); toast(id?"Seguimiento modificado 🌸":"Seguimiento guardado 🌸");
-  });
-}
-quickEvent = function(date){openSeguimiento(null,date)}
-
-renderSeguimiento = function(){
-  ensureTaskFields();
-  const pendientes=state.seguimientos.filter(s=>!isTaskCompleted(s));
-  const completadas=state.seguimientos.filter(isTaskCompleted);
-  const row=s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions">${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}<button class="task-btn edit" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="delSeguimiento(${s.id})"><span>🗑️</span> Eliminar</button></div></article>`;
-  $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Llamadas, emails, visitas, reuniones y tareas")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Ahora puedes marcar cada tarea como completada o reabrirla.</p><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${state.seguimientos.length}</b><span>Total</span></article></div></div><div class="card table-card"><h3>Pendientes</h3><div class="list">${pendientes.map(row).join("")||"<p>No hay pendientes.</p>"}</div><h3 style="margin-top:18px">Completadas</h3><div class="list">${completadas.map(row).join("")||"<p>No hay tareas completadas.</p>"}</div></div></section>`;
-}
-
-const dayEventsBase42 = dayEvents;
-dayEvents = function(date){
-  const ev=[];
-  state.seguimientos.forEach(s=>{if(s.fecha===date||s.fechaProxima===date)ev.push({id:s.id,kind:isTaskCompleted(s)?"Tarea completada":"Seguimiento",title:s.proxima||s.resultado||s.tipo,sub:`${s.empresa||"Sin empresa"} · ${s.tipo}`,view:"seguimiento",edit:`openSeguimiento(${s.id})`,del:`delSeguimiento(${s.id})`,done:isTaskCompleted(s)})});
-  state.convenios.forEach(c=>{if(c.inicio===date||c.fin===date)ev.push({id:c.id,kind:c.inicio===date?"Inicio convenio":"Fin convenio",title:c.empresa,sub:`${c.estado}`,view:"convenios",edit:`openConvenio(${c.id})`,del:`delConvenio(${c.id})`})});
-  state.alumnos.forEach(a=>{if(a.inicio===date||a.fin===date)ev.push({id:a.id,kind:a.inicio===date?"Inicio prácticas":"Fin prácticas",title:a.nombre,sub:a.empresa||"Sin empresa",view:"alumnos",edit:`openAlumno(${a.id})`,del:`delAlumno(${a.id})`})});
-  state.documentos.forEach(d=>{if(d.fecha===date)ev.push({id:d.id,kind:"Documento",title:d.nombre,sub:`${d.tipo} · ${d.estado}`,view:"documentos",edit:`editDoc(${d.id})`,del:`delDoc(${d.id})`})});
-  return ev;
-}
-
-renderAgenda = function(){
-  const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const pendientes=ev.filter(e=>!e.done), completadas=ev.filter(e=>e.done);
-  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Calendario mensual con detalle diario")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item ${e.done?'task-done':''}"><div onclick="show('${e.view}')"><b>${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions">${e.id&&e.view==='seguimiento'?(e.done?`<button class="task-btn reopen" onclick="reopenTask(${e.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${e.id})"><span>✓</span> Completar</button>`):''}<button class="task-btn edit" onclick="${e.edit}"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="${e.del}"><span>🗑️</span> Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
-}
+previewAnyFile = function(file, title="Documento"){
+  modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>${filePreviewHTML(file,"modal")}</section>`, ()=>closeModal());
+};
 
 openAlumno = function(aid=null){
-  const a=state.alumnos.find(x=>Number(x.id)===Number(aid))||{nombre:"",telefono:"",email:"",direccion:"",nss:"",curso:"",estado:"sin asignar",empresa:"",inicio:"",fin:"",tutor:"",notas:"",foto:null,curriculum:null};
-  modal("Alumno",`<form id="alumnoForm" class="form-grid"><div class="student-photo-preview">${a.foto?.data?`<img src="${a.foto.data}">`:"Foto"}</div><input name="nombre" value="${esc(a.nombre)}" placeholder="Nombre" required><input name="telefono" value="${esc(a.telefono)}" placeholder="Teléfono"><input name="email" value="${esc(a.email)}" placeholder="Correo"><input name="direccion" value="${esc(a.direccion)}" placeholder="Dirección"><input name="nss" value="${esc(a.nss)}" placeholder="Nº Seguridad Social"><input name="curso" value="${esc(a.curso||"")}" placeholder="Curso de procedencia"><label class="student-files">Foto<input id="alumnoFoto" type="file" accept="image/*"></label><label class="student-files">Currículum<input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></label><select name="empresa">${empresaOptions(a.empresa||"")}</select><select name="estado">${optionList(["sin asignar","propuesta","entrevista","prácticas","finalizado"],a.estado)}</select><input name="inicio" type="date" value="${esc(a.inicio)}"><input name="fin" type="date" value="${esc(a.fin)}"><input name="tutor" value="${esc(a.tutor)}" placeholder="Tutor"><textarea name="notas">${esc(a.notas)}</textarea></form>`,async()=>{Object.assign(a,Object.fromEntries(new FormData($("#alumnoForm")).entries()));const foto=$("#alumnoFoto").files[0],cv=$("#alumnoCV").files[0];if(foto)a.foto=await fileToData(foto);if(cv)a.curriculum=await fileToData(cv);if(!aid){a.id=uid();state.alumnos.unshift(a)}log(`Alumno guardado: ${a.nombre}`);save();closeModal();render()})
-}
-
-renderAlumnos = function(){
-  ensureTaskFields();
-  const list=(dashboardFilters?.alumnos==="sinEmpresa"?state.alumnos.filter(a=>!a.empresa):state.alumnos);
-  const toolbar=document.createElement('div');
-  $("#alumnos").innerHTML=pageHead("Alumnos","Alumnos",dashboardFilters?.alumnos==="sinEmpresa"?"Alumnos sin empresa asignada":"Ficha completa del alumnado")+`<section class="card table-card"><div class="toolbar">${typeof filterPill==='function'?filterPill("alumnos","Filtro Dashboard"):''}<button class="primary" onclick="openAlumno()">Añadir alumno</button><button class="soft-btn" id="alumnoImportBtn">Importar Excel/CSV</button><button class="soft-btn" onclick="downloadAlumnoTemplate()">Plantilla Excel</button></div><table><thead><tr><th>Alumno</th><th>Curso</th><th>Contacto</th><th>Empresa</th><th>Estado</th><th>Archivos</th><th></th></tr></thead><tbody>${list.map(a=>`<tr class="student-row" onclick="openStudentProfile(${a.id})"><td><div class="student-cell"><div class="student-avatar">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||"A")[0])}</span>`}</div><div><b>${esc(a.nombre)}</b><br><small>NSS: ${esc(a.nss||"")}</small></div></div></td><td>${esc(a.curso||"Sin dato")}</td><td>${esc(a.telefono)}<br><small>${esc(a.email)}</small></td><td>${esc(a.empresa||"Sin empresa")}</td><td><span class="badge">${esc(a.estado)}</span></td><td onclick="event.stopPropagation()"><div class="student-files">${a.foto?.data?`<button onclick="previewAnyFile(state.alumnos.find(x=>x.id===${a.id}).foto,'Foto')">Foto</button>`:`<span>Sin foto</span>`}${a.curriculum?.data?`<button onclick="previewAnyFile(state.alumnos.find(x=>x.id===${a.id}).curriculum,'CV')">CV</button>`:`<span>Sin CV</span>`}</div></td><td class="row-actions" onclick="event.stopPropagation()"><button onclick="openAlumno(${a.id})">Modificar</button><button onclick="delAlumno(${a.id})">Eliminar</button></td></tr>`).join("")||`<tr><td colspan="7">No hay resultados.</td></tr>`}</tbody></table></section>`;
-  const btn=$("#alumnoImportBtn"); if(btn) btn.onclick=openAlumnoImport;
-}
-
-openStudentProfile = function(aid){
-  const a=state.alumnos.find(x=>Number(x.id)===Number(aid));if(!a)return;const empresa=state.empresas.find(e=>e.nombre===a.empresa),conv=state.convenios.find(c=>c.empresa===a.empresa),docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa),follows=state.seguimientos.filter(s=>s.empresa===a.empresa);
-  modal("Ficha del alumno",`<section class="student-profile"><aside class="student-profile-side"><div class="student-profile-photo">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||"A")[0])}</span>`}</div><h2>${esc(a.nombre)}</h2><p>${esc(a.estado)}</p><button class="primary" onclick="openAlumno(${a.id})">Editar ficha</button></aside><main class="student-profile-main"><section class="student-profile-grid">${[["Teléfono",a.telefono],["Correo",a.email],["Dirección",a.direccion],["NSS",a.nss],["Curso de procedencia",a.curso],["Empresa",a.empresa||"Sin empresa"],["Tutor",a.tutor||empresa?.contacto||""],["Inicio",a.inicio||conv?.inicio||""],["Fin",a.fin||conv?.fin||""]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||"Sin dato")}</span></article>`).join("")}</section><section class="student-profile-section"><div class="section-head"><div><p>Currículum</p><h3>Vista previa</h3></div></div>${filePreviewHTML(a.curriculum,a.id)}</section><section class="student-profile-section"><div class="section-head"><div><p>Documentos</p><h3>Relacionados</h3></div></div><div class="list">${docs.map(d=>`<article class="item"><div><b>${esc(d.nombre)}</b><p>${esc(d.tipo)} · ${esc(d.estado)}</p></div><button onclick="previewAnyFile(state.documentos.find(x=>x.id===${d.id}).file,'${esc(d.nombre)}')">Ver</button></article>`).join("")||"<p>No hay documentos asociados.</p>"}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Seguimiento</p><h3>Actividad</h3></div></div><div class="list">${follows.map(s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.empresa)}</b><p>${esc(s.fecha)} · ${esc(s.resultado||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div></article>`).join("")||"<p>Sin seguimientos asociados.</p>"}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Observaciones</p><h3>Notas</h3></div></div><p>${esc(a.notas||"Sin observaciones.")}</p></section></main></section>`,()=>closeModal())
-}
-
-const mapAlumnoImportRowBase42 = mapAlumnoImportRow;
-mapAlumnoImportRow = function(row){const r=mapAlumnoImportRowBase42(row);r.curso=rowValue(row,["curso","curso_procedencia","curso de procedencia","grupo","clase","programa_formativo","formacion","formación"]);return r}
-const renderAlumnoImportPreviewBase42 = renderAlumnoImportPreview;
-renderAlumnoImportPreview = function(rows, rawCount){
-  const preview=$("#alumnoImportPreview"); if(!preview) return;
-  const duplicates=rows.filter(r=>state.alumnos.some(a=>sameAlumno(a,r))).length;
-  preview.innerHTML=`<div class="import-summary"><article><b>${rawCount}</b><span>Filas leídas</span></article><article><b>${rows.length}</b><span>Alumnos válidos</span></article><article><b>${duplicates}</b><span>Coincidencias existentes</span></article></div><div class="import-table-wrap"><table><thead><tr><th>Alumno</th><th>Curso</th><th>Contacto</th><th>Empresa</th><th>Estado</th><th>Fechas</th><th>Tutor</th></tr></thead><tbody>${rows.slice(0,10).map(r=>`<tr><td><b>${esc(r.nombre)}</b><br><small>NSS: ${esc(r.nss)}</small></td><td>${esc(r.curso||"")}</td><td>${esc(r.telefono)}<br><small>${esc(r.email)}</small></td><td>${esc(r.empresa||"Sin empresa")}</td><td><span class="badge">${esc(r.estado)}</span></td><td>${esc(r.inicio)}${r.fin?` → ${esc(r.fin)}`:""}</td><td>${esc(r.tutor)}</td></tr>`).join("")}</tbody></table></div>${rows.length>10?`<p class="import-note">Mostrando 10 de ${rows.length} alumnos.</p>`:""}`;
-}
-const confirmAlumnoImportBase42 = confirmAlumnoImport;
-confirmAlumnoImport = function(){
-  if(!pendingAlumnoImportRows.length){toast("No hay alumnos válidos para importar");return;}
-  const updateExisting=$("#alumnoImportUpdateExisting")?.checked;let created=0,updated=0;
-  pendingAlumnoImportRows.forEach(row=>{const existing=state.alumnos.find(a=>sameAlumno(a,row));if(existing&&updateExisting){Object.assign(existing,{nombre:row.nombre||existing.nombre,telefono:row.telefono||existing.telefono,email:row.email||existing.email,direccion:row.direccion||existing.direccion,nss:row.nss||existing.nss,curso:row.curso||existing.curso,estado:row.estado||existing.estado,empresa:row.empresa||existing.empresa,inicio:row.inicio||existing.inicio,fin:row.fin||existing.fin,tutor:row.tutor||existing.tutor,notas:row.notas||existing.notas});updated++;}else if(!existing){state.alumnos.unshift(row);created++;}});
-  log(`Importación Excel: ${created} alumnos añadidos, ${updated} actualizados`);pendingAlumnoImportRows=[];save();closeModal();dashboardFilters.alumnos="all";show("alumnos");toast(`${created} añadidos · ${updated} actualizados 🌸`);
-}
-downloadAlumnoTemplate = function(){
-  const headers=["nombre_alumno","telefono","email","direccion","nss","curso","estado","empresa","inicio","fin","tutor","notas"];
-  const example=["Alumno Ejemplo","600000000","alumno@email.com","Las Palmas de Gran Canaria","123456789012","2º CFGM Gestión Administrativa","sin asignar","","2026-03-01","2026-06-15","Tutor/a","Notas internas"];
-  if(window.XLSX){const ws=XLSX.utils.aoa_to_sheet([headers,example]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Alumnos");XLSX.writeFile(wb,"plantilla_alumnos_bloom_crm.xlsx");}else{const csv=[headers,example].map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="plantilla_alumnos_bloom_crm.csv";a.click();}
-}
-
-render();
-
-/* v4.4 — Botones de tareas con iconos integrados */
-function findEmpresaByName(name){return state.empresas.find(e=>(e.nombre||'').toLowerCase()===(name||'').toLowerCase())||null}
-function taskActionLabel(tipo=''){
-  const t=String(tipo).toLowerCase();
-  if(t.includes('email')||t.includes('correo')) return 'Enviar correo';
-  if(t.includes('visita')) return 'Preparar visita';
-  if(t.includes('llamada')) return 'Llamar';
-  if(t.includes('reun')) return 'Reunión';
-  return 'Ver tarea';
-}
-function taskActionIcon(tipo=''){
-  const t=String(tipo).toLowerCase();
-  if(t.includes('email')||t.includes('correo')) return '✉️';
-  if(t.includes('visita')) return '📍';
-  if(t.includes('llamada')) return '📞';
-  if(t.includes('reun')) return '🤝';
-  return '✅';
-}
-function companyContactBlock(e){
-  if(!e) return `<article><b>Empresa</b><span>No hay empresa vinculada.</span></article>`;
-  const tel=e.telefono||e.contacto_telefono||'';
-  const email=e.email||e.contacto_email||'';
-  const web=e.web||'';
-  const lugar=[e.direccion,e.ciudad,e.isla].filter(Boolean).join(', ');
-  return `${[
-    ['Empresa',e.nombre],['Sector',e.sector],['Contacto',e.contacto||e.contacto_nombre],['Teléfono',tel],['Email',email],['Web',web],['Ubicación',lugar],['Estado CRM',e.estado],['Prioridad',e.prioridad],['Notas empresa',e.notas]
-  ].map(([b,v])=>`<article><b>${b}</b><span>${v?esc(v):'Sin dato'}</span></article>`).join('')}`;
-}
-function openTaskAction(id){
-  const s=state.seguimientos.find(x=>Number(x.id)===Number(id));
-  if(!s) return;
-  const e=findEmpresaByName(s.empresa);
-  const relatedStudents=state.alumnos.filter(a=>a.empresa===s.empresa);
-  const relatedDocs=state.documentos.filter(d=>d.empresa===s.empresa || relatedStudents.some(a=>a.nombre===d.alumno));
-  const conv=state.convenios.find(c=>c.empresa===s.empresa);
-  const lastFollow=state.seguimientos.filter(x=>x.id!==s.id && x.empresa===s.empresa).slice(0,4);
-  const tipo=String(s.tipo||'').toLowerCase();
-  const tel=e?.telefono||e?.contacto_telefono||'';
-  const email=e?.email||e?.contacto_email||'';
-  const location=[e?.direccion,e?.ciudad,e?.isla].filter(Boolean).join(', ');
-  const subject=encodeURIComponent(s.proxima||'Seguimiento de prácticas');
-  const body=encodeURIComponent(`Buenos días,\n\n${s.proxima||s.resultado||''}\n\nUn saludo.`);
-  let quick='';
-  if(tipo.includes('llamada')) quick=`${tel?`<a class="primary" href="tel:${esc(tel)}">Llamar ahora</a>`:''}${email?`<a class="soft-btn" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Enviar email</a>`:''}`;
-  else if(tipo.includes('email')||tipo.includes('correo')) quick=`${email?`<a class="primary" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Abrir correo</a>`:'<span class="badge">Sin email confirmado</span>'}${tel?`<a class="soft-btn" href="tel:${esc(tel)}">Llamar</a>`:''}`;
-  else if(tipo.includes('visita')) quick=`${location?`<a class="primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}">Abrir mapa</a>`:'<span class="badge">Sin ubicación completa</span>'}${tel?`<a class="soft-btn" href="tel:${esc(tel)}">Avisar por teléfono</a>`:''}${email?`<a class="soft-btn" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Avisar por email</a>`:''}`;
-  else quick=`${tel?`<a class="soft-btn" href="tel:${esc(tel)}">Llamar</a>`:''}${email?`<a class="soft-btn" href="mailto:${esc(email)}?subject=${subject}&body=${body}">Enviar email</a>`:''}${location?`<a class="soft-btn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}">Mapa</a>`:''}`;
-  modal(`${taskActionIcon(s.tipo)} ${taskActionLabel(s.tipo)}`,`<section class="student-profile task-action-modal"><aside class="student-profile-side"><h2>${esc(s.proxima||s.resultado||s.tipo)}</h2><p>${esc(s.tipo)} · ${isTaskCompleted(s)?'Completada':'Pendiente'}</p><div class="student-cv-actions task-quick-actions">${quick||'<span class="badge">No hay acción directa disponible</span>'}</div>${isTaskCompleted(s)?`<button class="task-btn reopen big" onclick="reopenTask(${s.id});closeModal()"><span>↩️</span> Reabrir tarea</button>`:`<button class="task-btn complete big" onclick="completeTask(${s.id});closeModal()"><span>✓</span> Marcar como completada</button>`}<button class="task-btn edit big" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar tarea</button></aside><main class="student-profile-main"><section class="student-profile-section"><div class="section-head"><div><p>Acción pendiente</p><h3>Qué hay que hacer</h3></div></div><div class="student-profile-grid">${[['Tipo',s.tipo],['Fecha registro',s.fecha],['Fecha prevista',s.fechaProxima],['Responsable',s.responsable],['Resultado / nota',s.resultado],['Próxima acción',s.proxima]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Información relevante</p><h3>Empresa y contacto</h3></div></div><div class="student-profile-grid">${companyContactBlock(e)}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Alumnado vinculado</p><h3>${relatedStudents.length} alumno(s)</h3></div></div><div class="list">${relatedStudents.map(a=>`<article class="item"><div><b>${esc(a.nombre)}</b><p>${esc(a.curso||'Sin curso')} · ${esc(a.estado||'Sin estado')} · ${esc(a.telefono||'Sin teléfono')} · ${esc(a.email||'Sin email')}</p></div><button onclick="openStudentProfile(${a.id})">Ficha</button></article>`).join('')||'<p>No hay alumnos vinculados a esta empresa.</p>'}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Contexto</p><h3>Convenio, documentos y últimos contactos</h3></div></div><div class="student-profile-grid">${[['Convenio',conv?`${conv.estado||''} · ${conv.inicio||''} → ${conv.fin||''}`:'Sin convenio'],['Documentos asociados',relatedDocs.length],['Últimos seguimientos',lastFollow.length]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div><div class="list" style="margin-top:12px">${lastFollow.map(f=>`<article class="item"><div><b>${esc(f.tipo)} · ${esc(f.fecha||'')}</b><p>${esc(f.resultado||f.proxima||'Sin nota')}</p></div></article>`).join('')||'<p>No hay seguimientos anteriores.</p>'}</div></section></main></section>`,()=>closeModal());
-}
-
-actionItem = function(s){return `<article class="item ${isTaskCompleted(s)?'task-done':''}"><div onclick="openTaskAction(${s.id})" style="cursor:pointer"><b>${taskActionIcon(s.tipo)} ${esc(s.proxima||s.resultado||taskActionLabel(s.tipo))}</b><p>${esc(s.empresa||'Sin empresa')} · ${esc(s.tipo)} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><span>${esc(s.fechaProxima||'')}</span><button class="task-btn view" onclick="openTaskAction(${s.id})"><span>👁️</span> Ver acción</button>${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}</div></article>`}
-
-renderSeguimiento = function(){
-  ensureTaskFields();
-  const pendientes=state.seguimientos.filter(s=>!isTaskCompleted(s));
-  const completadas=state.seguimientos.filter(isTaskCompleted);
-  const row=s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div onclick="openTaskAction(${s.id})" style="cursor:pointer"><b>${taskActionIcon(s.tipo)} ${esc(s.tipo)} · ${esc(s.empresa||"Sin empresa")}</b><p>${esc(s.resultado||"")} · Próxima: ${esc(s.proxima||"")} · ${esc(s.fechaProxima||"")} ${isTaskCompleted(s)?'· Completada':''}</p></div><div class="row-actions"><button class="task-btn view" onclick="openTaskAction(${s.id})"><span>👁️</span> Ver acción</button>${isTaskCompleted(s)?`<button class="task-btn reopen" onclick="reopenTask(${s.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${s.id})"><span>✓</span> Completar</button>`}<button class="task-btn edit" onclick="openSeguimiento(${s.id})"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="delSeguimiento(${s.id})"><span>🗑️</span> Eliminar</button></div></article>`;
-  $("#seguimiento").innerHTML=pageHead("Seguimiento","Seguimiento","Clica en una llamada, email o visita para ver la información útil de esa acción")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Nuevo</p><h3>Registrar seguimiento</h3></div><button class="primary" onclick="openSeguimiento(null,'${today()}')">Añadir</button></div><p>Las tareas de llamar, enviar correo o visitar muestran contacto, alumnado, convenio, documentos y accesos rápidos.</p><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${state.seguimientos.length}</b><span>Total</span></article></div></div><div class="card table-card"><h3>Pendientes</h3><div class="list">${pendientes.map(row).join("")||"<p>No hay pendientes.</p>"}</div><h3 style="margin-top:18px">Completadas</h3><div class="list">${completadas.map(row).join("")||"<p>No hay tareas completadas.</p>"}</div></div></section>`;
-}
-
-const dayEventsBase43 = dayEvents;
-dayEvents = function(date){
-  const ev=[];
-  state.seguimientos.forEach(s=>{if(s.fecha===date||s.fechaProxima===date)ev.push({id:s.id,kind:isTaskCompleted(s)?"Tarea completada":"Seguimiento",title:s.proxima||s.resultado||taskActionLabel(s.tipo),sub:`${s.empresa||"Sin empresa"} · ${s.tipo}`,view:"seguimiento",edit:`openSeguimiento(${s.id})`,del:`delSeguimiento(${s.id})`,detail:`openTaskAction(${s.id})`,done:isTaskCompleted(s)})});
-  state.convenios.forEach(c=>{if(c.inicio===date||c.fin===date)ev.push({id:c.id,kind:c.inicio===date?"Inicio convenio":"Fin convenio",title:c.empresa,sub:`${c.estado}`,view:"convenios",edit:`openConvenio(${c.id})`,del:`delConvenio(${c.id})`})});
-  state.alumnos.forEach(a=>{if(a.inicio===date||a.fin===date)ev.push({id:a.id,kind:a.inicio===date?"Inicio prácticas":"Fin prácticas",title:a.nombre,sub:a.empresa||"Sin empresa",view:"alumnos",edit:`openAlumno(${a.id})`,del:`delAlumno(${a.id})`})});
-  state.documentos.forEach(d=>{if(d.fecha===date)ev.push({id:d.id,kind:"Documento",title:d.nombre,sub:`${d.tipo} · ${d.estado}`,view:"documentos",edit:`editDoc(${d.id})`,del:`delDoc(${d.id})`})});
-  return ev;
-}
-
-renderAgenda = function(){
-  const ev=dayEvents(selectedDate);const formatted=new Date(selectedDate+"T12:00:00").toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const pendientes=ev.filter(e=>!e.done), completadas=ev.filter(e=>e.done);
-  $("#agenda").innerHTML=pageHead("Agenda","Próximas acciones","Clica en una tarea para ver contacto, alumnado y accesos rápidos")+`<section class="grid-2"><div class="card table-card"><div class="section-head"><div><p>Calendario</p><h3>Selecciona un día</h3></div><button class="soft-btn" onclick="selectedDate=today();renderAgenda()">Hoy</button></div>${miniCalendar(selectedDate)}</div><div class="card table-card day-detail"><div class="section-head"><div><p>Día seleccionado</p><h3>${esc(formatted)}</h3></div><button class="soft-btn" onclick="quickEvent('${selectedDate}')">Añadir pendiente</button></div><div class="day-summary"><article><b>${pendientes.length}</b><span>Pendientes</span></article><article><b>${completadas.length}</b><span>Completadas</span></article><article><b>${ev.filter(e=>e.kind.includes('convenio')).length}</b><span>Convenios</span></article></div><div class="list">${ev.length?ev.map(e=>`<article class="item ${e.done?'task-done':''}"><div onclick="${e.detail||`show('${e.view}')`}" style="cursor:pointer"><b>${e.view==='seguimiento'?taskActionIcon(e.sub):''} ${esc(e.title)}</b><p>${esc(e.kind)} · ${esc(e.sub)}</p></div><div class="row-actions">${e.id&&e.view==='seguimiento'?`<button class="task-btn view" onclick="openTaskAction(${e.id})"><span>👁️</span> Ver acción</button>${e.done?`<button class="task-btn reopen" onclick="reopenTask(${e.id})"><span>↩️</span> Reabrir</button>`:`<button class="task-btn complete" onclick="completeTask(${e.id})"><span>✓</span> Completar</button>`}`:''}<button class="task-btn edit" onclick="${e.edit}"><span>✎</span> Modificar</button><button class="task-btn delete" onclick="${e.del}"><span>🗑️</span> Eliminar</button></div></article>`).join(""):`<article class="empty-day"><b>No hay tareas ni pendientes este día.</b><p>Puedes crear un seguimiento, llamada, reunión o tarea para este día.</p><button class="primary" onclick="quickEvent('${selectedDate}')">Crear pendiente</button></article>`}</div></div></section>`
-}
-
-
-/* v4.4 — refresco final */
-render();
-
-/* v4.5 — Convenios con previsualización de información y documentos adjuntos */
-function convenioDocuments(c){
-  const ids=(c?.anexos||[]).map(x=>String(x));
-  const docs=state.documentos.filter(d=>ids.includes(String(d.id)) || (c?.empresa && d.empresa===c.empresa));
-  const seen=new Set();
-  return docs.filter(d=>{const k=String(d.id); if(seen.has(k)) return false; seen.add(k); return true;});
-}
-function convenioStatusText(c){
-  const docs=convenioDocuments(c);
-  if((c?.anexos||[]).length>=3 || docs.length>=3) return 'Completo';
-  if((c?.anexos||[]).length || docs.length) return 'Incompleto';
-  return 'Pendiente';
-}
-function detachDocFromConvenio(cid,did){
-  const c=state.convenios.find(x=>Number(x.id)===Number(cid));
-  if(!c) return;
-  c.anexos=(c.anexos||[]).filter(x=>String(x)!==String(did));
-  log(`Documento desvinculado de convenio: ${c.empresa}`);
-  save(); render(); previewConvenio(cid); toast('Documento desvinculado 🌸');
-}
-function previewConvenio(cid){
-  const c=state.convenios.find(x=>Number(x.id)===Number(cid));
-  if(!c) return;
-  const e=state.empresas.find(x=>x.nombre===c.empresa)||{};
-  const docs=convenioDocuments(c);
-  const alumnos=state.alumnos.filter(a=>a.empresa===c.empresa);
-  const follows=state.seguimientos.filter(s=>s.empresa===c.empresa).slice(0,6);
-  modal('Previsualización del convenio',`<section class="student-profile convenio-preview">
-    <aside class="student-profile-side">
-      <h2>${esc(c.empresa||'Convenio')}</h2>
-      <p>${esc(c.estado||'Sin estado')}</p>
-      <span class="badge">${esc(convenioStatusText(c))}</span>
-      <button class="primary" onclick="openConvenio(${c.id})">Modificar convenio</button>
-      <button class="task-btn view big" onclick="attachDoc(${c.id})"><span>📎</span> Adjuntar documento</button>
-      <button class="task-btn delete big" onclick="delConvenio(${c.id});closeModal()"><span>🗑️</span> Eliminar convenio</button>
-    </aside>
-    <main class="student-profile-main">
-      <section class="student-profile-section">
-        <div class="section-head"><div><p>Información del convenio</p><h3>Resumen</h3></div></div>
-        <div class="student-profile-grid">${[
-          ['Empresa',c.empresa],['Centro',c.centro],['Inicio',c.inicio],['Fin',c.fin],['Tutor empresa',c.tutorEmpresa],['Tutor centro',c.tutorCentro],['Estado',c.estado],['Documentos adjuntos',docs.length]
-        ].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div>
-      </section>
-      <section class="student-profile-section">
-        <div class="section-head"><div><p>Contacto de empresa</p><h3>Datos útiles</h3></div></div>
-        <div class="student-profile-grid">${[
-          ['Contacto',e.contacto],['Teléfono',e.telefono],['Email',e.email],['Web',e.web],['Ciudad',e.ciudad],['Isla',e.isla]
-        ].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div>
-      </section>
-      <section class="student-profile-section">
-        <div class="section-head"><div><p>Documentos adjuntos</p><h3>Previsualización y descarga</h3></div><button class="soft-btn" onclick="attachDoc(${c.id})">Añadir</button></div>
-        <div class="doc-grid">${docs.map(d=>`<article class="card doc-card"><h3>${esc(d.nombre)}</h3><p>${esc(d.tipo)} · ${esc(d.estado)}</p><p>${esc(d.fecha||'')} · ${esc(d.subidoPor||'')}</p><p>${esc(d.notas||'')}</p><div class="doc-actions"><button onclick="previewAnyFile(state.documentos.find(x=>Number(x.id)===Number(${d.id})).file,'${esc(d.nombre)}')">Previsualizar</button><a href="${d.file?.data||'#'}" download="${esc(d.file?.name||d.nombre)}">Descargar</a><button onclick="editDoc(${d.id})">Modificar</button><button onclick="detachDocFromConvenio(${c.id},${d.id})">Quitar del convenio</button></div></article>`).join('')||'<p>No hay documentos adjuntos todavía. Puedes añadirlos desde “Adjuntar documento”.</p>'}</div>
-      </section>
-      <section class="student-profile-section">
-        <div class="section-head"><div><p>Alumnado vinculado</p><h3>${alumnos.length} alumno(s)</h3></div></div>
-        <div class="list">${alumnos.map(a=>`<article class="item"><div><b>${esc(a.nombre)}</b><p>${esc(a.curso||'Sin curso')} · ${esc(a.estado||'Sin estado')} · ${esc(a.inicio||'')} → ${esc(a.fin||'')}</p></div><button onclick="openStudentProfile(${a.id})">Ficha</button></article>`).join('')||'<p>No hay alumnado vinculado a esta empresa.</p>'}</div>
-      </section>
-      <section class="student-profile-section">
-        <div class="section-head"><div><p>Seguimiento relacionado</p><h3>Últimos contactos</h3></div></div>
-        <div class="list">${follows.map(s=>`<article class="item"><div><b>${esc(s.tipo)} · ${esc(s.fecha||'')}</b><p>${esc(s.resultado||s.proxima||'Sin nota')}</p></div><button onclick="openSeguimiento(${s.id})">Modificar</button></article>`).join('')||'<p>No hay seguimientos relacionados.</p>'}</div>
-      </section>
-    </main>
-  </section>`,()=>closeModal());
-}
-
-attachDoc = function(cid){
-  const c=state.convenios.find(x=>Number(x.id)===Number(cid));
-  if(!c) return;
-  const already=(c.anexos||[]).map(x=>String(x));
-  const options=state.documentos.map(d=>`<option value="${d.id}" ${already.includes(String(d.id))?'disabled':''}>${esc(d.nombre)} · ${esc(d.tipo)} · ${esc(d.empresa||d.alumno||'General')}</option>`).join('');
-  modal('Adjuntar documento al convenio',`<section><p>Selecciona un documento del archivo documental para vincularlo a <b>${esc(c.empresa)}</b>.</p>${state.documentos.length?`<select id="docToAttach">${options}</select>`:'<p>No hay documentos subidos todavía. Súbelos primero desde la pestaña Documentos.</p>'}</section>`,()=>{
-    const did=Number($('#docToAttach')?.value||0);
-    c.anexos=c.anexos||[];
-    if(did && !c.anexos.map(x=>String(x)).includes(String(did))) c.anexos.push(did);
-    log(`Documento adjuntado a convenio: ${c.empresa}`); save(); closeModal(); render(); toast('Documento adjuntado 🌸');
+  const a=state.alumnos.find(x=>x.id===aid)||{nombre:"",telefono:"",email:"",direccion:"",nss:"",estado:"sin asignar",empresa:"",inicio:"",fin:"",tutor:"",notas:"",foto:null,curriculum:null};
+  modal("Alumno",`<form id="alumnoForm" class="form-grid"><div class="student-photo-preview">${a.foto?.url?`<img src="${a.foto.url}">`:a.foto?.data?`<img src="${a.foto.data}">`:"Foto"}</div><input name="nombre" value="${esc(a.nombre)}" placeholder="Nombre" required><input name="telefono" value="${esc(a.telefono)}" placeholder="Teléfono"><input name="email" value="${esc(a.email)}" placeholder="Correo"><input name="direccion" value="${esc(a.direccion)}" placeholder="Dirección"><input name="nss" value="${esc(a.nss)}" placeholder="Nº Seguridad Social"><label class="student-files">Foto<input id="alumnoFoto" type="file" accept="image/*"></label><label class="student-files">Currículum<input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></label><select name="empresa"><option value="">Sin empresa</option>${state.empresas.map(e=>`<option ${a.empresa===e.nombre?"selected":""}>${esc(e.nombre)}</option>`).join("")}</select><select name="estado">${["sin asignar","propuesta","entrevista","prácticas","finalizado"].map(x=>`<option ${a.estado===x?"selected":""}>${x}</option>`).join("")}</select><input name="inicio" type="date" value="${esc(a.inicio)}"><input name="fin" type="date" value="${esc(a.fin)}"><input name="tutor" value="${esc(a.tutor)}" placeholder="Tutor"><textarea name="notas">${esc(a.notas)}</textarea></form>`,async()=>{
+    Object.assign(a,Object.fromEntries(new FormData($("#alumnoForm")).entries()));
+    const foto=$("#alumnoFoto").files[0], cv=$("#alumnoCV").files[0];
+    if(foto){ const uploaded = await uploadFileToStorage(foto, `alumnos/${safeFileName(a.nombre || "alumno")}/foto`); if(uploaded) a.foto = uploaded; }
+    if(cv){ const uploaded = await uploadFileToStorage(cv, `alumnos/${safeFileName(a.nombre || "alumno")}/cv`); if(uploaded) a.curriculum = uploaded; }
+    if(!aid){a.id=uid();state.alumnos.unshift(a)}
+    log(`Alumno guardado: ${a.nombre}`); save(); closeModal(); render();
   });
+};
+
+addDoc = async function(ev){
+  ev.preventDefault();
+  const rawFile = $("#docFile").files[0];
+  if(!rawFile) return toast("Selecciona un archivo");
+  const empresa = $("#docEmpresa").value;
+  const alumno = $("#docAlumno").value;
+  const folder = empresa ? `empresas/${safeFileName(empresa)}` : alumno ? `alumnos/${safeFileName(alumno)}/documentos` : "documentos";
+  const uploaded = await uploadFileToStorage(rawFile, folder);
+  if(!uploaded) return;
+  state.documentos.unshift({
+    id:uid(), nombre:$("#docNombre").value || rawFile.name, tipo:$("#docTipo").value,
+    empresa, alumno, estado:$("#docEstado").value, fecha:$("#docFecha").value,
+    subidoPor:$("#docUser").value, notas:$("#docNotas").value,
+    carpeta:$("#docCarpeta").value, file:uploaded
+  });
+  log(`Documento subido: ${rawFile.name}`); save(); render(); toast("Documento guardado en Storage 🌸");
+};
+
+replaceDoc = function(id){
+  const inp=document.createElement("input"); inp.type="file";
+  inp.onchange=async()=>{
+    const d=state.documentos.find(x=>x.id===id); if(!d || !inp.files[0]) return;
+    const folder = d.empresa ? `empresas/${safeFileName(d.empresa)}` : d.alumno ? `alumnos/${safeFileName(d.alumno)}/documentos` : "documentos";
+    const uploaded = await uploadFileToStorage(inp.files[0], folder);
+    if(uploaded){ d.file = uploaded; d.nombre = uploaded.name; d.fecha = today(); log(`Documento reemplazado: ${uploaded.name}`); save(); render(); toast("Documento reemplazado 🌸"); }
+  };
+  inp.click();
+};
+
+function cleanLegacyBase64Files(){
+  let cleaned = 0;
+  const cleanFile = (f) => { if(f && f.data && !f.url){ delete f.data; cleaned++; } };
+  state.alumnos.forEach(a => { cleanFile(a.foto); cleanFile(a.curriculum); });
+  state.documentos.forEach(d => cleanFile(d.file));
+  save(); render();
+  alert(`Limpieza completada. Archivos base64 antiguos eliminados del backup: ${cleaned}.\n\nLos documentos antiguos sin URL deberán subirse de nuevo a Storage si quieres previsualizarlos.`);
 }
 
-renderConvenios = function(){
-  const list=(dashboardFilters?.convenios==='pendientes'?state.convenios.filter(c=>c.estado!=='firmado'):state.convenios);
-  $('#convenios').innerHTML=pageHead('Convenios','Convenios',dashboardFilters?.convenios==='pendientes'?'Convenios pendientes de completar':'Previsualiza información, anexos y documentos adjuntos')+`<section class="grid-2"><div class="card table-card"><div class="toolbar">${typeof filterPill==='function'?filterPill('convenios','Filtro Dashboard'):''}<button class="primary" onclick="openConvenio()">Nuevo convenio</button><button class="soft-btn" onclick="show('documentos')">Archivo documental</button></div><table><thead><tr><th>Empresa</th><th>Fechas</th><th>Estado</th><th>Documentos</th><th></th></tr></thead><tbody>${list.map(c=>{const docs=convenioDocuments(c);return `<tr><td onclick="previewConvenio(${c.id})" style="cursor:pointer"><b>${esc(c.empresa)}</b><br><small>${esc(c.centro)}</small></td><td>${esc(c.inicio)} → ${esc(c.fin)}</td><td><span class="badge">${esc(c.estado)}</span></td><td>${docs.length}</td><td class="row-actions"><button onclick="previewConvenio(${c.id})">Ver</button><button onclick="openConvenio(${c.id})">Modificar</button><button onclick="attachDoc(${c.id})">Adjuntar</button><button onclick="delConvenio(${c.id})">Eliminar</button></td></tr>`}).join('')||`<tr><td colspan="5">No hay resultados.</td></tr>`}</tbody></table></div><div class="card table-card"><div class="section-head"><div><p>Estado documental</p><h3>Checklist</h3></div></div><div class="list">${list.map(c=>`<article class="item" onclick="previewConvenio(${c.id})" style="cursor:pointer"><div><b>${esc(c.empresa)}</b><p>${esc(convenioStatusText(c))} · ${convenioDocuments(c).length} documento(s)</p></div><span>${esc(c.estado)}</span></article>`).join('')||'<p>No hay convenios.</p>'}</div></div></section>`;
+const renderAjustesStorageBase34 = renderAjustes;
+renderAjustes = function(){
+  renderAjustesStorageBase34();
+  const ajustes = $("#ajustes .grid-2");
+  if(ajustes && !$("#storageSettingsCard")){
+    ajustes.insertAdjacentHTML("beforeend", `<div id="storageSettingsCard" class="card table-card"><h3>Documentos en Supabase Storage</h3><p>Bucket esperado: <b>${STORAGE_BUCKET}</b></p><p>Los nuevos PDF, Word, fotos y documentos se subirán a Storage. El backup principal guardará solo metadatos ligeros para evitar errores de timeout.</p><button class="primary" onclick="downloadStorageSQL()">Descargar SQL Storage</button><button class="soft-btn" onclick="cleanLegacyBase64Files()">Limpiar base64 antiguo</button></div>`);
+  }
+};
+
+function downloadStorageSQL(){
+  const sql = `-- 1) Crea primero un bucket PUBLIC llamado bloom-crm-documents en Supabase > Storage.
+-- 2) Después ejecuta estas policies en SQL Editor.
+
+insert into storage.buckets (id, name, public)
+values ('bloom-crm-documents', 'bloom-crm-documents', true)
+on conflict (id) do update set public = true;
+
+create policy "Bloom CRM public read documents"
+on storage.objects
+for select
+to anon
+using (bucket_id = 'bloom-crm-documents');
+
+create policy "Bloom CRM public upload documents"
+on storage.objects
+for insert
+to anon
+with check (bucket_id = 'bloom-crm-documents');
+
+create policy "Bloom CRM public update documents"
+on storage.objects
+for update
+to anon
+using (bucket_id = 'bloom-crm-documents')
+with check (bucket_id = 'bloom-crm-documents');
+
+create policy "Bloom CRM public delete documents"
+on storage.objects
+for delete
+to anon
+using (bucket_id = 'bloom-crm-documents');`;
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([sql],{type:"text/sql;charset=utf-8"}));
+  a.download="bloom-crm-storage-policies.sql";
+  a.click();
 }
 
-const dayEventsBase45 = dayEvents;
-dayEvents = function(date){
-  const ev=dayEventsBase45(date);
-  ev.forEach(e=>{ if(e.view==='convenios' && e.id) e.detail=`previewConvenio(${e.id})`; });
-  return ev;
-}
-
-/* v4.5 — refresco final */
-render();
 
 
-/* v4.6 — Pestaña Alumnos en prácticas */
-function parseDateSafe(v){
-  if(!v) return null;
-  const d=new Date(String(v)+'T12:00:00');
-  return isNaN(d.getTime())?null:d;
+/* =========================================================
+   Bloom CRM 3.5 — privacidad real por usuario
+   - Supabase Auth
+   - Bucket privado
+   - Signed URLs temporales para ver documentos
+   - Backup JSON por usuario autenticado
+========================================================= */
+
+let bloomSupabase = null;
+let bloomUser = null;
+let signedUrlCache = new Map();
+
+function initPrivateSupabaseClient(){
+  if(window.supabase && !bloomSupabase){
+    bloomSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+  }
 }
-function alumnoEnPracticas(a){
-  const estado=String(a.estado||'').toLowerCase();
-  if(estado.includes('práctica') || estado.includes('practica')) return true;
-  const hasEmpresa=!!String(a.empresa||'').trim();
-  const ini=parseDateSafe(a.inicio), fin=parseDateSafe(a.fin), now=new Date();
-  if(hasEmpresa && ini && fin) return ini<=now && now<=fin;
-  return false;
+
+async function refreshBloomUser(){
+  initPrivateSupabaseClient();
+  if(!bloomSupabase) return null;
+  const { data } = await bloomSupabase.auth.getUser();
+  bloomUser = data?.user || null;
+  renderAuthStatus();
+  return bloomUser;
 }
-function practicasDaysLeft(a){
-  const fin=parseDateSafe(a.fin);
-  if(!fin) return 'Sin fecha fin';
-  const todayD=new Date(); todayD.setHours(0,0,0,0);
-  fin.setHours(0,0,0,0);
-  const days=Math.ceil((fin-todayD)/(1000*60*60*24));
-  if(days<0) return 'Finalizada por fecha';
-  if(days===0) return 'Termina hoy';
-  return `${days} día${days===1?'':'s'} restantes`;
+
+function requirePrivateUser(){
+  if(!bloomUser){
+    alert("Para proteger tus datos, inicia sesión en Ajustes antes de guardar o adjuntar documentos.");
+    show("ajustes");
+    return false;
+  }
+  return true;
 }
-function renderPracticas(){
-  const el=$('#practicas'); if(!el) return;
-  const q=($('#practicasSearch')?.value||'').toLowerCase();
-  const alumnos=state.alumnos.filter(alumnoEnPracticas).filter(a=>!q || JSON.stringify(a).toLowerCase().includes(q));
-  const sinDocs=alumnos.filter(a=>!state.documentos.some(d=>d.alumno===a.nombre||d.empresa===a.empresa)).length;
-  el.innerHTML=pageHead('Prácticas','Alumnos en prácticas','Seguimiento específico del alumnado actualmente en empresa')+`
-    <section class="kpi-grid">
-      <article class="kpi card"><div class="kpi-icon green">${icons.calendar}</div><strong>${alumnos.length}</strong><span>En prácticas</span></article>
-      <article class="kpi card"><div class="kpi-icon blue">${icons.building}</div><strong>${new Set(alumnos.map(a=>a.empresa).filter(Boolean)).size}</strong><span>Empresas activas</span></article>
-      <article class="kpi card"><div class="kpi-icon orange">${icons.archive}</div><strong>${sinDocs}</strong><span>Sin documentos asociados</span></article>
-      <article class="kpi card"><div class="kpi-icon pink">${icons.phone}</div><strong>${alumnos.filter(a=>state.seguimientos.some(s=>s.empresa===a.empresa && !isTaskCompleted(s))).length}</strong><span>Con tareas pendientes</span></article>
-    </section>
-    <section class="card table-card">
-      <div class="toolbar"><input id="practicasSearch" placeholder="Buscar alumno, empresa, curso..." oninput="renderPracticas()" value="${esc(q)}"><button class="primary" onclick="openAlumno()">Añadir alumno</button><button class="soft-btn" onclick="show('alumnos')">Ver todos los alumnos</button></div>
-      <table><thead><tr><th>Alumno</th><th>Curso</th><th>Empresa</th><th>Tutor</th><th>Fechas</th><th>Estado</th><th></th></tr></thead><tbody>${alumnos.map(a=>{const docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa).length;return `<tr class="student-row" onclick="openPracticasProfile(${a.id})"><td><div class="student-cell"><div class="student-avatar">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||'A')[0])}</span>`}</div><div><b>${esc(a.nombre)}</b><br><small>${esc(a.telefono||'')} · ${esc(a.email||'')}</small></div></div></td><td>${esc(a.curso||'Sin dato')}</td><td>${esc(a.empresa||'Sin empresa')}</td><td>${esc(a.tutor||'Sin dato')}</td><td>${esc(a.inicio||'')} → ${esc(a.fin||'')}<br><small>${esc(practicasDaysLeft(a))}</small></td><td><span class="badge">${esc(a.estado||'prácticas')}</span><br><small>${docs} doc.</small></td><td class="row-actions" onclick="event.stopPropagation()"><button onclick="openPracticasProfile(${a.id})">Ver</button><button onclick="openAlumno(${a.id})">Modificar</button><button onclick="finalizarPracticas(${a.id})">Finalizar</button></td></tr>`}).join('')||'<tr><td colspan="7">No hay alumnos en prácticas.</td></tr>'}</tbody></table>
+
+function privateCloudId(){
+  return bloomUser ? `user-${bloomUser.id}` : CLOUD_ID;
+}
+
+function privateStoragePath(path){
+  if(!bloomUser) return path;
+  return `${bloomUser.id}/${path}`;
+}
+
+async function signPrivateFile(path, expires=300){
+  if(!path) return "";
+  if(!bloomSupabase || !bloomUser) return "";
+
+  const cached = signedUrlCache.get(path);
+  if(cached && cached.expiresAt > Date.now() + 30000) return cached.url;
+
+  const { data, error } = await bloomSupabase
+    .storage
+    .from(STORAGE_BUCKET)
+    .createSignedUrl(path, expires);
+
+  if(error){
+    console.error("createSignedUrl", error);
+    return "";
+  }
+
+  signedUrlCache.set(path, {
+    url: data.signedUrl,
+    expiresAt: Date.now() + expires * 1000
+  });
+
+  return data.signedUrl;
+}
+
+async function loginBloomEmail(){
+  initPrivateSupabaseClient();
+  const email = $("#authEmail")?.value?.trim();
+  const password = $("#authPassword")?.value || "";
+
+  if(!email) return toast("Introduce tu email");
+
+  try{
+    let result;
+    if(password){
+      result = await bloomSupabase.auth.signInWithPassword({ email, password });
+      if(result.error && String(result.error.message || "").toLowerCase().includes("invalid")){
+        result = await bloomSupabase.auth.signUp({ email, password });
+      }
+    }else{
+      result = await bloomSupabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.href.split("#")[0] }
+      });
+    }
+
+    if(result.error) throw result.error;
+    await refreshBloomUser();
+    renderAjustes();
+    toast(password ? "Sesión iniciada 🌸" : "Revisa tu correo para entrar 🌸");
+  }catch(error){
+    alert("No se pudo iniciar sesión:\n\n" + (error.message || error));
+  }
+}
+
+async function logoutBloom(){
+  if(!bloomSupabase) return;
+  await bloomSupabase.auth.signOut();
+  bloomUser = null;
+  renderAjustes();
+  toast("Sesión cerrada");
+}
+
+function renderAuthStatus(){
+  const box = $("#authStatus");
+  if(!box) return;
+  box.innerHTML = bloomUser
+    ? `<div class="auth-ok"><b>Sesión privada activa</b><span>${esc(bloomUser.email || bloomUser.id)}</span></div>`
+    : `<div class="auth-warn"><b>Sin sesión privada</b><span>Inicia sesión para guardar datos y documentos de forma privada.</span></div>`;
+}
+
+/* Reemplaza saveCloud: solo guarda copia del usuario autenticado */
+saveCloud = async function(silent=false){
+  if(!requirePrivateUser()) return;
+
+  try{
+    setSync("Guardando privado...", "saving");
+    const lightState = stripHeavyFiles ? stripHeavyFiles(state) : state;
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bloom_crm_backups`, {
+      method:"POST",
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:`Bearer ${(await bloomSupabase.auth.getSession()).data.session.access_token}`,
+        "Content-Type":"application/json",
+        Prefer:"resolution=merge-duplicates,return=minimal"
+      },
+      body:JSON.stringify({
+        id: privateCloudId(),
+        data: lightState,
+        updated_at:new Date().toISOString()
+      })
+    });
+
+    if(!res.ok) throw new Error(await res.text());
+    setSync("Privado sincronizado", "ok");
+    if(!silent) toast("Datos privados guardados 🌸");
+  }catch(error){
+    console.error(error);
+    setSync("Error privado", "error");
+    if(!silent) alert("Error guardando privado:\n\n" + (error.message || error));
+  }
+};
+
+/* Reemplaza loadCloud: carga solo copia del usuario autenticado */
+loadCloud = async function(){
+  if(!requirePrivateUser()) return;
+
+  try{
+    setSync("Cargando privado...", "saving");
+    const session = (await bloomSupabase.auth.getSession()).data.session;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bloom_crm_backups?id=eq.${privateCloudId()}&select=data`, {
+      headers:{
+        apikey:SUPABASE_KEY,
+        Authorization:`Bearer ${session.access_token}`
+      }
+    });
+
+    if(!res.ok) throw new Error(await res.text());
+    const rows = await res.json();
+
+    if(rows[0]?.data){
+      state = rows[0].data;
+      localStorage.setItem(KEY, JSON.stringify(state));
+      render();
+      setSync("Privado sincronizado", "ok");
+      toast("Datos privados cargados 🌸");
+    }else{
+      toast("No hay copia privada todavía");
+    }
+  }catch(error){
+    console.error(error);
+    setSync("Error privado", "error");
+    alert("Error cargando privado:\n\n" + (error.message || error));
+  }
+};
+
+/* Reemplaza Storage: bucket privado, rutas por usuario */
+uploadFileToStorage = async function(file, folder="general"){
+  if(!file) return null;
+  if(!requirePrivateUser()) return null;
+
+  const relativePath = `${folder}/${new Date().getFullYear()}/${Date.now()}-${safeFileName(file.name)}`;
+  const path = privateStoragePath(relativePath);
+
+  try{
+    setSync("Subiendo privado...", "saving");
+    const { data, error } = await bloomSupabase
+      .storage
+      .from(STORAGE_BUCKET)
+      .upload(path, file, {
+        upsert: true,
+        contentType: file.type || "application/octet-stream"
+      });
+
+    if(error) throw error;
+
+    setSync("Archivo privado subido", "ok");
+    return {
+      name:file.name,
+      type:file.type || "",
+      size:file.size || 0,
+      path:data.path,
+      storage:true,
+      private:true
+    };
+  }catch(error){
+    console.error("uploadFileToStorage private", error);
+    alert(
+      "No se pudo subir el archivo al Storage privado.\n\n" +
+      "Revisa que exista el bucket privado 'bloom-crm-documents' y sus policies para usuarios autenticados.\n\n" +
+      "Detalle: " + (error.message || error)
+    );
+    setSync("Error Storage", "error");
+    return null;
+  }
+};
+
+/* Vista previa privada con URL firmada temporal */
+filePreviewHTML = function(file, aid="x"){
+  if(!file?.data && !file?.path && !file?.url){
+    return `<div class="student-cv-empty">No hay archivo adjunto.</div>`;
+  }
+
+  if(file?.path && file?.private){
+    const previewId = `private-preview-${String(aid).replace(/[^a-zA-Z0-9_-]/g,"")}-${Math.floor(Math.random()*99999)}`;
+    setTimeout(() => renderPrivatePreview(file, previewId), 80);
+    return `<div id="${previewId}" class="student-cv-empty"><b>Preparando vista privada...</b><span>Generando enlace temporal seguro.</span></div>`;
+  }
+
+  if(file?.url){
+    const name=file.name||"archivo", type=file.type||"";
+    const pdf=type.includes("pdf")||name.toLowerCase().endsWith(".pdf");
+    const img=type.includes("image")||/\.(png|jpg|jpeg|webp)$/i.test(name);
+    if(pdf) return `<div class="student-cv-preview"><iframe src="${file.url}"></iframe></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir</a><a href="${file.url}" download="${esc(name)}">Descargar</a></div>`;
+    if(img) return `<div class="student-cv-image"><img src="${file.url}"></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir</a><a href="${file.url}" download="${esc(name)}">Descargar</a></div>`;
+    return `<div class="student-cv-empty"><b>${esc(name)}</b><span>Archivo guardado.</span></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir/descargar</a></div>`;
+  }
+
+  /* Base64 antiguo */
+  return filePreviewHTMLBase34 ? filePreviewHTMLBase34(file, aid) : `<div class="student-cv-empty">Archivo heredado.</div>`;
+};
+
+async function renderPrivatePreview(file, targetId){
+  const target = document.getElementById(targetId);
+  if(!target) return;
+
+  const signed = await signPrivateFile(file.path);
+  const name = file.name || "archivo";
+  const type = file.type || "";
+  const pdf = type.includes("pdf") || name.toLowerCase().endsWith(".pdf");
+  const img = type.includes("image") || /\.(png|jpg|jpeg|webp)$/i.test(name);
+  const docx = name.toLowerCase().endsWith(".docx");
+
+  if(!signed){
+    target.innerHTML = `<b>No se pudo generar vista privada.</b><span>Vuelve a iniciar sesión o revisa las policies.</span>`;
+    return;
+  }
+
+  if(pdf){
+    target.outerHTML = `<div class="student-cv-preview"><iframe src="${signed}"></iframe></div><div class="student-cv-actions"><a href="${signed}" target="_blank">Abrir temporal</a><a href="${signed}" download="${esc(name)}">Descargar</a></div>`;
+    return;
+  }
+
+  if(img){
+    target.outerHTML = `<div class="student-cv-image"><img src="${signed}"></div><div class="student-cv-actions"><a href="${signed}" target="_blank">Abrir temporal</a><a href="${signed}" download="${esc(name)}">Descargar</a></div>`;
+    return;
+  }
+
+  if(docx){
+    target.outerHTML = `<div class="student-cv-empty"><b>${esc(name)}</b><span>Word guardado de forma privada. Descárgalo o súbelo en PDF para vista previa directa.</span></div><div class="student-cv-actions"><a href="${signed}" target="_blank">Abrir/descargar temporal</a></div>`;
+    return;
+  }
+
+  target.outerHTML = `<div class="student-cv-empty"><b>${esc(name)}</b><span>Archivo privado guardado.</span></div><div class="student-cv-actions"><a href="${signed}" target="_blank">Abrir/descargar temporal</a></div>`;
+}
+
+previewAnyFile = function(file, title="Documento"){
+  modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>${filePreviewHTML(file,"modal")}</section>`, ()=>closeModal());
+};
+
+/* Ajustes privados */
+const renderAjustesPrivateBase35 = renderAjustes;
+renderAjustes = function(){
+  renderAjustesPrivateBase35();
+  const ajustes = $("#ajustes .grid-2");
+  if(ajustes && !$("#privacySettingsCard")){
+    ajustes.insertAdjacentHTML("afterbegin", `
+      <div id="privacySettingsCard" class="card table-card privacy-card">
+        <h3>Cuenta privada</h3>
+        <div id="authStatus"></div>
+        <div class="form-grid">
+          <input id="authEmail" type="email" placeholder="Tu email">
+          <input id="authPassword" type="password" placeholder="Contraseña opcional">
+        </div>
+        <div class="settings-row">
+          <button class="primary" onclick="loginBloomEmail()">Entrar / crear cuenta</button>
+          <button class="soft-btn" onclick="logoutBloom()">Cerrar sesión</button>
+        </div>
+        <p>Sin sesión privada no se subirán documentos ni se guardará en la nube. Los archivos se almacenan en bucket privado y se visualizan con URLs temporales.</p>
+      </div>
+    `);
+  }
+
+  const storageCard = $("#storageSettingsCard");
+  if(storageCard){
+    storageCard.querySelector("p").innerHTML = "Bucket esperado: <b>bloom-crm-documents</b> privado.";
+  }
+
+  renderAuthStatus();
+};
+
+downloadStorageSQL = function(){
+  const sql = `-- Bloom CRM privado
+-- Ejecuta esto en Supabase SQL Editor.
+
+-- 1) Tabla de backups por usuario.
+create table if not exists bloom_crm_backups (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz default now()
+);
+
+alter table bloom_crm_backups enable row level security;
+
+drop policy if exists "Bloom CRM private read backup" on bloom_crm_backups;
+drop policy if exists "Bloom CRM private insert backup" on bloom_crm_backups;
+drop policy if exists "Bloom CRM private update backup" on bloom_crm_backups;
+
+create policy "Bloom CRM private read backup"
+on bloom_crm_backups
+for select
+to authenticated
+using (id = ('user-' || auth.uid()::text));
+
+create policy "Bloom CRM private insert backup"
+on bloom_crm_backups
+for insert
+to authenticated
+with check (id = ('user-' || auth.uid()::text));
+
+create policy "Bloom CRM private update backup"
+on bloom_crm_backups
+for update
+to authenticated
+using (id = ('user-' || auth.uid()::text))
+with check (id = ('user-' || auth.uid()::text));
+
+-- 2) Bucket privado.
+insert into storage.buckets (id, name, public)
+values ('bloom-crm-documents', 'bloom-crm-documents', false)
+on conflict (id) do update set public = false;
+
+-- 3) Policies Storage privado por carpeta de usuario.
+drop policy if exists "Bloom CRM private read documents" on storage.objects;
+drop policy if exists "Bloom CRM private upload documents" on storage.objects;
+drop policy if exists "Bloom CRM private update documents" on storage.objects;
+drop policy if exists "Bloom CRM private delete documents" on storage.objects;
+
+create policy "Bloom CRM private read documents"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'bloom-crm-documents'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Bloom CRM private upload documents"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'bloom-crm-documents'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Bloom CRM private update documents"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'bloom-crm-documents'
+  and (storage.foldername(name))[1] = auth.uid()::text
+)
+with check (
+  bucket_id = 'bloom-crm-documents'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Bloom CRM private delete documents"
+on storage.objects
+for delete
+to authenticated
+using (
+  bucket_id = 'bloom-crm-documents'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);`;
+
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([sql],{type:"text/sql;charset=utf-8"}));
+  a.download="bloom-crm-private-supabase.sql";
+  a.click();
+};
+
+/* Inicialización Auth */
+document.addEventListener("DOMContentLoaded", async () => {
+  initPrivateSupabaseClient();
+  if(bloomSupabase){
+    bloomSupabase.auth.onAuthStateChange(async () => {
+      await refreshBloomUser();
+      renderAjustes();
+    });
+    await refreshBloomUser();
+  }
+});
+
+
+
+/* =========================================================
+   Bloom CRM 4.0 — Arquitectura profesional privada
+   - Login obligatorio antes de ver el CRM
+   - Supabase Auth
+   - Tablas por entidad
+   - RLS por owner_id
+   - Storage privado con Signed URLs
+   - Sin localStorage como fuente principal
+========================================================= */
+
+const NORMALIZED_TABLES = {
+  empresas: "bloom_empresas",
+  alumnos: "bloom_alumnos",
+  convenios: "bloom_convenios",
+  documentos: "bloom_documentos",
+  carpetas: "bloom_carpetas",
+  seguimientos: "bloom_seguimientos",
+  emails: "bloom_email_templates",
+  actividad: "bloom_actividad"
+};
+
+let bloomProfessionalReady = false;
+let bloomIsLoadingCloud = false;
+let bloomSaveQueue = Promise.resolve();
+let bloomSignedUrlCache = new Map();
+
+function emptyCRMState(){
+  return {
+    empresas: [],
+    alumnos: [],
+    convenios: [],
+    documentos: [],
+    carpetas: [
+      {id:"all",nombre:"Todas"},
+      {id:"sin",nombre:"Sin carpeta"},
+      {id:"curso",nombre:"Curso 2025/26"},
+      {id:"conv",nombre:"Convenios"}
+    ],
+    seguimientos: [],
+    emails: [],
+    actividad: []
+  };
+}
+
+function ensureSupabaseClient4(){
+  if(window.supabase && !bloomSupabase){
+    bloomSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+    });
+  }
+  return bloomSupabase;
+}
+
+function authToken4(){
+  return bloomSupabase.auth.getSession().then(({data}) => data.session?.access_token || "");
+}
+
+function setGateStatus(text, type="info"){
+  const el = $("#authGateStatus");
+  if(el){
+    el.className = "auth-status " + type;
+    el.textContent = text;
+  }
+}
+
+function lockCRM(){
+  document.body.classList.add("locked");
+  state = emptyCRMState();
+}
+
+function unlockCRM(){
+  document.body.classList.remove("locked");
+}
+
+async function getCurrentUser4(){
+  ensureSupabaseClient4();
+  if(!bloomSupabase) return null;
+  const { data } = await bloomSupabase.auth.getUser();
+  bloomUser = data?.user || null;
+  return bloomUser;
+}
+
+async function loginPassword4(mode="login"){
+  ensureSupabaseClient4();
+  const email = $("#gateEmail")?.value?.trim();
+  const password = $("#gatePassword")?.value || "";
+
+  if(!email || !password){
+    setGateStatus("Introduce email y contraseña.", "error");
+    return;
+  }
+
+  try{
+    setGateStatus(mode === "signup" ? "Creando cuenta..." : "Entrando...", "info");
+    const result = mode === "signup"
+      ? await bloomSupabase.auth.signUp({ email, password })
+      : await bloomSupabase.auth.signInWithPassword({ email, password });
+
+    if(result.error) throw result.error;
+
+    await bootstrapPrivateCRM4();
+  }catch(error){
+    setGateStatus(error.message || "No se pudo iniciar sesión.", "error");
+  }
+}
+
+async function loginMagic4(){
+  ensureSupabaseClient4();
+  const email = $("#gateEmail")?.value?.trim();
+  if(!email){
+    setGateStatus("Introduce tu email.", "error");
+    return;
+  }
+  const { error } = await bloomSupabase.auth.signInWithOtp({
+    email,
+    options:{ emailRedirectTo: window.location.href.split("#")[0] }
+  });
+  if(error) setGateStatus(error.message, "error");
+  else setGateStatus("Revisa tu correo para entrar.", "ok");
+}
+
+async function logout4(){
+  ensureSupabaseClient4();
+  await bloomSupabase.auth.signOut();
+  bloomUser = null;
+  lockCRM();
+  setGateStatus("Sesión cerrada.", "info");
+}
+
+function userId4(){
+  return bloomUser?.id || "";
+}
+
+function tableRowFromEntity(entity){
+  const row = { id:String(entity.id), owner_id:userId4(), data:stripHeavyFiles ? stripHeavyFiles(entity) : entity };
+  if(entity.nombre) row.nombre = entity.nombre;
+  if(entity.empresa) row.empresa = entity.empresa;
+  if(entity.estado) row.estado = entity.estado;
+  if(entity.sector) row.sector = entity.sector;
+  if(entity.tipo) row.tipo = entity.tipo;
+  if(entity.fecha) row.fecha = entity.fecha;
+  if(entity.fechaProxima) row.fecha_proxima = entity.fechaProxima;
+  if(entity.carpeta) row.carpeta = String(entity.carpeta);
+  return row;
+}
+
+async function upsertEntityTable(key){
+  const table = NORMALIZED_TABLES[key];
+  const rows = (state[key] || [])
+    .filter(x => x && x.id !== "all" && x.id !== "sin")
+    .map(tableRowFromEntity);
+
+  if(!rows.length) return;
+
+  const { error } = await bloomSupabase.from(table).upsert(rows, { onConflict:"id" });
+  if(error) throw error;
+}
+
+async function loadEntityTable(key){
+  const table = NORMALIZED_TABLES[key];
+  const { data, error } = await bloomSupabase
+    .from(table)
+    .select("id,data")
+    .order("updated_at", { ascending:false });
+
+  if(error) throw error;
+  return (data || []).map(r => r.data || {});
+}
+
+async function loadAllNormalized4(){
+  if(!bloomUser) return;
+  bloomIsLoadingCloud = true;
+  setSync("Cargando privado...", "saving");
+
+  const loaded = emptyCRMState();
+  loaded.empresas = await loadEntityTable("empresas");
+  loaded.alumnos = await loadEntityTable("alumnos");
+  loaded.convenios = await loadEntityTable("convenios");
+  loaded.documentos = await loadEntityTable("documentos");
+  loaded.seguimientos = await loadEntityTable("seguimientos");
+  loaded.emails = await loadEntityTable("emails");
+  loaded.actividad = await loadEntityTable("actividad");
+
+  const cloudFolders = await loadEntityTable("carpetas");
+  loaded.carpetas = [
+    {id:"all",nombre:"Todas"},
+    {id:"sin",nombre:"Sin carpeta"},
+    ...(cloudFolders.length ? cloudFolders : [{id:"curso",nombre:"Curso 2025/26"},{id:"conv",nombre:"Convenios"}])
+  ];
+
+  state = loaded;
+  bloomIsLoadingCloud = false;
+}
+
+
+
+async function persistAllNormalized4(){
+  if(!bloomUser || bloomIsLoadingCloud) return;
+  bloomSaveQueue = bloomSaveQueue.then(async () => {
+    try{
+      setSync("Guardando privado...", "saving");
+      await upsertEntityTable("empresas");
+      await upsertEntityTable("alumnos");
+      await upsertEntityTable("convenios");
+      await upsertEntityTable("documentos");
+      await upsertEntityTable("carpetas");
+      await upsertEntityTable("seguimientos");
+      await upsertEntityTable("emails");
+      await upsertEntityTable("actividad");
+      setSync("Privado sincronizado", "ok");
+    }catch(error){
+      console.error("persistAllNormalized4", error);
+      setSync("Error guardado", "error");
+      alert("Error guardando en Supabase:\n\n" + (error.message || error));
+    }
+  });
+  return bloomSaveQueue;
+}
+
+/* Sustituye save: ya no usa localStorage como origen principal */
+save = function(){
+  if(!bloomUser){
+    setSync("Sin sesión", "error");
+    return;
+  }
+  persistAllNormalized4();
+};
+
+/* Mantiene compatibilidad con botones antiguos */
+saveCloud = async function(silent=false){
+  if(!bloomUser) return requirePrivateUser ? requirePrivateUser() : null;
+  await persistAllNormalized4();
+  if(!silent) toast("Datos guardados por tablas 🌸");
+};
+
+loadCloud = async function(){
+  if(!bloomUser) return requirePrivateUser ? requirePrivateUser() : null;
+  await loadAllNormalized4();
+  render();
+  toast("Datos privados cargados 🌸");
+};
+
+async function bootstrapPrivateCRM4(){
+  const user = await getCurrentUser4();
+  if(!user){
+    lockCRM();
+    return;
+  }
+
+  bloomUser = user;
+  unlockCRM();
+  setGateStatus("Sesión activa.", "ok");
+  await loadAllNormalized4();
+  render();
+  renderAjustes();
+  setSync("Privado sincronizado", "ok");
+}
+
+/* Storage privado: solo bajo carpeta auth.uid() */
+uploadFileToStorage = async function(file, folder="general"){
+  if(!file) return null;
+  if(!bloomUser){
+    alert("Inicia sesión antes de subir documentos.");
+    return null;
+  }
+
+  const relativePath = `${folder}/${new Date().getFullYear()}/${Date.now()}-${safeFileName(file.name)}`;
+  const path = `${bloomUser.id}/${relativePath}`;
+
+  try{
+    setSync("Subiendo archivo...", "saving");
+    const { data, error } = await bloomSupabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, file, { upsert:true, contentType:file.type || "application/octet-stream" });
+
+    if(error) throw error;
+
+    setSync("Archivo privado subido", "ok");
+    return { name:file.name, type:file.type || "", size:file.size || 0, path:data.path, storage:true, private:true };
+  }catch(error){
+    console.error("uploadFileToStorage 4", error);
+    alert("No se pudo subir el archivo privado.\n\nRevisa el bucket privado y las policies.\n\nDetalle: " + (error.message || error));
+    setSync("Error Storage", "error");
+    return null;
+  }
+};
+
+async function signedUrl4(path, expires=300){
+  if(!path || !bloomSupabase) return "";
+  const cached = bloomSignedUrlCache.get(path);
+  if(cached && cached.expires > Date.now() + 30000) return cached.url;
+
+  const { data, error } = await bloomSupabase.storage
+    .from(STORAGE_BUCKET)
+    .createSignedUrl(path, expires);
+
+  if(error){
+    console.error("signedUrl4", error);
+    return "";
+  }
+  bloomSignedUrlCache.set(path, { url:data.signedUrl, expires:Date.now() + expires*1000 });
+  return data.signedUrl;
+}
+
+filePreviewHTML = function(file, aid="x"){
+  if(!file?.path && !file?.data && !file?.url){
+    return `<div class="student-cv-empty">No hay archivo adjunto.</div>`;
+  }
+
+  if(file?.path){
+    const id = `signed-preview-${String(aid).replace(/[^a-zA-Z0-9_-]/g,"")}-${Math.floor(Math.random()*9999)}`;
+    setTimeout(() => renderSignedPreview4(file, id), 80);
+    return `<div id="${id}" class="student-cv-empty"><b>Preparando vista privada...</b><span>Generando enlace temporal seguro.</span></div>`;
+  }
+
+  if(file?.url){
+    const n=file.name||"archivo", t=file.type||"";
+    const pdf=t.includes("pdf")||n.toLowerCase().endsWith(".pdf");
+    const img=t.includes("image")||/\.(png|jpg|jpeg|webp)$/i.test(n);
+    if(pdf) return `<div class="student-cv-preview"><iframe src="${file.url}"></iframe></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir</a><a href="${file.url}" download="${esc(n)}">Descargar</a></div>`;
+    if(img) return `<div class="student-cv-image"><img src="${file.url}"></div><div class="student-cv-actions"><a href="${file.url}" target="_blank">Abrir</a><a href="${file.url}" download="${esc(n)}">Descargar</a></div>`;
+  }
+
+  return filePreviewHTMLBase34 ? filePreviewHTMLBase34(file, aid) : `<div class="student-cv-empty">Archivo heredado.</div>`;
+};
+
+async function renderSignedPreview4(file, id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const url = await signedUrl4(file.path);
+  const name = file.name || "archivo";
+  const type = file.type || "";
+  const pdf = type.includes("pdf") || name.toLowerCase().endsWith(".pdf");
+  const img = type.includes("image") || /\.(png|jpg|jpeg|webp)$/i.test(name);
+
+  if(!url){
+    el.innerHTML = `<b>No se pudo abrir el archivo.</b><span>Revisa sesión y policies.</span>`;
+    return;
+  }
+
+  if(pdf){
+    el.outerHTML = `<div class="student-cv-preview"><iframe src="${url}"></iframe></div><div class="student-cv-actions"><a href="${url}" target="_blank">Abrir temporal</a><a href="${url}" download="${esc(name)}">Descargar</a></div>`;
+  }else if(img){
+    el.outerHTML = `<div class="student-cv-image"><img src="${url}"></div><div class="student-cv-actions"><a href="${url}" target="_blank">Abrir temporal</a><a href="${url}" download="${esc(name)}">Descargar</a></div>`;
+  }else{
+    el.outerHTML = `<div class="student-cv-empty"><b>${esc(name)}</b><span>Archivo privado guardado. Usa el enlace temporal para abrirlo.</span></div><div class="student-cv-actions"><a href="${url}" target="_blank">Abrir/descargar temporal</a></div>`;
+  }
+};
+
+previewAnyFile = function(file, title="Documento"){
+  modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>${filePreviewHTML(file,"modal")}</section>`, ()=>closeModal());
+};
+
+/* Ajustes: panel de usuario privado */
+renderAjustes = function(){
+  $("#ajustes").innerHTML = pageHead("Ajustes","Ajustes","Cuenta privada, Supabase y mantenimiento") + `
+    <section class="grid-2">
+      <div class="card table-card privacy-card">
+        <h3>Cuenta privada</h3>
+        <div class="${bloomUser ? "auth-ok" : "auth-warn"}">
+          <b>${bloomUser ? "Sesión activa" : "Sin sesión"}</b>
+          <span>${esc(bloomUser?.email || "Inicia sesión para acceder a tus datos privados.")}</span>
+        </div>
+        <div class="settings-row">
+          <button class="primary" onclick="loadCloud()">Recargar mis datos</button>
+          <button class="soft-btn" onclick="logout4()">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div class="card table-card">
+        <h3>Supabase profesional</h3>
+        <p>Datos separados por tablas, protegidos con RLS por usuario.</p>
+        <button class="primary" onclick="downloadPrivateSchemaSQL4()">Descargar SQL completo</button>
+      </div>
+
+      <div class="card table-card">
+        <h3>Backup local opcional</h3>
+        <button class="primary" onclick="downloadBackup()">Descargar JSON local</button>
+        <label class="soft-btn">Restaurar JSON local<input type="file" onchange="restoreBackup(event)" hidden></label>
+      </div>
+
+      <div class="card table-card">
+        <h3>Storage privado</h3>
+        <p>Bucket: <b>${STORAGE_BUCKET}</b>. Los documentos se abren con Signed URLs temporales.</p>
+        <button class="soft-btn" onclick="cleanLegacyBase64Files && cleanLegacyBase64Files()">Limpiar base64 antiguo</button>
+      </div>
     </section>`;
+};
+
+function downloadPrivateSchemaSQL4(){
+  const sql = `-- Bloom CRM 4.0: esquema profesional privado
+-- Ejecuta en Supabase SQL Editor.
+-- Activa Email Auth en Authentication > Providers > Email.
+
+create extension if not exists pgcrypto;
+
+create table if not exists bloom_empresas (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  nombre text,
+  sector text,
+  estado text,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists bloom_alumnos (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  nombre text,
+  empresa text,
+  estado text,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists bloom_convenios (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  empresa text,
+  estado text,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists bloom_documentos (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  nombre text,
+  empresa text,
+  tipo text,
+  estado text,
+  carpeta text,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists bloom_carpetas (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  nombre text,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists bloom_seguimientos (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  empresa text,
+  tipo text,
+  fecha date,
+  fecha_proxima date,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists bloom_email_templates (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  nombre text,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists bloom_actividad (
+  id text primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table bloom_empresas enable row level security;
+alter table bloom_alumnos enable row level security;
+alter table bloom_convenios enable row level security;
+alter table bloom_documentos enable row level security;
+alter table bloom_carpetas enable row level security;
+alter table bloom_seguimientos enable row level security;
+alter table bloom_email_templates enable row level security;
+alter table bloom_actividad enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['bloom_empresas','bloom_alumnos','bloom_convenios','bloom_documentos','bloom_carpetas','bloom_seguimientos','bloom_email_templates','bloom_actividad']
+  loop
+    execute format('drop policy if exists "owner select" on %I', t);
+    execute format('drop policy if exists "owner insert" on %I', t);
+    execute format('drop policy if exists "owner update" on %I', t);
+    execute format('drop policy if exists "owner delete" on %I', t);
+
+    execute format('create policy "owner select" on %I for select to authenticated using (owner_id = auth.uid())', t);
+    execute format('create policy "owner insert" on %I for insert to authenticated with check (owner_id = auth.uid())', t);
+    execute format('create policy "owner update" on %I for update to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid())', t);
+    execute format('create policy "owner delete" on %I for delete to authenticated using (owner_id = auth.uid())', t);
+  end loop;
+end $$;
+
+insert into storage.buckets (id, name, public)
+values ('bloom-crm-documents', 'bloom-crm-documents', false)
+on conflict (id) do update set public = false;
+
+drop policy if exists "private read documents" on storage.objects;
+drop policy if exists "private upload documents" on storage.objects;
+drop policy if exists "private update documents" on storage.objects;
+drop policy if exists "private delete documents" on storage.objects;
+
+create policy "private read documents"
+on storage.objects
+for select
+to authenticated
+using (bucket_id = 'bloom-crm-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "private upload documents"
+on storage.objects
+for insert
+to authenticated
+with check (bucket_id = 'bloom-crm-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "private update documents"
+on storage.objects
+for update
+to authenticated
+using (bucket_id = 'bloom-crm-documents' and (storage.foldername(name))[1] = auth.uid()::text)
+with check (bucket_id = 'bloom-crm-documents' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "private delete documents"
+on storage.objects
+for delete
+to authenticated
+using (bucket_id = 'bloom-crm-documents' and (storage.foldername(name))[1] = auth.uid()::text);`;
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([sql], {type:"text/sql;charset=utf-8"}));
+  a.download = "bloom-crm-4-schema-privado.sql";
+  a.click();
 }
-function openPracticasProfile(aid){
-  const a=state.alumnos.find(x=>Number(x.id)===Number(aid)); if(!a) return;
-  const e=state.empresas.find(x=>x.nombre===a.empresa)||{};
-  const c=state.convenios.find(x=>x.empresa===a.empresa)||{};
-  const docs=state.documentos.filter(d=>d.alumno===a.nombre||d.empresa===a.empresa);
-  const tareas=state.seguimientos.filter(s=>s.empresa===a.empresa);
-  modal('Alumno en prácticas',`<section class="student-profile"><aside class="student-profile-side"><div class="student-profile-photo">${a.foto?.data?`<img src="${a.foto.data}">`:`<span>${esc((a.nombre||'A')[0])}</span>`}</div><h2>${esc(a.nombre)}</h2><p>${esc(a.empresa||'Sin empresa')}</p><span class="badge">${esc(practicasDaysLeft(a))}</span><button class="primary" onclick="openAlumno(${a.id})">Modificar alumno</button><button class="task-btn complete big" onclick="finalizarPracticas(${a.id});closeModal()"><span>✓</span> Finalizar prácticas</button></aside><main class="student-profile-main"><section class="student-profile-section"><div class="section-head"><div><p>Información de prácticas</p><h3>Resumen</h3></div></div><div class="student-profile-grid">${[['Alumno',a.nombre],['Curso',a.curso],['Empresa',a.empresa],['Tutor alumno',a.tutor],['Inicio',a.inicio],['Fin',a.fin],['Estado',a.estado],['Convenio',c.estado||'Sin convenio']].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Contacto empresa</p><h3>Datos útiles</h3></div></div><div class="student-profile-grid">${[['Contacto',e.contacto],['Teléfono',e.telefono],['Email',e.email],['Ciudad',e.ciudad],['Web',e.web]].map(([b,v])=>`<article><b>${b}</b><span>${esc(v||'Sin dato')}</span></article>`).join('')}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Documentos</p><h3>Adjuntos relacionados</h3></div><button class="soft-btn" onclick="show('documentos');closeModal()">Ir a documentos</button></div><div class="list">${docs.map(d=>`<article class="item"><div><b>${esc(d.nombre)}</b><p>${esc(d.tipo)} · ${esc(d.estado)}</p></div><button onclick="previewAnyFile(state.documentos.find(x=>Number(x.id)===Number(${d.id})).file,'${esc(d.nombre)}')">Ver</button></article>`).join('')||'<p>No hay documentos relacionados.</p>'}</div></section><section class="student-profile-section"><div class="section-head"><div><p>Tareas y seguimiento</p><h3>Acciones vinculadas</h3></div><button class="soft-btn" onclick="openSeguimiento()">Añadir tarea</button></div><div class="list">${tareas.map(s=>`<article class="item ${isTaskCompleted(s)?'task-done':''}"><div><b>${esc(s.tipo)} · ${esc(s.proxima||s.resultado||'Tarea')}</b><p>${esc(s.fechaProxima||s.fecha||'')} · ${isTaskCompleted(s)?'Completada':'Pendiente'}</p></div><div class="row-actions"><button onclick="openTaskContext(${s.id})">Ver</button><button onclick="openSeguimiento(${s.id})">Modificar</button></div></article>`).join('')||'<p>No hay tareas vinculadas a esta empresa.</p>'}</div></section></main></section>`,()=>closeModal());
-}
-function finalizarPracticas(aid){
-  const a=state.alumnos.find(x=>Number(x.id)===Number(aid)); if(!a) return;
-  if(!confirm(`¿Marcar como finalizadas las prácticas de ${a.nombre}?`)) return;
-  a.estado='finalizado';
-  if(!a.fin) a.fin=today();
-  log(`Prácticas finalizadas: ${a.nombre}`);
-  save(); render(); toast('Prácticas finalizadas 🌸');
-}
-const renderBase46 = render;
-render = function(){ renderBase46(); renderPracticas(); }
-render();
+
+/* Login gate events */
+document.addEventListener("DOMContentLoaded", async () => {
+  ensureSupabaseClient4();
+
+  $("#gateLoginBtn")?.addEventListener("click", () => loginPassword4("login"));
+  $("#gateSignupBtn")?.addEventListener("click", () => loginPassword4("signup"));
+  $("#gateMagicBtn")?.addEventListener("click", loginMagic4);
+  $("#userPrivateBtn")?.addEventListener("click", () => show("ajustes"));
+
+  if(bloomSupabase){
+    bloomSupabase.auth.onAuthStateChange(async () => {
+      const u = await getCurrentUser4();
+      if(u) await bootstrapPrivateCRM4();
+      else lockCRM();
+    });
+  }
+
+  const u = await getCurrentUser4();
+  if(u) await bootstrapPrivateCRM4();
+  else lockCRM();
+});
+
+/* Bloquea render inicial si no hay sesión */
+const renderBaseBeforeAuth4 = render;
+render = function(){
+  if(!bloomUser && document.body.classList.contains("locked")){
+    return;
+  }
+  renderBaseBeforeAuth4();
+};

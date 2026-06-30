@@ -5,9 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloom CRM 3.0</title>
   <meta name="theme-color" content="#fff7fb" />
-  <link rel="stylesheet" href="style.css?v=4.6-practicas" />
+  <link rel="stylesheet" href="style.css?v=4.0-profesional" />
 </head>
-<body>
+<body class="locked">
+  <section id="authGate" class="auth-gate">
+    <div class="auth-card">
+      <div class="auth-flower">✿</div>
+      <h1>Bloom CRM</h1>
+      <p>Acceso privado para gestionar prácticas, empresas, expedientes y documentos.</p>
+
+      <div id="authGateStatus" class="auth-status">Inicia sesión para acceder a tus datos.</div>
+
+      <div class="auth-form">
+        <input id="gateEmail" type="email" autocomplete="email" placeholder="Email">
+        <input id="gatePassword" type="password" autocomplete="current-password" placeholder="Contraseña">
+        <button class="primary" id="gateLoginBtn">Entrar</button>
+        <button class="soft-btn" id="gateSignupBtn">Crear cuenta</button>
+        <button class="soft-btn" id="gateMagicBtn">Enviar enlace mágico</button>
+      </div>
+
+      <small>Tus datos solo se cargan después de iniciar sesión. Los documentos se guardan en Storage privado con enlaces temporales.</small>
+    </div>
+  </section>
   <div class="petals"><i></i><i></i><i></i><i></i><i></i></div>
   <aside class="sidebar" id="sidebar">
     <div class="brand">
@@ -18,7 +37,6 @@
       <button data-view="dashboard" class="active"><span data-i="home"></span>Dashboard</button>
       <button data-view="empresas"><span data-i="building"></span>Empresas</button>
       <button data-view="alumnos"><span data-i="student"></span>Alumnos</button>
-      <button data-view="practicas"><span data-i="calendar"></span>Prácticas</button>
       <button data-view="convenios"><span data-i="file"></span>Convenios</button>
       <button data-view="expedientes"><span data-i="folder"></span>Expedientes</button>
       <button data-view="documentos"><span data-i="archive"></span>Documentos</button>
@@ -45,14 +63,13 @@
       <div class="top-actions">
         <span id="syncStatus" class="sync ok"><i></i> Sincronizado</span>
         <button id="notificationsBtn" class="icon-btn heart" title="Notificaciones">♡<b id="alertCount">0</b></button>
-        <button id="quickBtn" class="icon-btn" title="Acciones rápidas">＋</button>
+        <button id="quickBtn" class="icon-btn" title="Acciones rápidas">＋</button><button id="userPrivateBtn" class="icon-btn" title="Cuenta privada">👤</button>
       </div>
     </header>
     <section id="searchResults" class="search-results hidden"></section>
     <section id="dashboard" class="view active"></section>
     <section id="empresas" class="view"></section>
     <section id="alumnos" class="view"></section>
-    <section id="practicas" class="view"></section>
     <section id="convenios" class="view"></section>
     <section id="expedientes" class="view"></section>
     <section id="documentos" class="view"></section>
@@ -64,7 +81,7 @@
   </main>
 
   <aside id="drawer" class="drawer">
-    <div class="drawer-head"><div><p>Revisiones</p><h2>Notificaciones</h2></div><div class="drawer-actions"><button id="clearNotifications" class="soft-btn" onclick="clearNotifications()">Limpiar</button><button id="closeDrawer" class="icon-btn">×</button></div></div>
+    <div class="drawer-head"><div><p>Revisiones</p><h2>Notificaciones</h2></div><button id="closeDrawer" class="icon-btn">×</button></div>
     <div id="drawerList" class="drawer-list"></div>
   </aside>
   <div id="overlay" class="overlay"></div>
@@ -73,6 +90,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="script.js?v=4.6-practicas"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js?v=4.0-profesional"></script>
 </body>
 </html>

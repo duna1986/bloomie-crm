@@ -3512,3 +3512,712 @@ if(typeof loadCloud === "function"){
 }
 
 document.addEventListener("DOMContentLoaded", bloomPhotoPatchRenderCycle);
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — FIX alumno click + editar + miniatura
+   Corrige:
+   - Clic en fila de alumno abre ficha aunque el ID sea texto o número.
+   - Botón Editar vuelve a abrir formulario y permite modificar.
+   - Botón Eliminar funciona con ID texto/número.
+   - La miniatura sigue mostrando foto real si existe.
+========================================================= */
+
+function bloomAlunoIdEq(a, b){
+  return String(a) === String(b);
+}
+
+function bloomAlumnoGet(id){
+  return (state.alumnos || []).find(a => bloomAlunoIdEq(a.id, id));
+}
+
+function bloomAlumnoInitials(name){
+  const parts = String(name || "A").trim().split(/\s+/).filter(Boolean);
+  return (parts.length ? parts.slice(0,2).map(p => p[0]).join("") : "A").toUpperCase();
+}
+
+function bloomAlumnoPhotoDirect(a){
+  if(!a) return "";
+  if(a.foto?.data) return a.foto.data;
+  if(a.foto?.url) return a.foto.url;
+  if(a.foto?.signedUrl) return a.foto.signedUrl;
+  if(a.foto_signed_url) return a.foto_signed_url;
+  if(a.foto_url) return a.foto_url;
+  if(a.fotoUrl) return a.fotoUrl;
+  if(typeof a.foto === "string" && a.foto.trim()) return a.foto;
+  return "";
+}
+
+function bloomAlumnoPhotoPath(a){
+  if(!a) return "";
+  return a.foto_path || a.fotoPath || a.foto?.path || a.foto?.storage_path || a.foto?.storagePath || "";
+}
+
+async function bloomAlumnoSignedPhoto(a){
+  const direct = bloomAlumnoPhotoDirect(a);
+  if(direct) return direct;
+
+  const path = bloomAlumnoPhotoPath(a);
+  if(!path) return "";
+
+  try{
+    let url = "";
+    if(typeof bloom3SignedUrl === "function"){
+      url = await bloom3SignedUrl(path);
+    }else if(typeof bloom3Client !== "undefined" && bloom3Client){
+      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+      const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, 300);
+      if(error) throw error;
+      url = data.signedUrl;
+    }
+    if(url){
+      a.foto = Object.assign({}, a.foto || {}, { path, signedUrl:url, storage:true, type:"image/*", name:"Foto alumno" });
+      a.foto_signed_url = url;
+      return url;
+    }
+  }catch(error){
+    console.warn("No se pudo cargar miniatura/foto del alumno", error);
+  }
+  return "";
+}
+
+function bloomAlumnoAvatar(a, cls=""){
+  const src = bloomAlumnoPhotoDirect(a);
+  return `
+    <div class="student-avatar bloom-alumno-avatar ${cls}" data-alumno-avatar-id="${esc(a?.id || "")}">
+      ${src ? `<img src="${esc(src)}" alt="Foto de ${esc(a?.nombre || "alumno")}" loading="lazy">` : `<span>${esc(bloomAlumnoInitials(a?.nombre))}</span>`}
+    </div>
+  `;
+}
+
+async function bloomHydrateAlumnoAvatars(){
+  const avatars = [...document.querySelectorAll("[data-alumno-avatar-id]")];
+  for(const avatar of avatars){
+    if(avatar.querySelector("img")) continue;
+    const alumno = bloomAlumnoGet(avatar.dataset.alumnoAvatarId);
+    if(!alumno) continue;
+    const url = await bloomAlumnoSignedPhoto(alumno);
+    if(url){
+      avatar.innerHTML = `<img src="${esc(url)}" alt="Foto de ${esc(alumno.nombre || "alumno")}" loading="lazy">`;
+      avatar.classList.add("has-photo");
+    }
+  }
+}
+
+function bloomAlumnoField(label, value){
+  const v = value === undefined || value === null || String(value).trim() === "" ? "Sin dato" : String(value);
+  return `<article><b>${esc(label)}</b><span>${esc(v)}</span></article>`;
+}
+
+/* Ficha completa robusta */
+function openStudentProfile(aid){
+  const a = bloomAlumnoGet(aid);
+  if(!a) {
+    alert("No se encontró el alumno seleccionado.");
+    return;
+  }
+
+  bloomAlumnoSignedPhoto(a).then(() => {
+    const empresa = (state.empresas || []).find(e => e.nombre === a.empresa);
+    const conv = (state.convenios || []).find(c => c.empresa === a.empresa || c.alumno === a.nombre);
+    const docs = (state.documentos || []).filter(d => d.alumno === a.nombre || d.empresa === a.empresa);
+    const follows = (state.seguimientos || []).filter(s => s.empresa === a.empresa || s.alumno === a.nombre);
+
+    const fotoUrl = bloomAlumnoPhotoDirect(a);
+
+    modal("Ficha del alumno", `
+      <section class="student-profile">
+        <aside class="student-profile-side">
+          <div class="student-profile-photo">
+            ${fotoUrl ? `<img src="${esc(fotoUrl)}" alt="Foto de ${esc(a.nombre || "alumno")}">` : `<span>${esc(bloomAlumnoInitials(a.nombre))}</span>`}
+          </div>
+          <h2>${esc(a.nombre || "Alumno")}</h2>
+          <p>${esc(a.estado || "sin asignar")}</p>
+          ${a.dni ? `<p><b>DNI/NIE:</b> ${esc(a.dni)}</p>` : ""}
+          <button class="primary" onclick="openAlumno('${esc(a.id)}')">Editar ficha</button>
+        </aside>
+
+        <main class="student-profile-main">
+          <section class="student-profile-grid">
+            ${[
+              ["DNI / NIE", a.dni],
+              ["Teléfono", a.telefono],
+              ["Correo", a.email],
+              ["Dirección", a.direccion],
+              ["NSS", a.nss],
+              ["Curso", a.curso],
+              ["Empresa", a.empresa || "Sin empresa"],
+              ["Tutor centro", a.tutor],
+              ["Tutor empresa", a.tutor_empresa],
+              ["Inicio", a.inicio || conv?.inicio],
+              ["Fin", a.fin || conv?.fin],
+              ["Horas", a.horas],
+              ["Evaluación", a.evaluacion],
+            ].map(([b,v]) => bloomAlumnoField(b,v)).join("")}
+          </section>
+
+          <section class="student-profile-section">
+            <div class="section-head"><div><p>Currículum</p><h3>Vista previa</h3></div></div>
+            ${filePreviewHTML(a.curriculum, a.id)}
+          </section>
+
+          <section class="student-profile-section">
+            <div class="section-head"><div><p>Documentos</p><h3>Relacionados</h3></div></div>
+            <div class="list">
+              ${docs.map(d => `
+                <article class="item">
+                  <div><b>${esc(d.nombre)}</b><p>${esc(d.tipo || "")} · ${esc(d.estado || "")}</p></div>
+                  <button onclick="previewAnyFile(state.documentos.find(x=>String(x.id)===String('${d.id}')).file,'${esc(d.nombre)}')">Ver</button>
+                </article>
+              `).join("") || "<p>No hay documentos asociados.</p>"}
+            </div>
+          </section>
+
+          <section class="student-profile-section">
+            <div class="section-head"><div><p>Seguimiento</p><h3>Actividad</h3></div></div>
+            <div class="list">
+              ${follows.map(s => `
+                <article class="item">
+                  <div><b>${esc(s.tipo || "Seguimiento")} · ${esc(s.empresa || "")}</b><p>${esc(s.fecha || "")} · ${esc(s.resultado || "")}</p></div>
+                </article>
+              `).join("") || "<p>Sin seguimientos asociados.</p>"}
+            </div>
+          </section>
+
+          <section class="student-profile-section">
+            <div class="section-head"><div><p>Observaciones</p><h3>Notas</h3></div></div>
+            <p>${esc(a.notas || "Sin observaciones.")}</p>
+          </section>
+        </main>
+      </section>
+    `, () => closeModal());
+  });
+}
+
+/* Formulario editar/crear robusto */
+function openAlumno(aid=null){
+  const isEdit = aid !== null && aid !== undefined && aid !== "";
+  const existing = isEdit ? bloomAlumnoGet(aid) : null;
+  const a = existing || {
+    nombre:"", dni:"", telefono:"", email:"", direccion:"", nss:"", curso:"",
+    estado:"sin asignar", empresa:"", inicio:"", fin:"", tutor:"", tutor_empresa:"",
+    horas:"", evaluacion:"", notas:"", foto:null, curriculum:null
+  };
+
+  bloomAlumnoSignedPhoto(a).then(() => {
+    const photo = bloomAlumnoPhotoDirect(a);
+
+    modal(isEdit ? "Editar alumno" : "Alumno", `
+      <form id="alumnoForm" class="form-grid">
+        <div class="student-photo-preview" id="studentPhotoEditPreview">
+          ${photo ? `<img src="${esc(photo)}" alt="Foto alumno">` : "Foto"}
+        </div>
+
+        <input name="nombre" value="${esc(a.nombre || "")}" placeholder="Nombre" required>
+        <input name="dni" value="${esc(a.dni || "")}" placeholder="DNI / NIE">
+        <input name="telefono" value="${esc(a.telefono || "")}" placeholder="Teléfono">
+        <input name="email" value="${esc(a.email || "")}" placeholder="Correo">
+        <input name="direccion" value="${esc(a.direccion || "")}" placeholder="Dirección">
+        <input name="nss" value="${esc(a.nss || "")}" placeholder="Nº Seguridad Social">
+        <input name="curso" value="${esc(a.curso || "")}" placeholder="Curso">
+
+        <label class="student-files">Foto
+          <input id="alumnoFoto" type="file" accept="image/*">
+        </label>
+
+        <label class="student-files">Currículum
+          <input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp">
+        </label>
+
+        <select name="empresa">
+          <option value="">Sin empresa</option>
+          ${(state.empresas || []).map(e => `<option ${a.empresa === e.nombre ? "selected" : ""}>${esc(e.nombre)}</option>`).join("")}
+        </select>
+
+        <select name="estado">
+          ${["sin asignar","propuesta","entrevista","prácticas","finalizado","archivado"].map(x => `<option ${a.estado === x ? "selected" : ""}>${x}</option>`).join("")}
+        </select>
+
+        <input name="inicio" type="date" value="${esc(a.inicio || "")}">
+        <input name="fin" type="date" value="${esc(a.fin || "")}">
+        <input name="tutor" value="${esc(a.tutor || "")}" placeholder="Tutor centro">
+        <input name="tutor_empresa" value="${esc(a.tutor_empresa || "")}" placeholder="Tutor empresa">
+        <input name="horas" value="${esc(a.horas || "")}" placeholder="Horas">
+        <input name="evaluacion" value="${esc(a.evaluacion || "")}" placeholder="Evaluación">
+        <textarea name="notas" placeholder="Notas">${esc(a.notas || "")}</textarea>
+      </form>
+    `, async () => {
+      const formData = Object.fromEntries(new FormData($("#alumnoForm")).entries());
+      formData.dni = String(formData.dni || "").trim().toUpperCase();
+
+      let target = existing;
+      if(!target){
+        target = { id: uid(), foto:null, curriculum:null };
+        state.alumnos.unshift(target);
+      }
+
+      Object.assign(target, formData, {
+        data: Object.assign({}, target.data || {}, formData)
+      });
+
+      const foto = $("#alumnoFoto")?.files?.[0];
+      const cv = $("#alumnoCV")?.files?.[0];
+
+      if(foto){
+        target.foto = await fileToData(foto);
+        if(target.foto?.data) target.foto_url = target.foto.data;
+      }
+
+      if(cv){
+        target.curriculum = await fileToData(cv);
+      }
+
+      log(`Alumno guardado: ${target.nombre}`);
+      save();
+      closeModal();
+      render();
+      toast(isEdit ? "Alumno modificado 🌸" : "Alumno creado 🌸");
+    });
+
+    setTimeout(() => {
+      const input = $("#alumnoFoto");
+      const preview = $("#studentPhotoEditPreview");
+      if(input && preview){
+        input.addEventListener("change", () => {
+          const file = input.files?.[0];
+          if(!file) return;
+          const reader = new FileReader();
+          reader.onload = () => preview.innerHTML = `<img src="${reader.result}" alt="Foto alumno">`;
+          reader.readAsDataURL(file);
+        });
+      }
+    }, 40);
+  });
+}
+
+function delAlumno(id){
+  if(confirm("¿Eliminar alumno?")){
+    state.alumnos = (state.alumnos || []).filter(a => !bloomAlunoIdEq(a.id, id));
+    save();
+    render();
+  }
+}
+
+/* Tabla alumnos con eventos seguros, sin romper botones internos */
+function renderAlumnos(){
+  const q = $("#studentSearch")?.value?.toLowerCase() || "";
+  const alumnos = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+
+  $("#alumnos").innerHTML = pageHead("Alumnos", "Alumnos", "Ficha completa del alumnado") + `
+    <section class="card table-card">
+      <div class="toolbar">
+        <input id="studentSearch" placeholder="Buscar alumno..." oninput="renderAlumnos()" value="${esc(q)}">
+        <button class="primary" onclick="openAlumno()">Añadir alumno</button>
+        ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
+        ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
+        ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Contacto</th>
+            <th>Empresa</th>
+            <th>Estado</th>
+            <th>Archivos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${alumnos.map(a => `
+            <tr class="student-row clickable-row" data-alumno-row-id="${esc(a.id)}">
+              <td>
+                <div class="student-cell">
+                  ${bloomAlumnoAvatar(a)}
+                  <div>
+                    <b>${esc(a.nombre || "Sin nombre")}</b><br>
+                    <small>NSS: ${esc(a.nss || "")}</small>
+                  </div>
+                </div>
+              </td>
+              <td>${esc(a.telefono || "")}<br><small>${esc(a.email || "")}</small></td>
+              <td>${esc(a.empresa || "Sin empresa")}</td>
+              <td><span class="badge">${esc(a.estado || "sin asignar")}</span></td>
+              <td>
+                <div class="student-files">
+                  ${(bloomAlumnoPhotoDirect(a) || bloomAlumnoPhotoPath(a)) ? `<button data-action="foto" data-alumno-id="${esc(a.id)}">Foto</button>` : `<span>Sin foto</span>`}
+                  ${a.curriculum?.data || a.curriculum?.url || a.curriculum?.path ? `<button data-action="cv" data-alumno-id="${esc(a.id)}">CV</button>` : `<span>Sin CV</span>`}
+                </div>
+              </td>
+              <td class="row-actions">
+                <button data-action="edit" data-alumno-id="${esc(a.id)}">Editar</button>
+                <button data-action="delete" data-alumno-id="${esc(a.id)}">Eliminar</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="6">No hay alumnos.</td></tr>`}
+        </tbody>
+      </table>
+    </section>
+  `;
+
+  bloomHydrateAlumnoAvatars();
+}
+
+/* Delegación de clicks: repara pinchar ficha y botones */
+document.addEventListener("click", function(event){
+  const actionBtn = event.target.closest("#alumnos [data-action]");
+  if(actionBtn){
+    event.preventDefault();
+    event.stopPropagation();
+
+    const id = actionBtn.dataset.alumnoId;
+    const alumno = bloomAlumnoGet(id);
+    const action = actionBtn.dataset.action;
+
+    if(action === "edit") return openAlumno(id);
+    if(action === "delete") return delAlumno(id);
+    if(action === "foto" && alumno) return previewAnyFile(alumno.foto, "Foto");
+    if(action === "cv" && alumno) return previewAnyFile(alumno.curriculum, "CV");
+    return;
+  }
+
+  const row = event.target.closest("#alumnos tr[data-alumno-row-id]");
+  if(row && !event.target.closest("button, a, input, select, textarea, label")){
+    event.preventDefault();
+    event.stopPropagation();
+    openStudentProfile(row.dataset.alumnoRowId);
+  }
+}, true);
+
+/* Si otras partes llaman con número o string, funcionan */
+window.openStudentProfile = openStudentProfile;
+window.openAlumno = openAlumno;
+window.delAlumno = delAlumno;
+window.renderAlumnos = renderAlumnos;
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — Modo ficha del alumno
+   Añade:
+   - Botón "Ver ficha" en cada alumno.
+   - Clic sobre la fila del alumno abre su ficha completa.
+   - Vista tipo ficha/360 con foto, datos personales, prácticas,
+     empresa, CV, documentos, seguimiento y observaciones.
+   - Mantiene el botón Editar separado para modificar datos.
+========================================================= */
+
+function bloomFichaIdEq(a,b){ return String(a) === String(b); }
+
+function bloomFichaAlumnoGet(id){
+  return (state.alumnos || []).find(a => bloomFichaIdEq(a.id, id));
+}
+
+function bloomFichaClean(value, fallback="Sin dato"){
+  if(value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  if(!text || text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return fallback;
+  return text;
+}
+
+function bloomFichaInitials(name){
+  const parts = String(name || "A").trim().split(/\s+/).filter(Boolean);
+  return (parts.length ? parts.slice(0,2).map(p => p[0]).join("") : "A").toUpperCase();
+}
+
+function bloomFichaPhotoSrc(a){
+  if(!a) return "";
+  if(a.foto?.data) return a.foto.data;
+  if(a.foto?.url) return a.foto.url;
+  if(a.foto?.signedUrl) return a.foto.signedUrl;
+  if(a.foto_signed_url) return a.foto_signed_url;
+  if(a.foto_url) return a.foto_url;
+  if(a.fotoUrl) return a.fotoUrl;
+  if(typeof a.foto === "string" && a.foto.trim()) return a.foto;
+  return "";
+}
+
+function bloomFichaPhotoPath(a){
+  if(!a) return "";
+  return a.foto_path || a.fotoPath || a.foto?.path || a.foto?.storage_path || a.foto?.storagePath || "";
+}
+
+async function bloomFichaResolvePhoto(a){
+  const direct = bloomFichaPhotoSrc(a);
+  if(direct) return direct;
+
+  const path = bloomFichaPhotoPath(a);
+  if(!path) return "";
+
+  try{
+    let url = "";
+    if(typeof bloom3SignedUrl === "function"){
+      url = await bloom3SignedUrl(path);
+    }else if(typeof bloom3Client !== "undefined" && bloom3Client){
+      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+      const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, 300);
+      if(error) throw error;
+      url = data.signedUrl;
+    }
+    if(url){
+      a.foto = Object.assign({}, a.foto || {}, { path, signedUrl:url, storage:true, type:"image/*", name:"Foto alumno" });
+      a.foto_signed_url = url;
+      return url;
+    }
+  }catch(error){
+    console.warn("No se pudo cargar la foto del alumno", error);
+  }
+
+  return "";
+}
+
+function bloomFichaAvatar(a, size="sm"){
+  const src = bloomFichaPhotoSrc(a);
+  return `
+    <div class="bloom-ficha-avatar ${size}" data-ficha-avatar-id="${esc(a?.id || "")}">
+      ${src ? `<img src="${esc(src)}" alt="Foto de ${esc(a?.nombre || "alumno")}" loading="lazy">` : `<span>${esc(bloomFichaInitials(a?.nombre))}</span>`}
+    </div>
+  `;
+}
+
+async function bloomFichaHydrateAvatars(){
+  const avatars = [...document.querySelectorAll("[data-ficha-avatar-id]")];
+  for(const avatar of avatars){
+    if(avatar.querySelector("img")) continue;
+    const alumno = bloomFichaAlumnoGet(avatar.dataset.fichaAvatarId);
+    if(!alumno) continue;
+    const url = await bloomFichaResolvePhoto(alumno);
+    if(url){
+      avatar.innerHTML = `<img src="${esc(url)}" alt="Foto de ${esc(alumno.nombre || "alumno")}" loading="lazy">`;
+      avatar.classList.add("has-photo");
+    }
+  }
+}
+
+function bloomFichaField(label, value){
+  return `
+    <article>
+      <b>${esc(label)}</b>
+      <span>${esc(bloomFichaClean(value))}</span>
+    </article>
+  `;
+}
+
+function bloomFichaProgress(a){
+  if(!a.inicio || !a.fin) return 0;
+  const start = new Date(a.inicio);
+  const end = new Date(a.fin);
+  const now = new Date();
+  if(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return 0;
+  if(now <= start) return 0;
+  if(now >= end) return 100;
+  return Math.round(((now - start) / (end - start)) * 100);
+}
+
+function bloomFichaList(items, empty){
+  return items.length ? `<div class="list">${items.join("")}</div>` : `<p class="empty-text">${esc(empty)}</p>`;
+}
+
+function openAlumnoFichaModo(id){
+  const a = bloomFichaAlumnoGet(id);
+  if(!a){
+    alert("No se encontró el alumno seleccionado.");
+    return;
+  }
+
+  bloomFichaResolvePhoto(a).then(() => {
+    const empresa = (state.empresas || []).find(e => e.nombre === a.empresa || String(e.id) === String(a.empresa_id || ""));
+    const convenio = (state.convenios || []).find(c => c.empresa === a.empresa || c.alumno === a.nombre || String(c.alumno_id || "") === String(a.id));
+    const docs = (state.documentos || []).filter(d => d.alumno === a.nombre || d.alumno_id === a.id || d.empresa === a.empresa);
+    const segs = (state.seguimientos || []).filter(s => s.alumno === a.nombre || s.alumno_id === a.id || s.empresa === a.empresa);
+    const progress = bloomFichaProgress(a);
+    const photo = bloomFichaPhotoSrc(a);
+
+    modal("Ficha del alumno", `
+      <section class="alumno-ficha360">
+        <aside class="alumno-ficha-side">
+          <div class="alumno-ficha-photo">
+            ${photo ? `<img src="${esc(photo)}" alt="Foto de ${esc(a.nombre || "alumno")}">` : `<span>${esc(bloomFichaInitials(a.nombre))}</span>`}
+          </div>
+          <h2>${esc(a.nombre || "Alumno")}</h2>
+          <p>${esc(a.dni || "Sin DNI/NIE")}</p>
+          <span class="badge">${esc(a.estado || "sin asignar")}</span>
+
+          <div class="alumno-ficha-progress">
+            <div><span>Progreso prácticas</span><b>${progress}%</b></div>
+            <i><em style="width:${progress}%"></em></i>
+          </div>
+
+          <button class="primary" onclick="openAlumno('${esc(a.id)}')">Modificar datos</button>
+          ${a.curriculum ? `<button class="soft-btn" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').curriculum,'Currículum')">Ver currículum</button>` : ""}
+          ${photo ? `<button class="soft-btn" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').foto,'Foto')">Ver foto</button>` : ""}
+        </aside>
+
+        <main class="alumno-ficha-main">
+          <section class="alumno-ficha-section">
+            <div class="section-head"><div><p>Datos personales</p><h3>Información general</h3></div></div>
+            <div class="alumno-ficha-grid">
+              ${bloomFichaField("Nombre", a.nombre)}
+              ${bloomFichaField("DNI / NIE", a.dni)}
+              ${bloomFichaField("Teléfono", a.telefono)}
+              ${bloomFichaField("Correo", a.email)}
+              ${bloomFichaField("Dirección", a.direccion)}
+              ${bloomFichaField("Nº Seguridad Social", a.nss)}
+              ${bloomFichaField("Curso", a.curso)}
+            </div>
+          </section>
+
+          <section class="alumno-ficha-section">
+            <div class="section-head"><div><p>Prácticas</p><h3>Datos académicos y FCT</h3></div></div>
+            <div class="alumno-ficha-grid">
+              ${bloomFichaField("Estado", a.estado)}
+              ${bloomFichaField("Empresa", a.empresa)}
+              ${bloomFichaField("Tutor centro", a.tutor)}
+              ${bloomFichaField("Tutor empresa", a.tutor_empresa)}
+              ${bloomFichaField("Inicio", a.inicio || convenio?.inicio)}
+              ${bloomFichaField("Fin", a.fin || convenio?.fin)}
+              ${bloomFichaField("Horas", a.horas)}
+              ${bloomFichaField("Evaluación", a.evaluacion)}
+              ${bloomFichaField("Convenio", convenio?.estado)}
+            </div>
+          </section>
+
+          <section class="alumno-ficha-section">
+            <div class="section-head"><div><p>Empresa</p><h3>Empresa asignada</h3></div></div>
+            ${empresa ? `
+              <article class="item">
+                <div>
+                  <b>${esc(empresa.nombre)}</b>
+                  <p>${esc(empresa.contacto || "Sin contacto")} · ${esc(empresa.telefono || "")}${empresa.email ? " · " + esc(empresa.email) : ""}</p>
+                </div>
+              </article>
+            ` : `<p class="empty-text">Sin empresa asignada.</p>`}
+          </section>
+
+          <section class="alumno-ficha-section">
+            <div class="section-head"><div><p>Documentación</p><h3>Archivos y previsualización</h3></div></div>
+            <div class="alumno-doc-grid">
+              ${photo ? `
+                <article class="alumno-doc-card" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').foto,'Foto')">
+                  <b>🖼 Foto</b><span>Ver / descargar</span>
+                </article>
+              ` : `
+                <article class="alumno-doc-card muted"><b>🖼 Foto</b><span>No adjuntada</span></article>
+              `}
+              ${a.curriculum ? `
+                <article class="alumno-doc-card" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').curriculum,'Currículum')">
+                  <b>📄 Currículum</b><span>Ver / descargar</span>
+                </article>
+              ` : `
+                <article class="alumno-doc-card muted"><b>📄 Currículum</b><span>No adjuntado</span></article>
+              `}
+              ${docs.map(d => `
+                <article class="alumno-doc-card" onclick="previewAnyFile(state.documentos.find(x=>String(x.id)===String('${d.id}')).file,'${esc(d.nombre)}')">
+                  <b>📎 ${esc(d.nombre || "Documento")}</b><span>${esc(d.tipo || "Documento")} · ${esc(d.estado || "")}</span>
+                </article>
+              `).join("")}
+            </div>
+          </section>
+
+          <section class="alumno-ficha-section">
+            <div class="section-head"><div><p>Seguimiento</p><h3>Historial relacionado</h3></div></div>
+            ${bloomFichaList(segs.map(s => `
+              <article class="item">
+                <div>
+                  <b>${esc(s.tipo || "Seguimiento")} · ${esc(s.fecha || "")}</b>
+                  <p>${esc(s.resultado || "")}${s.proxima ? " · Próxima: " + esc(s.proxima) : ""}</p>
+                </div>
+              </article>
+            `), "No hay seguimientos relacionados.")}
+          </section>
+
+          <section class="alumno-ficha-section">
+            <div class="section-head"><div><p>Observaciones</p><h3>Notas privadas</h3></div></div>
+            <p>${esc(a.notas || "Sin observaciones.")}</p>
+          </section>
+        </main>
+      </section>
+    `, () => closeModal());
+  });
+}
+
+/* Alias global: cualquier llamada previa abre la ficha nueva */
+window.openAlumnoFichaModo = openAlumnoFichaModo;
+window.openStudentProfile = openAlumnoFichaModo;
+
+/* Tabla alumnos con acceso explícito a ficha */
+const bloomFichaRenderAlumnosOriginal = typeof renderAlumnos === "function" ? renderAlumnos : null;
+renderAlumnos = function(){
+  const q = $("#studentSearch")?.value?.toLowerCase() || "";
+  const alumnos = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+
+  $("#alumnos").innerHTML = pageHead("Alumnos", "Alumnos", "Ficha completa del alumnado") + `
+    <section class="card table-card">
+      <div class="toolbar">
+        <input id="studentSearch" placeholder="Buscar alumno..." oninput="renderAlumnos()" value="${esc(q)}">
+        <button class="primary" onclick="openAlumno()">Añadir alumno</button>
+        ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
+        ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
+        ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Contacto</th>
+            <th>Empresa</th>
+            <th>Estado</th>
+            <th>Archivos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${alumnos.map(a => `
+            <tr class="student-row clickable-row" data-alumno-row-id="${esc(a.id)}">
+              <td>
+                <div class="student-cell">
+                  ${bloomFichaAvatar(a)}
+                  <div>
+                    <b>${esc(a.nombre || "Sin nombre")}</b><br>
+                    <small>${a.dni ? "DNI: " + esc(a.dni) + " · " : ""}NSS: ${esc(a.nss || "Sin NSS")}</small>
+                  </div>
+                </div>
+              </td>
+              <td>${esc(a.telefono || "")}<br><small>${esc(a.email || "")}</small></td>
+              <td>${esc(a.empresa || "Sin empresa")}</td>
+              <td><span class="badge">${esc(a.estado || "sin asignar")}</span></td>
+              <td>
+                <div class="student-files" onclick="event.stopPropagation()">
+                  ${(bloomFichaPhotoSrc(a) || bloomFichaPhotoPath(a)) ? `<button onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').foto,'Foto')">Foto</button>` : `<span>Sin foto</span>`}
+                  ${a.curriculum?.data || a.curriculum?.url || a.curriculum?.path ? `<button onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').curriculum,'CV')">CV</button>` : `<span>Sin CV</span>`}
+                </div>
+              </td>
+              <td class="row-actions" onclick="event.stopPropagation()">
+                <button onclick="openAlumno('${esc(a.id)}')">Modificar</button>
+                <button onclick="openAlumnoFichaModo('${esc(a.id)}')">Ver ficha</button>
+                <button onclick="delAlumno('${esc(a.id)}')">Eliminar</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="6">No hay alumnos.</td></tr>`}
+        </tbody>
+      </table>
+      <p class="hint-click">Haz clic sobre cualquier alumno o usa “Ver ficha” para visualizar todos sus datos en modo ficha.</p>
+    </section>
+  `;
+
+  bloomFichaHydrateAvatars();
+};
+
+/* Delegación de seguridad por si otra función vuelve a pintar filas */
+document.addEventListener("click", function(event){
+  const row = event.target.closest("#alumnos tr[data-alumno-row-id]");
+  if(!row) return;
+  if(event.target.closest("button, a, input, select, textarea, label")) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  openAlumnoFichaModo(row.dataset.alumnoRowId);
+}, true);

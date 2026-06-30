@@ -267,3 +267,34 @@ También añade:
 - previsualización instantánea al elegir una foto en el formulario,
 - foto recortada con `object-fit: cover`,
 - fallback a iniciales solo si no existe fotografía.
+
+
+## Fix — click, ficha y edición de alumno
+
+Se corrige el problema introducido por el fix de miniaturas:
+
+- Al pinchar sobre un alumno vuelve a abrirse la ficha completa.
+- El botón Editar vuelve a abrir el formulario.
+- El botón Eliminar funciona con IDs numéricos o de texto.
+- La foto sigue apareciendo en el cuadrado de la tabla.
+- Se mantiene compatibilidad con foto en Base64 y Supabase Storage privado.
+
+
+## Mejora — modo ficha del alumno
+
+Añadido sobre estos archivos:
+
+- Al hacer clic en un alumno se abre una ficha visual completa.
+- Nuevo botón **Ver ficha** en la tabla de alumnos.
+- Botón **Modificar** separado para editar los datos.
+- Ficha con:
+  - foto,
+  - DNI/NIE,
+  - datos personales,
+  - prácticas,
+  - empresa asignada,
+  - documentación,
+  - currículum,
+  - seguimiento,
+  - observaciones.
+- Compatible con fotos en Base64 y Supabase Storage privado mediante Signed URLs.

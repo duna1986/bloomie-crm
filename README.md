@@ -185,3 +185,45 @@ Incluye:
   - búsqueda,
   - exportación/importación cuando las funciones están disponibles.
 - Fichas completas con empresa, documentos, seguimiento y observaciones.
+
+
+## v3.0 — Importar y exportar XML
+
+Añadido en las pestañas **Empresas** y **Alumnos**:
+
+- Botón **Importar XML**.
+- Botón **Exportar XML**.
+- Exportación estructurada:
+  - `bloom_empresas.xml`
+  - `bloom_alumnos.xml`
+- Importación con vista previa.
+- Actualización de registros existentes si coinciden por:
+  - ID,
+  - nombre,
+  - email,
+  - DNI en alumnos.
+- Compatible con XML tipo:
+
+```xml
+<bloom>
+  <empresas>
+    <empresa>
+      <nombre>Empresa ejemplo</nombre>
+      <sector>Sanidad</sector>
+    </empresa>
+  </empresas>
+</bloom>
+```
+
+y
+
+```xml
+<bloom>
+  <alumnos>
+    <alumno>
+      <nombre>Alumno ejemplo</nombre>
+      <dni>12345678Z</dni>
+    </alumno>
+  </alumnos>
+</bloom>
+```

@@ -2630,3 +2630,290 @@ if(typeof exportExcel41 === "function"){
     }
   };
 }
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — Importar / Exportar XML
+   Añade a Empresas y Alumnos:
+   - Exportar XML
+   - Importar XML
+   Compatible con:
+   - <bloom><empresas><empresa>...</empresa></empresas></bloom>
+   - <bloom><alumnos><alumno>...</alumno></alumnos></bloom>
+   - XML simple con <empresa> o <alumno> como nodos raíz.
+========================================================= */
+
+function bloomXmlClean(value){
+  if(value === null || value === undefined) return "";
+  const text = String(value);
+  if(text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return "";
+  return text;
+}
+
+function bloomXmlEscape(value){
+  return bloomXmlClean(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&apos;");
+}
+
+function bloomXmlDownload(filename, xml){
+  const blob = new Blob([xml], { type:"application/xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+function bloomXmlField(item, key){
+  const value = item?.[key];
+  if(value === null || value === undefined) return "";
+  if(typeof value === "object") return "";
+  return bloomXmlEscape(value);
+}
+
+function bloomEmpresaXmlItem(e){
+  const empresa = typeof bloomEmpresaHydrate === "function" ? bloomEmpresaHydrate(e) : e;
+  const fields = [
+    "id","nombre","sector","subsector","ciudad","isla","web","fuente",
+    "acepta_practicas","tipo_practicas","contacto","telefono","email",
+    "estado","prioridad","notas"
+  ];
+  return `    <empresa>\n${fields.map(k => `      <${k}>${bloomXmlField(empresa,k)}</${k}>`).join("\n")}\n    </empresa>`;
+}
+
+function bloomAlumnoXmlItem(a){
+  const alumno = typeof bloomAlumnoHydrate === "function" ? bloomAlumnoHydrate(a) : a;
+  const fields = [
+    "id","nombre","dni","telefono","email","direccion","nss","curso",
+    "estado","empresa","inicio","fin","tutor","tutor_empresa","horas",
+    "evaluacion","notas"
+  ];
+  return `    <alumno>\n${fields.map(k => `      <${k}>${bloomXmlField(alumno,k)}</${k}>`).join("\n")}\n    </alumno>`;
+}
+
+function exportXML(type){
+  const now = new Date().toISOString();
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+
+  if(type === "empresas"){
+    const empresas = (state.empresas || []).map(e => typeof bloomEmpresaHydrate === "function" ? bloomEmpresaHydrate(e) : e);
+    xml += `<bloom version="3.0" entidad="empresas" generado="${bloomXmlEscape(now)}">\n  <empresas>\n${empresas.map(bloomEmpresaXmlItem).join("\n")}\n  </empresas>\n</bloom>\n`;
+    bloomXmlDownload("bloom_empresas.xml", xml);
+    toast("Empresas exportadas en XML 🌸");
+    return;
+  }
+
+  if(type === "alumnos"){
+    const alumnos = (state.alumnos || []).map(a => typeof bloomAlumnoHydrate === "function" ? bloomAlumnoHydrate(a) : a);
+    xml += `<bloom version="3.0" entidad="alumnos" generado="${bloomXmlEscape(now)}">\n  <alumnos>\n${alumnos.map(bloomAlumnoXmlItem).join("\n")}\n  </alumnos>\n</bloom>\n`;
+    bloomXmlDownload("bloom_alumnos.xml", xml);
+    toast("Alumnos exportados en XML 🌸");
+    return;
+  }
+}
+
+function bloomXmlText(node, names){
+  for(const name of names){
+    const el = node.querySelector(name);
+    if(el && el.textContent !== null && el.textContent !== undefined){
+      return el.textContent.trim();
+    }
+  }
+  return "";
+}
+
+function bloomXmlEmpresaFromNode(node){
+  return {
+    id: bloomXmlText(node, ["id"]) || uid(),
+    nombre: bloomXmlText(node, ["nombre","nombre_empresa","empresa"]),
+    sector: bloomXmlText(node, ["sector"]),
+    subsector: bloomXmlText(node, ["subsector"]),
+    ciudad: bloomXmlText(node, ["ciudad","localidad","municipio"]) || "Las Palmas",
+    isla: bloomXmlText(node, ["isla"]) || "Gran Canaria",
+    web: bloomXmlText(node, ["web","website","url"]),
+    fuente: bloomXmlText(node, ["fuente","origen"]),
+    acepta_practicas: bloomXmlText(node, ["acepta_practicas","acepta"]),
+    tipo_practicas: bloomXmlText(node, ["tipo_practicas","tipo"]),
+    contacto: bloomXmlText(node, ["contacto","contacto_nombre","persona_contacto"]),
+    telefono: bloomXmlText(node, ["telefono","contacto_telefono"]),
+    email: bloomXmlText(node, ["email","correo","contacto_email"]),
+    estado: bloomXmlText(node, ["estado","estado_crm"]) || "nueva",
+    prioridad: bloomXmlText(node, ["prioridad"]) || "media",
+    notas: bloomXmlText(node, ["notas","observaciones"]),
+  };
+}
+
+function bloomXmlAlumnoFromNode(node){
+  return {
+    id: bloomXmlText(node, ["id"]) || uid(),
+    nombre: bloomXmlText(node, ["nombre","nombre_alumno","alumno"]),
+    dni: bloomXmlText(node, ["dni","nif","nie","documento","documento_identidad"]).toUpperCase(),
+    telefono: bloomXmlText(node, ["telefono"]),
+    email: bloomXmlText(node, ["email","correo"]),
+    direccion: bloomXmlText(node, ["direccion","dirección"]),
+    nss: bloomXmlText(node, ["nss","seguridad_social"]),
+    curso: bloomXmlText(node, ["curso","curso_procedencia"]),
+    estado: bloomXmlText(node, ["estado"]) || "sin asignar",
+    empresa: bloomXmlText(node, ["empresa","empresa_nombre"]),
+    inicio: bloomXmlText(node, ["inicio","fecha_inicio"]),
+    fin: bloomXmlText(node, ["fin","fecha_fin"]),
+    tutor: bloomXmlText(node, ["tutor","tutor_centro"]),
+    tutor_empresa: bloomXmlText(node, ["tutor_empresa","tutorEmpresa"]),
+    horas: bloomXmlText(node, ["horas","horas_fct"]),
+    evaluacion: bloomXmlText(node, ["evaluacion","evaluación"]),
+    notas: bloomXmlText(node, ["notas","observaciones"]),
+  };
+}
+
+function bloomXmlFindNodes(doc, type){
+  const selector = type === "empresas" ? "empresa" : "alumno";
+  return [...doc.querySelectorAll(selector)];
+}
+
+function bloomXmlUpsert(type, rows, updateExisting){
+  const collection = type === "empresas" ? state.empresas : state.alumnos;
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  rows.forEach(row => {
+    if(!row.nombre){
+      skipped++;
+      return;
+    }
+
+    let idx = -1;
+    if(row.id) idx = collection.findIndex(x => String(x.id) === String(row.id));
+
+    if(idx < 0){
+      if(type === "empresas"){
+        idx = collection.findIndex(x => String((x.nombre || "")).toLowerCase() === String(row.nombre).toLowerCase());
+      }else{
+        idx = collection.findIndex(x =>
+          (row.email && String(x.email || "").toLowerCase() === String(row.email).toLowerCase()) ||
+          (row.dni && String(x.dni || "").toLowerCase() === String(row.dni).toLowerCase()) ||
+          String((x.nombre || "")).toLowerCase() === String(row.nombre).toLowerCase()
+        );
+      }
+    }
+
+    if(idx >= 0){
+      if(updateExisting){
+        collection[idx] = Object.assign({}, collection[idx], row, {
+          id: collection[idx].id,
+          data: Object.assign({}, collection[idx].data || {}, row)
+        });
+        updated++;
+      }else{
+        skipped++;
+      }
+    }else{
+      row.id = row.id || uid();
+      row.data = Object.assign({}, row);
+      collection.unshift(row);
+      created++;
+    }
+  });
+
+  return { created, updated, skipped };
+}
+
+function importXML(type){
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".xml,application/xml,text/xml";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if(!file) return;
+
+    try{
+      const text = await file.text();
+      const doc = new DOMParser().parseFromString(text, "application/xml");
+      const parseError = doc.querySelector("parsererror");
+      if(parseError){
+        alert("El XML no es válido.");
+        return;
+      }
+
+      const nodes = bloomXmlFindNodes(doc, type);
+      if(!nodes.length){
+        alert(type === "empresas" ? "No se encontraron nodos <empresa> en el XML." : "No se encontraron nodos <alumno> en el XML.");
+        return;
+      }
+
+      const rows = nodes.map(node => type === "empresas" ? bloomXmlEmpresaFromNode(node) : bloomXmlAlumnoFromNode(node));
+      const validRows = rows.filter(r => r.nombre);
+
+      if(!validRows.length){
+        alert("El XML no contiene registros con nombre.");
+        return;
+      }
+
+      const preview = validRows.slice(0,8).map(r => `
+        <article class="item">
+          <div>
+            <b>${esc(r.nombre)}</b>
+            <p>${type === "empresas" ? esc([r.sector, r.contacto, r.email].filter(Boolean).join(" · ")) : esc([r.dni, r.empresa, r.email].filter(Boolean).join(" · "))}</p>
+          </div>
+        </article>
+      `).join("");
+
+      modal(`Importar XML — ${type === "empresas" ? "Empresas" : "Alumnos"}`, `
+        <section>
+          <p>Se han detectado <b>${validRows.length}</b> registros en el archivo XML.</p>
+          <div class="xml-preview-list">${preview}</div>
+          ${validRows.length > 8 ? `<p class="hint-click">Vista previa de 8 registros.</p>` : ""}
+          <label class="xml-check">
+            <input id="xmlUpdateExisting" type="checkbox" checked>
+            Actualizar registros existentes si coinciden por ID, nombre, email o DNI.
+          </label>
+        </section>
+      `, () => {
+        const updateExisting = $("#xmlUpdateExisting")?.checked !== false;
+        const result = bloomXmlUpsert(type, validRows, updateExisting);
+        log(`${type === "empresas" ? "Empresas" : "Alumnos"} importados desde XML: ${result.created} nuevos, ${result.updated} actualizados`);
+        save();
+        closeModal();
+        render();
+        toast(`XML importado: ${result.created} nuevos · ${result.updated} actualizados 🌸`);
+      });
+
+    }catch(error){
+      alert("No se pudo importar el XML:\n\n" + error.message);
+    }
+  };
+  input.click();
+}
+
+/* Re-render con botones XML incluidos */
+const bloomXmlRenderEmpresasBase = renderEmpresas;
+renderEmpresas = function(){
+  bloomXmlRenderEmpresasBase();
+  const toolbar = $("#empresas .toolbar");
+  if(toolbar && !toolbar.querySelector("[data-xml='empresas-export']")){
+    toolbar.insertAdjacentHTML("beforeend", `
+      <button class="soft-btn" data-xml="empresas-import" onclick="importXML('empresas')">Importar XML</button>
+      <button class="soft-btn" data-xml="empresas-export" onclick="exportXML('empresas')">Exportar XML</button>
+    `);
+  }
+};
+
+const bloomXmlRenderAlumnosBase = renderAlumnos;
+renderAlumnos = function(){
+  bloomXmlRenderAlumnosBase();
+  const toolbar = $("#alumnos .toolbar");
+  if(toolbar && !toolbar.querySelector("[data-xml='alumnos-export']")){
+    toolbar.insertAdjacentHTML("beforeend", `
+      <button class="soft-btn" data-xml="alumnos-import" onclick="importXML('alumnos')">Importar XML</button>
+      <button class="soft-btn" data-xml="alumnos-export" onclick="exportXML('alumnos')">Exportar XML</button>
+    `);
+  }
+};

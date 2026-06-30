@@ -597,3 +597,33 @@ body.auth-locked .overlay{
   .profile360,.student-full-card{grid-template-columns:1fr}
   .profile360-side,.student-full-side{position:static}
 }
+
+
+
+/* Bloom CRM 3.0 — Importar/exportar XML */
+.xml-preview-list{
+  max-height:280px;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:rgba(255,255,255,.62);
+  padding:8px 14px;
+  margin:12px 0;
+}
+
+.xml-check{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  color:var(--muted);
+  font-weight:800;
+}
+
+.xml-check input{
+  width:18px;
+  height:18px;
+}

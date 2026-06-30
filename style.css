@@ -627,3 +627,35 @@ body.auth-locked .overlay{
   width:18px;
   height:18px;
 }
+
+
+
+/* Bloom CRM 3.0 — Plantillas Excel Base */
+.template-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:14px;
+  margin-top:16px;
+}
+
+.template-card{
+  display:grid;
+  gap:10px;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:#fff;
+}
+
+.template-card b{
+  font-size:18px;
+}
+
+.template-card span{
+  color:var(--muted);
+  line-height:1.45;
+}
+
+.template-card .primary{
+  width:100%;
+}

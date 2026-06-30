@@ -2917,3 +2917,121 @@ renderAlumnos = function(){
     `);
   }
 };
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — Plantillas Excel para montar bases
+   Añade descarga de plantillas XLSX ya preparadas:
+   - templates/plantilla_empresas_bloom.xlsx
+   - templates/plantilla_alumnos_bloom.xlsx
+========================================================= */
+
+function downloadBloomExcelTemplate(type){
+  const config = {
+    empresas: {
+      href: "templates/plantilla_empresas_bloom.xlsx",
+      filename: "plantilla_empresas_bloom.xlsx",
+      label: "Plantilla Empresas"
+    },
+    alumnos: {
+      href: "templates/plantilla_alumnos_bloom.xlsx",
+      filename: "plantilla_alumnos_bloom.xlsx",
+      label: "Plantilla Alumnos"
+    }
+  }[type];
+
+  if(!config){
+    alert("No se encontró la plantilla solicitada.");
+    return;
+  }
+
+  const a = document.createElement("a");
+  a.href = config.href;
+  a.download = config.filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  toast(`${config.label} descargada 🌸`);
+}
+
+/* Si ya existía el botón Plantilla Excel, ahora descarga el formato profesional */
+if(typeof downloadTemplateExcel41 === "function"){
+  const bloomOriginalTemplateDownload = downloadTemplateExcel41;
+  downloadTemplateExcel41 = function(type){
+    if(type === "empresas" || type === "alumnos"){
+      downloadBloomExcelTemplate(type);
+      return;
+    }
+    return bloomOriginalTemplateDownload(type);
+  };
+}
+
+/* Refuerza render Empresas: añade botón si no existe */
+const bloomTemplatesRenderEmpresasBase = renderEmpresas;
+renderEmpresas = function(){
+  bloomTemplatesRenderEmpresasBase();
+  const toolbar = $("#empresas .toolbar");
+  if(toolbar && !toolbar.querySelector("[data-template-xlsx='empresas']")){
+    toolbar.insertAdjacentHTML("beforeend", `
+      <button class="soft-btn" data-template-xlsx="empresas" onclick="downloadBloomExcelTemplate('empresas')">Plantilla Excel Base</button>
+    `);
+  }
+};
+
+/* Refuerza render Alumnos: añade botón si no existe */
+const bloomTemplatesRenderAlumnosBase = renderAlumnos;
+renderAlumnos = function(){
+  bloomTemplatesRenderAlumnosBase();
+  const toolbar = $("#alumnos .toolbar");
+  if(toolbar && !toolbar.querySelector("[data-template-xlsx='alumnos']")){
+    toolbar.insertAdjacentHTML("beforeend", `
+      <button class="soft-btn" data-template-xlsx="alumnos" onclick="downloadBloomExcelTemplate('alumnos')">Plantilla Excel Base</button>
+    `);
+  }
+};
+
+/* Modal informativo opcional desde Ajustes */
+function openExcelTemplatesInfo(){
+  modal("Plantillas Excel Bloom", `
+    <section>
+      <p>Descarga las plantillas oficiales para montar las bases de datos antes de importarlas al CRM.</p>
+      <div class="template-cards">
+        <article class="template-card">
+          <b>🏢 Empresas</b>
+          <span>Incluye columnas, ejemplo, instrucciones y desplegables para estado, prioridad e isla.</span>
+          <button class="primary" onclick="downloadBloomExcelTemplate('empresas')">Descargar empresas</button>
+        </article>
+        <article class="template-card">
+          <b>👨‍🎓 Alumnos</b>
+          <span>Incluye DNI/NIE, curso, empresa, fechas, tutor, evaluación y desplegables.</span>
+          <button class="primary" onclick="downloadBloomExcelTemplate('alumnos')">Descargar alumnos</button>
+        </article>
+      </div>
+    </section>
+  `, () => closeModal());
+}
+
+/* Añade acceso en Ajustes sin romper el render actual */
+const bloomTemplatesRenderAjustesBase = typeof renderAjustes === "function" ? renderAjustes : null;
+if(bloomTemplatesRenderAjustesBase){
+  renderAjustes = function(){
+    bloomTemplatesRenderAjustesBase();
+    const target = $("#ajustes .grid-2") || $("#ajustes");
+    if(target && !target.querySelector("[data-excel-template-panel]")){
+      target.insertAdjacentHTML("afterbegin", `
+        <section class="card table-card" data-excel-template-panel>
+          <div class="section-head">
+            <div><p>Plantillas</p><h3>Formatos Excel para montar bases</h3></div>
+          </div>
+          <p>Descarga las plantillas oficiales para preparar empresas y alumnos en Excel antes de importar.</p>
+          <div class="settings-row">
+            <button class="soft-btn" onclick="downloadBloomExcelTemplate('empresas')">Plantilla Empresas</button>
+            <button class="soft-btn" onclick="downloadBloomExcelTemplate('alumnos')">Plantilla Alumnos</button>
+            <button class="primary" onclick="openExcelTemplatesInfo()">Ver instrucciones</button>
+          </div>
+        </section>
+      `);
+    }
+  };
+}

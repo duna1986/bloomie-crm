@@ -2921,117 +2921,311 @@ renderAlumnos = function(){
 
 
 /* =========================================================
-   Bloom CRM 3.0 — Plantillas Excel para montar bases
-   Añade descarga de plantillas XLSX ya preparadas:
-   - templates/plantilla_empresas_bloom.xlsx
-   - templates/plantilla_alumnos_bloom.xlsx
+   Bloom CRM 3.0 — Importar / Exportar Excel funcional
+   Empresas y Alumnos:
+   - Importar .xlsx, .xls y .csv
+   - Exportar .xlsx
+   - Descargar plantillas .xlsx
+   - Vista previa antes de importar
 ========================================================= */
 
-function downloadBloomExcelTemplate(type){
-  const config = {
-    empresas: {
-      href: "templates/plantilla_empresas_bloom.xlsx",
-      filename: "plantilla_empresas_bloom.xlsx",
-      label: "Plantilla Empresas"
-    },
-    alumnos: {
-      href: "templates/plantilla_alumnos_bloom.xlsx",
-      filename: "plantilla_alumnos_bloom.xlsx",
-      label: "Plantilla Alumnos"
-    }
-  }[type];
+function bloomExcelClean(value){
+  if(value === null || value === undefined) return "";
+  const text = String(value);
+  if(text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return "";
+  return text.trim();
+}
 
-  if(!config){
-    alert("No se encontró la plantilla solicitada.");
+function bloomExcelNormKey(key){
+  return String(key || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function bloomExcelRowValue(row, keys){
+  const normalized = {};
+  Object.keys(row || {}).forEach(k => normalized[bloomExcelNormKey(k)] = row[k]);
+  for(const k of keys){
+    const nk = bloomExcelNormKey(k);
+    if(normalized[nk] !== undefined && normalized[nk] !== null && String(normalized[nk]).trim() !== ""){
+      return bloomExcelClean(normalized[nk]);
+    }
+  }
+  return "";
+}
+
+function bloomExcelDate(value){
+  if(!value) return "";
+  if(value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0,10);
+  if(typeof value === "number"){
+    const date = XLSX.SSF.parse_date_code(value);
+    if(date) return `${date.y}-${String(date.m).padStart(2,"0")}-${String(date.d).padStart(2,"0")}`;
+  }
+  return bloomExcelClean(value);
+}
+
+function bloomExcelEmpresaFromRow(row){
+  const empresa = {
+    id: bloomExcelRowValue(row, ["id"]) || uid(),
+    nombre: bloomExcelRowValue(row, ["nombre_empresa","nombre","empresa","company","name"]),
+    sector: bloomExcelRowValue(row, ["sector","actividad","categoria"]),
+    subsector: bloomExcelRowValue(row, ["subsector","sub_sector"]),
+    ciudad: bloomExcelRowValue(row, ["ciudad","localidad","municipio"]) || "Las Palmas",
+    isla: bloomExcelRowValue(row, ["isla"]) || "Gran Canaria",
+    web: bloomExcelRowValue(row, ["web","website","url"]),
+    fuente: bloomExcelRowValue(row, ["fuente","origen"]),
+    acepta_practicas: bloomExcelRowValue(row, ["acepta_practicas","acepta","practicas"]),
+    tipo_practicas: bloomExcelRowValue(row, ["tipo_practicas","tipo"]),
+    contacto: bloomExcelRowValue(row, ["contacto_nombre","contacto","persona_contacto","responsable"]),
+    email: bloomExcelRowValue(row, ["contacto_email","email","correo","mail"]),
+    telefono: bloomExcelRowValue(row, ["contacto_telefono","telefono","phone"]),
+    estado: bloomExcelRowValue(row, ["estado_crm","estado"]) || "nueva",
+    prioridad: bloomExcelRowValue(row, ["prioridad"]) || "media",
+    notas: bloomExcelRowValue(row, ["notas","observaciones","comentarios"])
+  };
+  empresa.data = Object.assign({}, empresa);
+  return empresa;
+}
+
+function bloomExcelAlumnoFromRow(row){
+  const alumno = {
+    id: bloomExcelRowValue(row, ["id"]) || uid(),
+    nombre: bloomExcelRowValue(row, ["nombre_alumno","nombre","alumno","name"]),
+    dni: bloomExcelRowValue(row, ["dni","nif","nie","documento","documento_identidad"]).toUpperCase(),
+    telefono: bloomExcelRowValue(row, ["telefono","phone"]),
+    email: bloomExcelRowValue(row, ["email","correo","mail"]),
+    direccion: bloomExcelRowValue(row, ["direccion","direccion_alumno","address"]),
+    nss: bloomExcelRowValue(row, ["nss","seguridad_social","numero_seguridad_social"]),
+    curso: bloomExcelRowValue(row, ["curso","curso_procedencia"]),
+    estado: bloomExcelRowValue(row, ["estado"]) || "sin asignar",
+    empresa: bloomExcelRowValue(row, ["empresa","empresa_nombre"]),
+    inicio: bloomExcelDate(row.inicio ?? row.fecha_inicio ?? row["Fecha inicio"]),
+    fin: bloomExcelDate(row.fin ?? row.fecha_fin ?? row["Fecha fin"]),
+    tutor: bloomExcelRowValue(row, ["tutor","tutor_centro"]),
+    tutor_empresa: bloomExcelRowValue(row, ["tutor_empresa","tutorEmpresa"]),
+    horas: bloomExcelRowValue(row, ["horas","horas_fct"]),
+    evaluacion: bloomExcelRowValue(row, ["evaluacion","evaluación"]),
+    notas: bloomExcelRowValue(row, ["notas","observaciones"])
+  };
+  alumno.data = Object.assign({}, alumno);
+  return alumno;
+}
+
+function bloomExcelExportRows(type){
+  if(type === "empresas"){
+    return (state.empresas || []).map(e => ({
+      nombre_empresa: e.nombre || "",
+      sector: e.sector || "",
+      subsector: e.subsector || "",
+      ciudad: e.ciudad || "",
+      isla: e.isla || "",
+      web: e.web || "",
+      fuente: e.fuente || "",
+      acepta_practicas: e.acepta_practicas || "",
+      tipo_practicas: e.tipo_practicas || "",
+      contacto_nombre: e.contacto || "",
+      contacto_email: e.email || "",
+      contacto_telefono: e.telefono || "",
+      estado_crm: e.estado || "",
+      prioridad: e.prioridad || "",
+      notas: e.notas || ""
+    }));
+  }
+
+  return (state.alumnos || []).map(a => ({
+    nombre_alumno: a.nombre || "",
+    dni: a.dni || "",
+    telefono: a.telefono || "",
+    email: a.email || "",
+    direccion: a.direccion || "",
+    nss: a.nss || "",
+    curso: a.curso || "",
+    estado: a.estado || "",
+    empresa: a.empresa || "",
+    inicio: a.inicio || "",
+    fin: a.fin || "",
+    tutor: a.tutor || "",
+    tutor_empresa: a.tutor_empresa || "",
+    horas: a.horas || "",
+    evaluacion: a.evaluacion || "",
+    notas: a.notas || ""
+  }));
+}
+
+function exportExcel(type){
+  if(!window.XLSX){
+    alert("No se pudo cargar la librería Excel. Revisa la conexión.");
     return;
   }
 
+  const rows = bloomExcelExportRows(type);
+  const wb = XLSX.utils.book_new();
+  const sheetName = type === "empresas" ? "Empresas" : "Alumnos";
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, type === "empresas" ? "bloom_empresas.xlsx" : "bloom_alumnos.xlsx");
+  toast(`${sheetName} exportados a Excel 🌸`);
+}
+
+/* Compatibilidad con funciones antiguas */
+exportExcel41 = exportExcel;
+
+function downloadTemplateExcel(type){
+  const file = type === "empresas"
+    ? "templates/plantilla_empresas_bloom.xlsx"
+    : "templates/plantilla_alumnos_bloom.xlsx";
+  const name = type === "empresas"
+    ? "plantilla_empresas_bloom.xlsx"
+    : "plantilla_alumnos_bloom.xlsx";
+
   const a = document.createElement("a");
-  a.href = config.href;
-  a.download = config.filename;
+  a.href = file;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  toast(`${config.label} descargada 🌸`);
+  toast("Plantilla Excel descargada 🌸");
 }
 
-/* Si ya existía el botón Plantilla Excel, ahora descarga el formato profesional */
-if(typeof downloadTemplateExcel41 === "function"){
-  const bloomOriginalTemplateDownload = downloadTemplateExcel41;
-  downloadTemplateExcel41 = function(type){
-    if(type === "empresas" || type === "alumnos"){
-      downloadBloomExcelTemplate(type);
+downloadTemplateExcel41 = downloadTemplateExcel;
+
+function bloomExcelUpsert(type, rows, updateExisting){
+  const collection = type === "empresas" ? state.empresas : state.alumnos;
+  let created = 0, updated = 0, skipped = 0;
+
+  rows.forEach(row => {
+    if(!row.nombre){
+      skipped++;
       return;
     }
-    return bloomOriginalTemplateDownload(type);
-  };
+
+    let idx = collection.findIndex(x => String(x.id) === String(row.id));
+
+    if(idx < 0 && type === "empresas"){
+      idx = collection.findIndex(x => String(x.nombre || "").toLowerCase() === String(row.nombre || "").toLowerCase());
+    }
+
+    if(idx < 0 && type === "alumnos"){
+      idx = collection.findIndex(x =>
+        (row.dni && String(x.dni || "").toLowerCase() === String(row.dni).toLowerCase()) ||
+        (row.email && String(x.email || "").toLowerCase() === String(row.email).toLowerCase()) ||
+        String(x.nombre || "").toLowerCase() === String(row.nombre || "").toLowerCase()
+      );
+    }
+
+    if(idx >= 0){
+      if(updateExisting){
+        collection[idx] = Object.assign({}, collection[idx], row, {
+          id: collection[idx].id,
+          data: Object.assign({}, collection[idx].data || {}, row)
+        });
+        updated++;
+      }else{
+        skipped++;
+      }
+    }else{
+      collection.unshift(row);
+      created++;
+    }
+  });
+
+  return { created, updated, skipped };
 }
 
-/* Refuerza render Empresas: añade botón si no existe */
-const bloomTemplatesRenderEmpresasBase = renderEmpresas;
-renderEmpresas = function(){
-  bloomTemplatesRenderEmpresasBase();
-  const toolbar = $("#empresas .toolbar");
-  if(toolbar && !toolbar.querySelector("[data-template-xlsx='empresas']")){
-    toolbar.insertAdjacentHTML("beforeend", `
-      <button class="soft-btn" data-template-xlsx="empresas" onclick="downloadBloomExcelTemplate('empresas')">Plantilla Excel Base</button>
-    `);
+function openImportExcel(type){
+  if(!window.XLSX){
+    alert("No se pudo cargar la librería Excel. Revisa la conexión.");
+    return;
   }
-};
 
-/* Refuerza render Alumnos: añade botón si no existe */
-const bloomTemplatesRenderAlumnosBase = renderAlumnos;
-renderAlumnos = function(){
-  bloomTemplatesRenderAlumnosBase();
-  const toolbar = $("#alumnos .toolbar");
-  if(toolbar && !toolbar.querySelector("[data-template-xlsx='alumnos']")){
-    toolbar.insertAdjacentHTML("beforeend", `
-      <button class="soft-btn" data-template-xlsx="alumnos" onclick="downloadBloomExcelTemplate('alumnos')">Plantilla Excel Base</button>
-    `);
-  }
-};
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".xlsx,.xls,.csv";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if(!file) return;
 
-/* Modal informativo opcional desde Ajustes */
-function openExcelTemplatesInfo(){
-  modal("Plantillas Excel Bloom", `
-    <section>
-      <p>Descarga las plantillas oficiales para montar las bases de datos antes de importarlas al CRM.</p>
-      <div class="template-cards">
-        <article class="template-card">
-          <b>🏢 Empresas</b>
-          <span>Incluye columnas, ejemplo, instrucciones y desplegables para estado, prioridad e isla.</span>
-          <button class="primary" onclick="downloadBloomExcelTemplate('empresas')">Descargar empresas</button>
-        </article>
-        <article class="template-card">
-          <b>👨‍🎓 Alumnos</b>
-          <span>Incluye DNI/NIE, curso, empresa, fechas, tutor, evaluación y desplegables.</span>
-          <button class="primary" onclick="downloadBloomExcelTemplate('alumnos')">Descargar alumnos</button>
-        </article>
-      </div>
-    </section>
-  `, () => closeModal());
-}
+    try{
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type:"array", cellDates:true });
+      const firstSheet = wb.SheetNames[0];
+      const ws = wb.Sheets[firstSheet];
+      const rawRows = XLSX.utils.sheet_to_json(ws, { defval:"", raw:false });
 
-/* Añade acceso en Ajustes sin romper el render actual */
-const bloomTemplatesRenderAjustesBase = typeof renderAjustes === "function" ? renderAjustes : null;
-if(bloomTemplatesRenderAjustesBase){
-  renderAjustes = function(){
-    bloomTemplatesRenderAjustesBase();
-    const target = $("#ajustes .grid-2") || $("#ajustes");
-    if(target && !target.querySelector("[data-excel-template-panel]")){
-      target.insertAdjacentHTML("afterbegin", `
-        <section class="card table-card" data-excel-template-panel>
-          <div class="section-head">
-            <div><p>Plantillas</p><h3>Formatos Excel para montar bases</h3></div>
+      const rows = rawRows
+        .map(row => type === "empresas" ? bloomExcelEmpresaFromRow(row) : bloomExcelAlumnoFromRow(row))
+        .filter(row => row.nombre);
+
+      if(!rows.length){
+        alert("No se encontraron registros válidos. Revisa que la plantilla tenga la columna de nombre.");
+        return;
+      }
+
+      const preview = rows.slice(0, 10).map(row => `
+        <article class="item">
+          <div>
+            <b>${esc(row.nombre)}</b>
+            <p>${type === "empresas"
+              ? esc([row.sector, row.contacto, row.email].filter(Boolean).join(" · "))
+              : esc([row.dni, row.empresa, row.email].filter(Boolean).join(" · "))}</p>
           </div>
-          <p>Descarga las plantillas oficiales para preparar empresas y alumnos en Excel antes de importar.</p>
-          <div class="settings-row">
-            <button class="soft-btn" onclick="downloadBloomExcelTemplate('empresas')">Plantilla Empresas</button>
-            <button class="soft-btn" onclick="downloadBloomExcelTemplate('alumnos')">Plantilla Alumnos</button>
-            <button class="primary" onclick="openExcelTemplatesInfo()">Ver instrucciones</button>
-          </div>
+        </article>
+      `).join("");
+
+      modal(`Importar Excel — ${type === "empresas" ? "Empresas" : "Alumnos"}`, `
+        <section>
+          <p>Archivo: <b>${esc(file.name)}</b></p>
+          <p>Se han detectado <b>${rows.length}</b> registros válidos.</p>
+          <div class="excel-preview-list">${preview}</div>
+          ${rows.length > 10 ? `<p class="hint-click">Vista previa de 10 registros.</p>` : ""}
+          <label class="excel-check">
+            <input id="excelUpdateExisting" type="checkbox" checked>
+            Actualizar registros existentes si coinciden por ID, nombre, email o DNI.
+          </label>
         </section>
-      `);
+      `, () => {
+        const updateExisting = $("#excelUpdateExisting")?.checked !== false;
+        const result = bloomExcelUpsert(type, rows, updateExisting);
+        log(`${type === "empresas" ? "Empresas" : "Alumnos"} importados desde Excel: ${result.created} nuevos, ${result.updated} actualizados`);
+        save();
+        closeModal();
+        render();
+        toast(`Excel importado: ${result.created} nuevos · ${result.updated} actualizados 🌸`);
+      });
+
+    }catch(error){
+      alert("No se pudo importar el Excel:\n\n" + error.message);
     }
   };
+
+  input.click();
 }
+
+/* Añadir botones siempre a las vistas aunque el render base cambie */
+const bloomExcelRenderEmpresasBase = renderEmpresas;
+renderEmpresas = function(){
+  bloomExcelRenderEmpresasBase();
+  const toolbar = $("#empresas .toolbar");
+  if(toolbar && !toolbar.querySelector("[data-excel-action='empresas-import']")){
+    toolbar.insertAdjacentHTML("beforeend", `
+      <button class="soft-btn" data-excel-action="empresas-import" onclick="openImportExcel('empresas')">Importar Excel</button>
+      <button class="soft-btn" data-excel-action="empresas-export" onclick="exportExcel('empresas')">Exportar Excel</button>
+      <button class="soft-btn" data-excel-action="empresas-template" onclick="downloadTemplateExcel('empresas')">Plantilla Excel</button>
+    `);
+  }
+};
+
+const bloomExcelRenderAlumnosBase = renderAlumnos;
+renderAlumnos = function(){
+  bloomExcelRenderAlumnosBase();
+  const toolbar = $("#alumnos .toolbar");
+  if(toolbar && !toolbar.querySelector("[data-excel-action='alumnos-import']")){
+    toolbar.insertAdjacentHTML("beforeend", `
+      <button class="soft-btn" data-excel-action="alumnos-import" onclick="openImportExcel('alumnos')">Importar Excel</button>
+      <button class="soft-btn" data-excel-action="alumnos-export" onclick="exportExcel('alumnos')">Exportar Excel</button>
+      <button class="soft-btn" data-excel-action="alumnos-template" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>
+    `);
+  }
+};

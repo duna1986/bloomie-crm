@@ -229,23 +229,21 @@ y
 ```
 
 
-## v3.0 — Plantillas Excel para montar bases
+## v3.0 — Importar y exportar Excel funcional
 
-Añadidas dos plantillas oficiales dentro de la carpeta `templates/`:
+Añadido/reparado en **Empresas** y **Alumnos**:
 
-- `templates/plantilla_empresas_bloom.xlsx`
-- `templates/plantilla_alumnos_bloom.xlsx`
+- Importar Excel `.xlsx`, `.xls` y `.csv`.
+- Exportar Excel `.xlsx`.
+- Descargar plantilla Excel Base.
+- Vista previa antes de importar.
+- Actualización de registros existentes si coinciden por:
+  - ID,
+  - nombre,
+  - email,
+  - DNI en alumnos.
+- Plantillas incluidas en:
+  - `templates/plantilla_empresas_bloom.xlsx`
+  - `templates/plantilla_alumnos_bloom.xlsx`
 
-Cada plantilla incluye:
-- Hoja principal para datos.
-- Hoja de instrucciones.
-- Hoja de listas/desplegables.
-- Fila de ejemplo.
-- Encabezados compatibles con la importación de Bloom CRM.
-- Formato visual Bloom.
-- Desplegables para campos como estado, prioridad, isla y evaluación.
-
-También se añaden botones:
-- En Empresas: **Plantilla Excel Base**.
-- En Alumnos: **Plantilla Excel Base**.
-- En Ajustes: panel de descarga de plantillas.
+Las plantillas incluyen hoja de instrucciones, listas desplegables y fila de ejemplo.

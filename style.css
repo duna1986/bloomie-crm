@@ -630,32 +630,30 @@ body.auth-locked .overlay{
 
 
 
-/* Bloom CRM 3.0 — Plantillas Excel Base */
-.template-cards{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-  gap:14px;
-  margin-top:16px;
-}
-
-.template-card{
-  display:grid;
-  gap:10px;
-  padding:16px;
+/* Bloom CRM 3.0 — importar/exportar Excel */
+.excel-preview-list{
+  max-height:290px;
+  overflow:auto;
   border:1px solid var(--line);
-  border-radius:22px;
+  border-radius:20px;
+  background:rgba(255,255,255,.62);
+  padding:8px 14px;
+  margin:12px 0;
+}
+
+.excel-check{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:16px;
   background:#fff;
-}
-
-.template-card b{
-  font-size:18px;
-}
-
-.template-card span{
   color:var(--muted);
-  line-height:1.45;
+  font-weight:800;
 }
 
-.template-card .primary{
-  width:100%;
+.excel-check input{
+  width:18px;
+  height:18px;
 }

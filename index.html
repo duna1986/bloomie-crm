@@ -1,53 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bloom CRM 3.0</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bloom CRM 5.0</title>
   <meta name="theme-color" content="#fff7fb" />
-  <link rel="stylesheet" href="style.css?v=4.0-profesional" />
+  <link rel="stylesheet" href="style.css?v=5.0" />
 </head>
 <body class="locked">
   <section id="authGate" class="auth-gate">
     <div class="auth-card">
-      <div class="auth-flower">✿</div>
+      <div class="auth-mark">✿</div>
       <h1>Bloom CRM</h1>
-      <p>Acceso privado para gestionar prácticas, empresas, expedientes y documentos.</p>
-
-      <div id="authGateStatus" class="auth-status">Inicia sesión para acceder a tus datos.</div>
-
+      <p>Acceso privado para gestionar empresas, alumnado, prácticas y documentos.</p>
+      <div id="authStatus" class="auth-status">Inicia sesión para cargar tus datos.</div>
       <div class="auth-form">
-        <input id="gateEmail" type="email" autocomplete="email" placeholder="Email">
-        <input id="gatePassword" type="password" autocomplete="current-password" placeholder="Contraseña">
-        <button class="primary" id="gateLoginBtn">Entrar</button>
-        <button class="soft-btn" id="gateSignupBtn">Crear cuenta</button>
-        <button class="soft-btn" id="gateMagicBtn">Enviar enlace mágico</button>
+        <input id="authEmail" type="email" placeholder="Email" autocomplete="email">
+        <input id="authPassword" type="password" placeholder="Contraseña" autocomplete="current-password">
+        <button id="loginBtn" class="primary">Entrar</button>
+        <button id="signupBtn" class="soft-btn">Crear cuenta</button>
+        <button id="magicBtn" class="ghost-btn">Enviar enlace mágico</button>
       </div>
-
-      <small>Tus datos solo se cargan después de iniciar sesión. Los documentos se guardan en Storage privado con enlaces temporales.</small>
+      <small>El CRM no carga datos hasta autenticarte. Supabase protege cada fila con RLS.</small>
     </div>
   </section>
-  <div class="petals"><i></i><i></i><i></i><i></i><i></i></div>
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="brand-icon">✿</div>
-      <div><h1>Bloom</h1><p>CRM Prácticas</p></div>
-    </div>
+
+  <aside class="sidebar">
+    <div class="brand"><div>✿</div><span><b>Bloom</b><small>CRM Prácticas</small></span></div>
     <nav id="nav">
-      <button data-view="dashboard" class="active"><span data-i="home"></span>Dashboard</button>
-      <button data-view="empresas"><span data-i="building"></span>Empresas</button>
-      <button data-view="alumnos"><span data-i="student"></span>Alumnos</button>
-      <button data-view="convenios"><span data-i="file"></span>Convenios</button>
-      <button data-view="expedientes"><span data-i="folder"></span>Expedientes</button>
-      <button data-view="documentos"><span data-i="archive"></span>Documentos</button>
-      <button data-view="seguimiento"><span data-i="phone"></span>Seguimiento</button>
-      <button data-view="emails"><span data-i="mail"></span>Emails</button>
-      <button data-view="agenda"><span data-i="calendar"></span>Agenda</button>
-      <button data-view="reportes"><span data-i="chart"></span>Reportes</button>
-      <button data-view="ajustes"><span data-i="settings"></span>Ajustes</button>
+      <button data-view="dashboard" class="active"><i data-icon="home"></i>Dashboard</button>
+      <button data-view="empresas"><i data-icon="building"></i>Empresas</button>
+      <button data-view="alumnos"><i data-icon="student"></i>Alumnos</button>
+      <button data-view="practicas"><i data-icon="briefcase"></i>Prácticas</button>
+      <button data-view="convenios"><i data-icon="file"></i>Convenios</button>
+      <button data-view="documentos"><i data-icon="archive"></i>Documentos</button>
+      <button data-view="seguimiento"><i data-icon="phone"></i>Seguimiento</button>
+      <button data-view="agenda"><i data-icon="calendar"></i>Agenda</button>
+      <button data-view="emails"><i data-icon="mail"></i>Emails</button>
+      <button data-view="reportes"><i data-icon="chart"></i>Reportes</button>
+      <button data-view="ajustes"><i data-icon="settings"></i>Ajustes</button>
     </nav>
     <section class="plant-card">
-      <div class="plant-wrap"><img src="assets/bloom-plant.png" alt="Flor Bloom" /></div>
+      <div class="plant-wrap"><img src="assets/bloom-plant.png" alt="Flor Bloom"></div>
       <h3 id="plantTitle">Que hoy florezcan nuevas oportunidades.</h3>
       <p id="plantMessage">Cada pequeño paso también cuenta.</p>
     </section>
@@ -55,42 +49,36 @@
 
   <main class="main">
     <header class="topbar">
-      <button class="mobile-menu" id="menuBtn">☰</button>
-      <label class="search">
-        <span data-i="search"></span>
-        <input id="globalSearch" placeholder="Buscar empresas, alumnos, convenios, documentos..." />
-      </label>
-      <div class="top-actions">
-        <span id="syncStatus" class="sync ok"><i></i> Sincronizado</span>
-        <button id="notificationsBtn" class="icon-btn heart" title="Notificaciones">♡<b id="alertCount">0</b></button>
-        <button id="quickBtn" class="icon-btn" title="Acciones rápidas">＋</button><button id="userPrivateBtn" class="icon-btn" title="Cuenta privada">👤</button>
-      </div>
+      <button id="menuBtn" class="mobile-menu">☰</button>
+      <label class="search"><i data-icon="search"></i><input id="searchInput" placeholder="Buscar empresas, alumnos, documentos..."></label>
+      <span id="syncStatus" class="sync"><i></i> Privado</span>
+      <button id="notificationsBtn" class="icon-btn">♡<b id="alertCount">0</b></button>
+      <button id="quickBtn" class="icon-btn">＋</button>
+      <button id="accountBtn" class="icon-btn">👤</button>
     </header>
     <section id="searchResults" class="search-results hidden"></section>
+
     <section id="dashboard" class="view active"></section>
     <section id="empresas" class="view"></section>
     <section id="alumnos" class="view"></section>
+    <section id="practicas" class="view"></section>
     <section id="convenios" class="view"></section>
-    <section id="expedientes" class="view"></section>
     <section id="documentos" class="view"></section>
     <section id="seguimiento" class="view"></section>
-    <section id="emails" class="view"></section>
     <section id="agenda" class="view"></section>
+    <section id="emails" class="view"></section>
     <section id="reportes" class="view"></section>
     <section id="ajustes" class="view"></section>
   </main>
 
-  <aside id="drawer" class="drawer">
-    <div class="drawer-head"><div><p>Revisiones</p><h2>Notificaciones</h2></div><button id="closeDrawer" class="icon-btn">×</button></div>
-    <div id="drawerList" class="drawer-list"></div>
-  </aside>
+  <aside id="drawer" class="drawer"><div class="drawer-head"><div><p>Revisiones</p><h2>Notificaciones</h2></div><button id="closeDrawer" class="icon-btn">×</button></div><div id="drawerList"></div></aside>
   <div id="overlay" class="overlay"></div>
   <dialog id="modal"></dialog>
   <div id="toast"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js?v=4.0-profesional"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <script src="script.js?v=5.0"></script>
 </body>
 </html>

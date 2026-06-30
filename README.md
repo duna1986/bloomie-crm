@@ -1,25 +1,24 @@
-# Bloom CRM 4.0 — Profesional privado
+# Bloom CRM 5.0 — Base limpia privada
 
-Esta versión migra Bloom CRM hacia una arquitectura profesional:
+Reescritura desde cero para evitar conflictos de parches.
 
-- Pantalla de login obligatoria antes de acceder al CRM.
-- Registro e inicio de sesión con Supabase Auth.
-- Datos separados por tablas: empresas, alumnos, convenios, documentos, carpetas, seguimientos, emails y actividad.
-- RLS por `owner_id = auth.uid()`.
-- Bucket de Storage privado.
-- Documentos con Signed URLs temporales.
-- Sin usar `localStorage` como origen principal de datos.
-- Sin JSON gigante único.
-- Cada entidad se guarda por separado.
+Incluye:
+- Login obligatorio con Supabase Auth.
+- Tablas normalizadas por entidad.
+- RLS por usuario.
+- Storage privado con signed URLs.
+- Empresas, Alumnos con DNI, Prácticas, Convenios, Documentos, Seguimiento, Agenda, Emails, Reportes.
+- Importar/exportar Excel en Empresas y Alumnos.
+- Documentos en Storage privado, no en JSON gigante.
+- Dashboard, pipeline arrastrable y estética Bloom.
 
-## Pasos obligatorios en Supabase
+## Configuración
 
-1. Ve a Authentication > Providers > Email y activa Email.
-2. Abre la app, entra en Ajustes y descarga `bloom-crm-4-schema-privado.sql`.
-3. Ejecuta ese SQL en Supabase SQL Editor.
-4. Vuelve a la app, crea cuenta o inicia sesión.
-5. A partir de ahí los datos y documentos se guardan de forma privada por usuario.
+1. Sube los archivos a GitHub Pages.
+2. Abre la web.
+3. Crea cuenta o inicia sesión.
+4. En Ajustes descarga el SQL.
+5. Ejecuta el SQL en Supabase SQL Editor.
+6. Recarga la web.
 
-## Importante
-
-GitHub Pages solo sirve la app. La privacidad real la garantiza Supabase con Auth + RLS + Storage privado.
+Sin ejecutar el SQL, la app no podrá cargar/guardar tablas.

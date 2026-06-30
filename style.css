@@ -657,3 +657,67 @@ body.auth-locked .overlay{
   width:18px;
   height:18px;
 }
+
+
+
+/* Bloom CRM 3.0 — foto real dentro del cuadrado de iniciales */
+.student-cell{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.student-avatar,
+.bloom-photo-avatar{
+  width:62px!important;
+  height:62px!important;
+  min-width:62px!important;
+  border-radius:20px!important;
+  overflow:hidden!important;
+  display:grid!important;
+  place-items:center!important;
+  background:linear-gradient(135deg,#ffe7f0,#fff)!important;
+  color:var(--pink)!important;
+  border:1px solid var(--line)!important;
+  font-weight:900!important;
+  box-shadow:0 10px 24px rgba(188,86,122,.10);
+}
+
+.student-avatar img,
+.bloom-photo-avatar img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  display:block!important;
+}
+
+.bloom-photo-avatar.has-photo{
+  padding:0!important;
+  background:#fff!important;
+}
+
+.student-photo-preview{
+  width:138px!important;
+  height:138px!important;
+  border-radius:32px!important;
+  overflow:hidden!important;
+  display:grid!important;
+  place-items:center!important;
+  background:linear-gradient(135deg,#ffe7f0,#fff)!important;
+  color:var(--pink)!important;
+  font-weight:900!important;
+  border:1px solid var(--line)!important;
+}
+
+.student-photo-preview img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  display:block!important;
+}
+
+.student-profile-photo img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+}

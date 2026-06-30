@@ -247,3 +247,23 @@ Añadido/reparado en **Empresas** y **Alumnos**:
   - `templates/plantilla_alumnos_bloom.xlsx`
 
 Las plantillas incluyen hoja de instrucciones, listas desplegables y fila de ejemplo.
+
+
+## Fix final — miniatura de foto del alumno
+
+Aplicado sobre los archivos subidos en esta versión.
+
+Corrige que en la tabla de Alumnos aparezca la inicial en lugar de la foto.
+
+Ahora el cuadrado de la lista carga la imagen real desde:
+- `foto.data`
+- `foto.url`
+- `foto_url`
+- `foto_path`
+- `foto.path`
+- Supabase Storage privado mediante Signed URL temporal.
+
+También añade:
+- previsualización instantánea al elegir una foto en el formulario,
+- foto recortada con `object-fit: cover`,
+- fallback a iniciales solo si no existe fotografía.

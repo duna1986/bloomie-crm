@@ -3229,3 +3229,286 @@ renderAlumnos = function(){
     `);
   }
 };
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — FIX FINAL miniatura foto alumno
+   Objetivo:
+   - Sustituir la inicial del cuadrado por la foto real.
+   - Funciona con foto.data, foto.url, foto_url, foto_path y foto.path.
+   - Si la foto está en Supabase Storage privado, crea Signed URL.
+   - Previsualización instantánea al elegir foto en el formulario.
+========================================================= */
+
+const BLOOM_STUDENT_PHOTO_CACHE = new Map();
+
+function bloomPhotoIsEmpty(value){
+  return value === null ||
+    value === undefined ||
+    String(value).trim() === "" ||
+    String(value).toLowerCase() === "null" ||
+    String(value).toLowerCase() === "undefined";
+}
+
+function bloomPhotoInitials(name){
+  const parts = String(name || "A").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "A";
+  return parts.slice(0, 2).map(x => x[0]).join("").toUpperCase();
+}
+
+function bloomPhotoDirectSrc(alumno){
+  if(!alumno) return "";
+  if(alumno.foto?.data) return alumno.foto.data;
+  if(alumno.foto?.url) return alumno.foto.url;
+  if(alumno.foto?.signedUrl) return alumno.foto.signedUrl;
+  if(alumno.foto_signed_url) return alumno.foto_signed_url;
+  if(alumno.foto_url) return alumno.foto_url;
+  if(alumno.fotoUrl) return alumno.fotoUrl;
+  if(typeof alumno.foto === "string" && !bloomPhotoIsEmpty(alumno.foto)) return alumno.foto;
+  return "";
+}
+
+function bloomPhotoStoragePath(alumno){
+  if(!alumno) return "";
+  return alumno.foto_path ||
+    alumno.fotoPath ||
+    alumno.foto?.path ||
+    alumno.foto?.storage_path ||
+    alumno.foto?.storagePath ||
+    "";
+}
+
+function bloomPhotoAvatarHTML(alumno, size="sm"){
+  const src = bloomPhotoDirectSrc(alumno);
+  const path = bloomPhotoStoragePath(alumno);
+  const id = alumno?.id || "";
+  const initials = bloomPhotoInitials(alumno?.nombre);
+
+  return `
+    <div class="student-avatar bloom-photo-avatar ${size}" data-photo-student-id="${esc(id)}" data-photo-path="${esc(path)}">
+      ${src
+        ? `<img src="${esc(src)}" alt="Foto de ${esc(alumno?.nombre || "alumno")}" loading="lazy">`
+        : `<span>${esc(initials)}</span>`}
+    </div>
+  `;
+}
+
+async function bloomPhotoCreateSignedUrl(path){
+  if(!path) return "";
+  const cached = BLOOM_STUDENT_PHOTO_CACHE.get(path);
+  if(cached && cached.exp > Date.now() + 30000) return cached.url;
+
+  try{
+    if(typeof bloom3SignedUrl === "function"){
+      const url = await bloom3SignedUrl(path);
+      BLOOM_STUDENT_PHOTO_CACHE.set(path, { url, exp: Date.now() + 280000 });
+      return url;
+    }
+
+    if(typeof bloom3Client !== "undefined" && bloom3Client){
+      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+      const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, 300);
+      if(error) throw error;
+      BLOOM_STUDENT_PHOTO_CACHE.set(path, { url: data.signedUrl, exp: Date.now() + 280000 });
+      return data.signedUrl;
+    }
+
+    if(typeof supabase !== "undefined" && supabase?.storage){
+      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 300);
+      if(error) throw error;
+      BLOOM_STUDENT_PHOTO_CACHE.set(path, { url: data.signedUrl, exp: Date.now() + 280000 });
+      return data.signedUrl;
+    }
+  }catch(error){
+    console.warn("Bloom CRM: no se pudo obtener Signed URL para foto", error);
+  }
+
+  return "";
+}
+
+async function bloomPhotoResolve(alumno){
+  const direct = bloomPhotoDirectSrc(alumno);
+  if(direct) return direct;
+
+  const path = bloomPhotoStoragePath(alumno);
+  if(!path) return "";
+
+  const signedUrl = await bloomPhotoCreateSignedUrl(path);
+  if(signedUrl){
+    alumno.foto = Object.assign({}, alumno.foto || {}, {
+      path,
+      signedUrl,
+      storage: true,
+      type: "image/*",
+      name: alumno.foto?.name || "Foto alumno"
+    });
+    alumno.foto_signed_url = signedUrl;
+  }
+  return signedUrl;
+}
+
+async function bloomPhotoHydrateVisibleAvatars(){
+  const avatars = [...document.querySelectorAll("[data-photo-student-id]")];
+
+  for(const avatar of avatars){
+    if(avatar.querySelector("img")) continue;
+
+    const id = avatar.dataset.photoStudentId;
+    const alumno = (state.alumnos || []).find(a => String(a.id) === String(id));
+    if(!alumno) continue;
+
+    const url = await bloomPhotoResolve(alumno);
+    if(url){
+      avatar.innerHTML = `<img src="${esc(url)}" alt="Foto de ${esc(alumno.nombre || "alumno")}" loading="lazy">`;
+      avatar.classList.add("has-photo");
+    }
+  }
+}
+
+function bloomPhotoPatchRenderCycle(){
+  setTimeout(bloomPhotoHydrateVisibleAvatars, 40);
+  setTimeout(bloomPhotoHydrateVisibleAvatars, 250);
+}
+
+/* Render alumnos completo con foto en el primer cuadrado */
+renderAlumnos = function(){
+  const q = $("#studentSearch")?.value?.toLowerCase() || "";
+  const alumnos = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+
+  $("#alumnos").innerHTML = pageHead("Alumnos", "Alumnos", "Ficha completa del alumnado") + `
+    <section class="card table-card">
+      <div class="toolbar">
+        <input id="studentSearch" placeholder="Buscar alumno..." oninput="renderAlumnos()" value="${esc(q)}">
+        <button class="primary" onclick="openAlumno()">Añadir alumno</button>
+        ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
+        ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
+        ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Contacto</th>
+            <th>Empresa</th>
+            <th>Estado</th>
+            <th>Archivos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${alumnos.map(a => `
+            <tr class="student-row" data-photo-student-row="${esc(a.id)}" onclick="openStudentProfile(${JSON.stringify(String(a.id))})">
+              <td>
+                <div class="student-cell">
+                  ${bloomPhotoAvatarHTML(a, "sm")}
+                  <div>
+                    <b>${esc(a.nombre || "Sin nombre")}</b><br>
+                    <small>NSS: ${esc(a.nss || "")}</small>
+                  </div>
+                </div>
+              </td>
+              <td>${esc(a.telefono || "")}<br><small>${esc(a.email || "")}</small></td>
+              <td>${esc(a.empresa || "Sin empresa")}</td>
+              <td><span class="badge">${esc(a.estado || "sin asignar")}</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="student-files">
+                  ${(bloomPhotoDirectSrc(a) || bloomPhotoStoragePath(a)) ? `<button onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).foto,'Foto')">Foto</button>` : `<span>Sin foto</span>`}
+                  ${a.curriculum?.data || a.curriculum?.url || a.curriculum?.path ? `<button onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).curriculum,'CV')">CV</button>` : `<span>Sin CV</span>`}
+                </div>
+              </td>
+              <td class="row-actions" onclick="event.stopPropagation()">
+                <button onclick="openAlumno(${JSON.stringify(String(a.id))})">Editar</button>
+                <button onclick="delAlumno(${JSON.stringify(String(a.id))})">Eliminar</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="6">No hay alumnos.</td></tr>`}
+        </tbody>
+      </table>
+    </section>
+  `;
+
+  bloomPhotoPatchRenderCycle();
+};
+
+/* Ficha alumno: también resuelve foto Storage privado */
+const bloomPhotoOriginalOpenStudentProfile = openStudentProfile;
+openStudentProfile = function(aid){
+  const alumno = (state.alumnos || []).find(a => String(a.id) === String(aid));
+  if(!alumno) return bloomPhotoOriginalOpenStudentProfile(aid);
+
+  bloomPhotoResolve(alumno).then(() => {
+    const original = alumno.foto;
+    if(alumno.foto_signed_url && !alumno.foto?.data){
+      alumno.foto = Object.assign({}, alumno.foto || {}, {
+        data: alumno.foto_signed_url,
+        signedUrl: alumno.foto_signed_url,
+        type: "image/*"
+      });
+    }
+    bloomPhotoOriginalOpenStudentProfile(aid);
+    alumno.foto = original || alumno.foto;
+  });
+};
+
+/* Editar alumno: previsualización instantánea en el mismo cuadrado */
+const bloomPhotoOriginalOpenAlumno = openAlumno;
+openAlumno = function(aid=null){
+  bloomPhotoOriginalOpenAlumno(aid);
+
+  setTimeout(async () => {
+    const form = $("#alumnoForm");
+    const input = $("#alumnoFoto");
+    if(!form || !input) return;
+
+    let preview = form.querySelector(".student-photo-preview");
+    if(!preview) return;
+
+    const alumno = (state.alumnos || []).find(a => String(a.id) === String(aid));
+    if(alumno){
+      const url = await bloomPhotoResolve(alumno);
+      if(url && !preview.querySelector("img")){
+        preview.innerHTML = `<img src="${esc(url)}" alt="Foto alumno">`;
+      }
+    }
+
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.innerHTML = `<img src="${reader.result}" alt="Foto alumno">`;
+      };
+      reader.readAsDataURL(file);
+    });
+  }, 60);
+};
+
+/* Guardar foto: si es imagen, asegurar foto_url para miniatura inmediata */
+const bloomPhotoOriginalFileToData = fileToData;
+fileToData = async function(file){
+  const result = await bloomPhotoOriginalFileToData(file);
+  if(result && file?.type?.startsWith("image/")){
+    result.kind = "student-photo";
+  }
+  return result;
+};
+
+/* Tras cualquier render, intentar sustituir iniciales */
+const bloomPhotoOriginalRender = render;
+render = function(){
+  bloomPhotoOriginalRender();
+  bloomPhotoPatchRenderCycle();
+};
+
+/* Tras cargar nube, intentar sustituir iniciales */
+if(typeof loadCloud === "function"){
+  const bloomPhotoOriginalLoadCloud = loadCloud;
+  loadCloud = async function(){
+    await bloomPhotoOriginalLoadCloud();
+    bloomPhotoPatchRenderCycle();
+  };
+}
+
+document.addEventListener("DOMContentLoaded", bloomPhotoPatchRenderCycle);

@@ -4,7 +4,7 @@ const KEY="bloom_crm_3_state"; const SUPABASE_URL="https://wmvalzkkoivfwhhwhplw.
 const icons={home:'<svg viewBox="0 0 24 24"><path d="M4 10.6 12 4l8 6.6V20h-6v-5h-4v5H4Z"/></svg>',building:'<svg viewBox="0 0 24 24"><path d="M5 21V5h14v16M8 9h2M14 9h2M8 13h2M14 13h2M3 21h18"/></svg>',student:'<svg viewBox="0 0 24 24"><path d="M12 4 3 8.5 12 13l9-4.5Z"/><path d="M6 11v5c2 2 10 2 12 0v-5"/></svg>',file:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',folder:'<svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10H3Z"/></svg>',archive:'<svg viewBox="0 0 24 24"><path d="M3 7h18v4H3Z"/><path d="M5 11h14l-2 8H7Z"/></svg>',phone:'<svg viewBox="0 0 24 24"><path d="M6 4l4 4-2 2c1.5 3 3.5 5 6.5 6.5l2-2 4 4-2 3C10 20 4 14 3 6Z"/></svg>',mail:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 8 8 5 8-5"/></svg>',calendar:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',chart:'<svg viewBox="0 0 24 24"><path d="M4 20h16M7 17V9M12 17V5M17 17v-6"/></svg>',settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4"/></svg>',search:'<svg viewBox="0 0 24 24"><path d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>',users:'<svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><path d="M3 20c1-4 11-4 12 0"/><circle cx="17" cy="10" r="2"/><path d="M15 16c2 0 4 1 5 4"/></svg>'};
 function uid(){return Date.now()+Math.floor(Math.random()*9999)} function today(){return new Date().toISOString().slice(0,10)} function datePlus(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)} function esc(s=""){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))} function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)} function fileToData(file){return new Promise(res=>{if(!file)return res(null);const r=new FileReader();r.onload=()=>res({name:file.name,type:file.type,size:file.size,data:r.result});r.readAsDataURL(file)})}
 const seed={empresas:[{id:uid(),nombre:"Deloitte",sector:"Consultoría",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"nueva",prioridad:"alta",contacto:"Laura Pérez",telefono:"928000001",email:"rrhh@deloitte.es",notas:"Potencial para administración y finanzas"},{id:uid()+1,nombre:"AON",sector:"Seguros",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"contactada",prioridad:"alta",contacto:"Marta Sosa",telefono:"928000002",email:"canarias@aon.es",notas:"Enviar convenio"},{id:uid()+2,nombre:"EY",sector:"Consultoría",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"interesada",prioridad:"media",contacto:"Javier Martín",telefono:"928000003",email:"talent@ey.es",notas:"Interesados"},{id:uid()+3,nombre:"Domingo Alonso",sector:"Automoción",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"convenio",prioridad:"alta",contacto:"Beatriz Vega",telefono:"928000005",email:"personas@domingoalonso.com",notas:"Convenio enviado"},{id:uid()+4,nombre:"Clínica Dental",sector:"Salud",isla:"Gran Canaria",ciudad:"Las Palmas",estado:"activa",prioridad:"baja",contacto:"Sara González",telefono:"928000006",email:"info@clinicadental.es",notas:"Prácticas activas"}],alumnos:[{id:uid()+10,nombre:"María López",telefono:"600000001",email:"maria@email.com",direccion:"Las Palmas",nss:"123456789012",estado:"sin asignar",empresa:"",inicio:"",fin:"",tutor:"",notas:"",foto:null,curriculum:null},{id:uid()+11,nombre:"Juan Pérez",telefono:"600000002",email:"juan@email.com",direccion:"Telde",nss:"223456789012",estado:"prácticas",empresa:"Clínica Dental",inicio:today(),fin:datePlus(60),tutor:"Sara González",notas:"Buen progreso",foto:null,curriculum:null}],convenios:[{id:uid()+20,empresa:"AON",centro:"Centro educativo",inicio:today(),fin:datePlus(90),tutorEmpresa:"Marta Sosa",tutorCentro:"María García",estado:"pendiente",anexos:[]},{id:uid()+21,empresa:"Domingo Alonso",centro:"Centro educativo",inicio:today(),fin:datePlus(100),tutorEmpresa:"Beatriz Vega",tutorCentro:"María García",estado:"enviado",anexos:[]}],documentos:[],carpetas:[{id:"all",nombre:"Todas"},{id:"sin",nombre:"Sin carpeta"},{id:"curso",nombre:"Curso 2025/26"},{id:"conv",nombre:"Convenios"}],seguimientos:[{id:uid()+40,fecha:today(),empresa:"Deloitte",tipo:"llamada",resultado:"Pendiente respuesta",proxima:"Llamar a Deloitte",fechaProxima:today(),responsable:""},{id:uid()+41,fecha:today(),empresa:"AON",tipo:"email",resultado:"Convenio enviado",proxima:"Revisar firma",fechaProxima:datePlus(2),responsable:""}],emails:[{id:uid()+50,nombre:"Primer contacto",asunto:"Colaboración para prácticas",cuerpo:"Buenos días,\n\nNos gustaría valorar una posible colaboración para prácticas.\n\nUn saludo."}],actividad:[]};
-let state=JSON.parse(localStorage.getItem(KEY)||"null")||seed; if(!Array.isArray(state.dismissedNotifications)) state.dismissedNotifications=[]; let current="dashboard"; let activeFolder="all"; let selectedDate=today(); let draggedCompany=null; let cloudTimer=null;
+let state=JSON.parse(JSON.stringify(seed)); if(!Array.isArray(state.dismissedNotifications)) state.dismissedNotifications=[]; let current="dashboard"; let activeFolder="all"; let selectedDate=today(); let draggedCompany=null; let cloudTimer=null;
 function save(){localStorage.setItem(KEY,JSON.stringify(state));setSync("Guardando...","saving");clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>saveCloud(true),1000);setTimeout(()=>setSync("Sincronizado","ok"),400)} function log(t){state.actividad.unshift({id:uid(),txt:t,fecha:new Date().toISOString()});state.actividad=state.actividad.slice(0,50)} function setSync(t,c="ok"){const el=$("#syncStatus");if(el){el.className="sync "+c;el.innerHTML=`<i></i> ${t}`}}
 function show(v){current=v;$$(".view").forEach(x=>x.classList.toggle("active",x.id===v));$$("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));render();if(innerWidth<820)$("#sidebar").classList.remove("open")} function pageHead(p,h,s){return `<div class="page-head"><div><p>${p}</p><h2>${h}</h2><span>${s}</span></div><button class="date-pill">${new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})}</button></div>`}
 function render(){updateIcons();updatePlant();renderDashboard();renderEmpresas();renderAlumnos();renderConvenios();renderExpedientes();renderDocumentos();renderSeguimiento();renderEmails();renderAgenda();renderReportes();renderAjustes();renderNotifications();setupPipeline()}
@@ -4605,271 +4605,283 @@ if(bloomProOriginalRender){
 }
 
 
-
 /* =========================================================
-   Bloom CRM 3.1 — Alumno 360 + Fotos + Sincronización
-   Entrega consolidada sobre los archivos actuales.
-   - Miniaturas reales desde Base64, URL pública o Supabase Storage privado.
-   - Foto grande en ficha Alumno 360.
-   - Cambio de foto desde la ficha.
-   - Edición de alumno estable.
-   - Eliminación definitiva en Supabase.
-   - Recarga nube y limpieza de caché local.
+   Bloom CRM 3.2 estable — Supabase directo + Storage privado
+   - Supabase es la fuente principal.
+   - localStorage queda solo como caché auxiliar manual.
+   - CRUD directo para empresas y alumnos.
+   - Fotos/CV/documentos usan Storage path + Signed URL.
+   - Borrado definitivo, limpieza de Storage y anti-duplicados.
 ========================================================= */
 
-const BLOOM31_PHOTO_CACHE = new Map();
-
-function b31(value, fallback=""){
-  if(value === null || value === undefined) return fallback;
-  const text = String(value).trim();
-  if(!text || text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return fallback;
-  return text;
-}
-
-function b31id(a,b){ return String(a) === String(b); }
-
-function b31Initials(name){
-  const parts = b31(name, "A").split(/\s+/).filter(Boolean);
-  return (parts.length ? parts.slice(0,2).map(p => p[0]).join("") : "A").toUpperCase();
-}
-
-function b31Alumno(id){
-  return (state.alumnos || []).find(a => b31id(a.id, id));
-}
-
-function b31EmpresaByName(name){
-  return (state.empresas || []).find(e => e.nombre === name);
-}
-
-function b31PhotoDirect(a){
-  if(!a) return "";
-  if(a.foto?.data) return a.foto.data;
-  if(a.foto?.url) return a.foto.url;
-  if(a.foto?.signedUrl) return a.foto.signedUrl;
-  if(a.foto_signed_url) return a.foto_signed_url;
-  if(a.foto_url) return a.foto_url;
-  if(a.fotoUrl) return a.fotoUrl;
-  if(typeof a.foto === "string") return b31(a.foto);
-  return "";
-}
-
-function b31PhotoPath(a){
-  if(!a) return "";
-  return b31(a.foto_path || a.fotoPath || a.foto?.path || a.foto?.storage_path || a.foto?.storagePath);
-}
-
-function b31DocDirect(file){
-  if(!file) return "";
-  if(file.data) return file.data;
-  if(file.url) return file.url;
-  if(file.signedUrl) return file.signedUrl;
-  if(typeof file === "string") return file;
-  return "";
-}
-
-function b31DocPath(file){
-  if(!file) return "";
-  return b31(file.path || file.storage_path || file.storagePath);
-}
-
-async function b31SignedUrl(path, seconds=900){
-  if(!path) return "";
-  const cached = BLOOM31_PHOTO_CACHE.get(path);
-  if(cached && cached.exp > Date.now() + 30000) return cached.url;
-
-  try{
-    let url = "";
-    if(typeof bloom3SignedUrl === "function"){
-      url = await bloom3SignedUrl(path);
-    }else if(typeof bloom3Client !== "undefined" && bloom3Client){
-      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
-      const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, seconds);
-      if(error) throw error;
-      url = data.signedUrl;
-    }
-    if(url){
-      BLOOM31_PHOTO_CACHE.set(path, { url, exp: Date.now() + (seconds - 30) * 1000 });
-      return url;
-    }
-  }catch(error){
-    console.warn("Bloom 3.1: no se pudo crear Signed URL", error);
-  }
-
-  return "";
-}
-
-async function b31ResolvePhoto(a){
-  const direct = b31PhotoDirect(a);
-  if(direct) return direct;
-
-  const path = b31PhotoPath(a);
-  if(!path) return "";
-
-  const url = await b31SignedUrl(path, 900);
-  if(url){
-    a.foto = Object.assign({}, a.foto || {}, { path, signedUrl:url, storage:true, type:"image/*", name:"Foto alumno" });
-    a.foto_signed_url = url;
-  }
-  return url;
-}
-
-async function b31ResolveDoc(file){
-  const direct = b31DocDirect(file);
-  if(direct) return direct;
-  const path = b31DocPath(file);
-  if(!path) return "";
-  const url = await b31SignedUrl(path, 900);
-  if(url && typeof file === "object") file.signedUrl = url;
-  return url;
-}
-
-function b31Avatar(a, size="md"){
-  const src = b31PhotoDirect(a);
-  const initials = b31Initials(a?.nombre);
-  return `
-    <div class="b31-avatar ${size}" data-b31-avatar="${esc(a?.id || "")}">
-      ${src
-        ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.closest('.b31-avatar').innerHTML='<span>${esc(initials)}</span>'; this.remove();">`
-        : `<span>${esc(initials)}</span>`}
-    </div>
-  `;
-}
-
-async function b31HydrateAvatars(){
-  const avatars = [...document.querySelectorAll(".b31-avatar[data-b31-avatar]")];
-  for(const avatar of avatars){
-    if(avatar.querySelector("img")) continue;
-    const alumno = b31Alumno(avatar.dataset.b31Avatar);
-    if(!alumno) continue;
-    const url = await b31ResolvePhoto(alumno);
-    if(url){
-      avatar.innerHTML = `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.closest('.b31-avatar').innerHTML='<span>${esc(b31Initials(alumno.nombre))}</span>'; this.remove();">`;
-      avatar.classList.add("has-photo");
-    }
-  }
-}
-
-function b31Progress(a){
-  if(!a.inicio || !a.fin) return 0;
-  const s = new Date(a.inicio);
-  const e = new Date(a.fin);
-  const n = new Date();
-  if(Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e <= s) return 0;
-  if(n <= s) return 0;
-  if(n >= e) return 100;
-  return Math.round(((n - s) / (e - s)) * 100);
-}
-
-function b31Field(label, value){
-  return `<article><b>${esc(label)}</b><span>${esc(b31(value, "Sin dato"))}</span></article>`;
-}
-
-function b31List(items, empty){
-  return items.length ? `<div class="list">${items.join("")}</div>` : `<p class="empty-text">${esc(empty)}</p>`;
-}
-
-function b31StatusClass(status){
-  const s = b31(status).toLowerCase();
-  if(s.includes("práct") || s.includes("pract")) return "active";
-  if(s.includes("final")) return "done";
-  if(s.includes("entrevista") || s.includes("propuesta")) return "pending";
-  return "none";
-}
-
-/* ---------- Sincronización real casa/trabajo ---------- */
-
-function b31SyncKey(kind, item){
-  if(kind === "empresas") return b31(item.nombre || item.data?.nombre || item.data?.nombre_empresa).toLowerCase();
-  if(kind === "alumnos") return b31(item.dni || item.email || item.nombre || item.data?.dni || item.data?.email || item.data?.nombre).toLowerCase();
-  return String(item.id || "");
-}
-
-function b31Dedupe(kind, list){
-  const seen = new Map();
-  const duplicates = [];
-  (list || []).forEach(item => {
-    const key = b31SyncKey(kind, item) || String(item.id || "");
-    if(!key) return;
-    if(!seen.has(key)) seen.set(key, item);
-    else duplicates.push(item);
-  });
-  return { clean:[...seen.values()], duplicates };
-}
-
-async function b31DeleteRemote(kind, id){
-  if(!id || !bloom3Client || !bloom3Tables?.[kind]) return false;
-  const { error } = await bloom3Client.from(bloom3Tables[kind]).delete().eq("id", String(id));
-  if(error) throw error;
-  return true;
-}
-
-async function b31CleanDuplicates(){
-  let removed = 0;
-  for(const kind of ["empresas","alumnos"]){
-    const r = b31Dedupe(kind, state[kind] || []);
-    state[kind] = r.clean;
-    for(const dup of r.duplicates){
-      if(dup?.id){
-        try{ await b31DeleteRemote(kind, dup.id); removed++; }catch(e){ console.warn(e); }
-      }
-    }
-  }
-  localStorage.setItem(KEY, JSON.stringify(state));
-  setSync(`Duplicados limpiados: ${removed}`, "ok");
-  toast(`Duplicados limpiados: ${removed} 🌸`);
-}
-
-async function b31ForceReload(){
-  if(!confirm("Recargar desde Supabase y sustituir la caché local de este navegador?")) return;
-  try{
-    setSync("Recargando nube...", "saving");
-    if(typeof bloom3LoadAll === "function") await bloom3LoadAll();
-    for(const kind of ["empresas","alumnos"]){
-      const r = b31Dedupe(kind, state[kind] || []);
-      state[kind] = r.clean;
-    }
-    localStorage.setItem(KEY, JSON.stringify(state));
-    setSync("Nube cargada", "ok");
-    render();
-    toast("Datos recargados desde nube 🌸");
-  }catch(error){
-    setSync("Error nube", "error");
-    alert("No se pudo recargar desde Supabase:\n\n" + error.message);
-  }
-}
-
-function b31ClearCache(){
-  localStorage.removeItem(KEY);
-  b31ForceReload();
-}
-
-window.b31ForceReload = b31ForceReload;
-window.b31ClearCache = b31ClearCache;
-window.b31CleanDuplicates = b31CleanDuplicates;
-
-/* Guardado deduplicado */
-const b31SaveOriginal = typeof save === "function" ? save : null;
-save = function(){
-  for(const kind of ["empresas","alumnos"]){
-    const r = b31Dedupe(kind, state[kind] || []);
-    state[kind] = r.clean;
-  }
-  if(b31SaveOriginal) return b31SaveOriginal();
-  localStorage.setItem(KEY, JSON.stringify(state));
+const BLOOM32_VERSION = "3.2 estable";
+const BLOOM32_DEDUPE_KEY = {
+  empresas: item => bloom32Normalize(item?.nombre),
+  alumnos: item => bloom32Normalize(item?.email) || bloom32Normalize(item?.dni) || bloom32Normalize(item?.nombre)
 };
 
-/* Eliminación definitiva */
+function bloom32Normalize(value){
+  return String(value || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function bloom32EnsureId(item){
+  if(!item.id) item.id = String(uid());
+  item.id = String(item.id);
+  return item.id;
+}
+
+function bloom32UniqueItems(kind, items){
+  const keyFn = BLOOM32_DEDUPE_KEY[kind];
+  if(!keyFn) return items || [];
+  const seen = new Set();
+  const clean = [];
+  for(const item of items || []){
+    if(!item) continue;
+    bloom32EnsureId(item);
+    const key = keyFn(item) || String(item.id);
+    if(seen.has(key)) continue;
+    seen.add(key);
+    clean.push(item);
+  }
+  return clean;
+}
+
+function bloom32Client(){
+  const client = bloom3Client || bloom3ClientGet?.();
+  if(!client) throw new Error("Supabase no está disponible.");
+  return client;
+}
+
+function bloom32RequireSession(){
+  if(!bloom3Session?.user?.id) throw new Error("Debes iniciar sesión para guardar en Supabase.");
+  return bloom3Session.user;
+}
+
+async function bloom32Upsert(kind, item){
+  const user = bloom32RequireSession();
+  bloom32EnsureId(item);
+  const table = bloom3Tables[kind];
+  if(!table) throw new Error("Tabla no configurada: " + kind);
+  const row = bloom3PublicRow(kind, item);
+  row.user_id = user.id;
+  const { error } = await bloom32Client().from(table).upsert(row, { onConflict:"id" });
+  if(error) throw error;
+  return item;
+}
+
+async function bloom32Delete(kind, id){
+  bloom32RequireSession();
+  const table = bloom3Tables[kind];
+  if(!table) throw new Error("Tabla no configurada: " + kind);
+  const { error } = await bloom32Client().from(table).delete().eq("id", String(id));
+  if(error) throw error;
+}
+
+async function bloom32RemoveStoragePaths(paths){
+  const clean = [...new Set((paths || []).filter(Boolean))];
+  if(!clean.length || !bloom3Session?.user) return;
+  const owned = clean.filter(path => String(path).startsWith(bloom3Session.user.id + "/"));
+  if(!owned.length) return;
+  const { error } = await bloom32Client().storage.from(BLOOM3_BUCKET).remove(owned);
+  if(error) console.warn("No se pudieron borrar algunos archivos de Storage", error);
+}
+
+async function bloom32SignedUrl(path, ttl=900){
+  if(!path) return "";
+  const cacheKey = path + ":" + ttl;
+  const cached = bloom3SignedCache.get(cacheKey) || bloom3SignedCache.get(path);
+  if(cached && cached.exp > Date.now() + 30000) return cached.url;
+  const { data, error } = await bloom32Client().storage.from(BLOOM3_BUCKET).createSignedUrl(path, ttl);
+  if(error) throw error;
+  const url = data?.signedUrl || "";
+  bloom3SignedCache.set(cacheKey, { url, exp: Date.now() + (ttl * 1000) });
+  bloom3SignedCache.set(path, { url, exp: Date.now() + (ttl * 1000) });
+  return url;
+}
+
+bloom3SignedUrl = bloom32SignedUrl;
+
+async function bloom32HydrateStudentFiles(){
+  for(const alumno of state.alumnos || []){
+    const fotoPath = alumno.foto_path || alumno.foto?.path || alumno.foto?.storage_path;
+    if(fotoPath){
+      alumno.foto_path = fotoPath;
+      alumno.foto = Object.assign({ name:"Foto", storage:true, type:"image/*" }, alumno.foto || {}, { path:fotoPath });
+      try{ alumno.foto.signedUrl = await bloom32SignedUrl(fotoPath, 900); }catch(e){ console.warn(e); }
+    }
+    const cvPath = alumno.cv_path || alumno.curriculum?.path || alumno.curriculum?.storage_path;
+    if(cvPath){
+      alumno.cv_path = cvPath;
+      alumno.curriculum = Object.assign({ name:"Currículum", storage:true }, alumno.curriculum || {}, { path:cvPath });
+    }
+  }
+}
+
+function bloom32StudentPhotoUrl(a){
+  return a?.foto?.signedUrl || a?.foto?.url || a?.foto?.data || a?.foto_signed_url || "";
+}
+
+async function bloom32LoadAll(){
+  await bloom3LoadAll();
+  state.empresas = bloom32UniqueItems("empresas", state.empresas);
+  state.alumnos = bloom32UniqueItems("alumnos", state.alumnos);
+  await bloom32HydrateStudentFiles();
+  bloom3Ready = true;
+  try{ localStorage.setItem(KEY + "_last_user", bloom3Session?.user?.id || ""); }catch(e){}
+  setSync("Supabase sincronizado", "ok");
+}
+
+loadCloud = async function(){
+  await bloom32LoadAll();
+  render();
+};
+
+saveCloud = async function(silent=false){
+  if(!bloom3Ready || !bloom3Session?.user) return;
+  try{
+    setSync("Guardando en Supabase...", "saving");
+    state.empresas = bloom32UniqueItems("empresas", state.empresas);
+    state.alumnos = bloom32UniqueItems("alumnos", state.alumnos);
+    for(const kind of ["empresas","alumnos","convenios","carpetas","documentos","seguimientos","emails"]){
+      await bloom3SaveKind(kind);
+    }
+    setSync("Supabase sincronizado", "ok");
+    if(!silent) toast("Guardado en Supabase 🌸");
+  }catch(error){
+    console.error(error);
+    setSync("Error Supabase", "error");
+    if(!silent) alert("No se pudo guardar en Supabase:\n\n" + error.message);
+  }
+};
+
+save = function(){
+  state.empresas = bloom32UniqueItems("empresas", state.empresas);
+  state.alumnos = bloom32UniqueItems("alumnos", state.alumnos);
+  clearTimeout(cloudTimer);
+  if(bloom3Ready && bloom3Session?.user){
+    setSync("Guardando en Supabase...", "saving");
+    cloudTimer = setTimeout(() => saveCloud(true), 350);
+  }else{
+    setSync("Pendiente de sesión", "saving");
+  }
+};
+
+function bloom32EmpresaForm(e){
+  return `<form id="empresaForm" class="form-grid">
+    <input name="nombre" value="${esc(e.nombre)}" placeholder="Nombre" required>
+    <input name="sector" value="${esc(e.sector)}" placeholder="Sector">
+    <input name="subsector" value="${esc(e.subsector || "")}" placeholder="Subsector">
+    <input name="ciudad" value="${esc(e.ciudad)}" placeholder="Ciudad">
+    <input name="isla" value="${esc(e.isla)}" placeholder="Isla">
+    <input name="web" value="${esc(e.web || "")}" placeholder="Web">
+    <input name="fuente" value="${esc(e.fuente || "")}" placeholder="Fuente">
+    <input name="contacto" value="${esc(e.contacto)}" placeholder="Contacto">
+    <input name="telefono" value="${esc(e.telefono)}" placeholder="Teléfono">
+    <input name="email" value="${esc(e.email)}" placeholder="Email">
+    <select name="estado">${["nueva","contactada","interesada","convenio","activa","descartada"].map(x=>`<option value="${x}" ${e.estado===x?"selected":""}>${x}</option>`).join("")}</select>
+    <select name="prioridad">${["alta","media","baja"].map(x=>`<option value="${x}" ${e.prioridad===x?"selected":""}>${x}</option>`).join("")}</select>
+    <textarea name="notas" placeholder="Notas">${esc(e.notas)}</textarea>
+  </form>`;
+}
+
+openEmpresa = function(eid=null){
+  const editing = (state.empresas || []).find(x => String(x.id) === String(eid));
+  const e = editing || { id:String(uid()), nombre:"", sector:"", subsector:"", isla:"Gran Canaria", ciudad:"Las Palmas", estado:"nueva", prioridad:"media", contacto:"", telefono:"", email:"", notas:"" };
+  modal("Empresa", bloom32EmpresaForm(e), async()=>{
+    const values = Object.fromEntries(new FormData($("#empresaForm")).entries());
+    Object.assign(e, values);
+    bloom32EnsureId(e);
+    try{
+      setSync("Guardando empresa...", "saving");
+      await bloom32Upsert("empresas", e);
+      if(!editing) state.empresas.unshift(e);
+      state.empresas = bloom32UniqueItems("empresas", state.empresas);
+      log(`Empresa guardada: ${e.nombre}`);
+      closeModal();
+      setSync("Empresa sincronizada", "ok");
+      render();
+      toast("Empresa guardada 🌸");
+    }catch(error){
+      setSync("Error empresa", "error");
+      alert("No se pudo guardar la empresa:\n\n" + error.message);
+    }
+  });
+};
+
+function bloom32AlumnoForm(a){
+  const photoUrl = bloom32StudentPhotoUrl(a);
+  return `<form id="alumnoForm" class="form-grid">
+    <div class="student-photo-preview">${photoUrl ? `<img src="${esc(photoUrl)}">` : "Foto"}</div>
+    <input name="nombre" value="${esc(a.nombre)}" placeholder="Nombre" required>
+    <input name="dni" value="${esc(a.dni || "")}" placeholder="DNI/NIE">
+    <input name="telefono" value="${esc(a.telefono)}" placeholder="Teléfono">
+    <input name="email" value="${esc(a.email)}" placeholder="Correo">
+    <input name="direccion" value="${esc(a.direccion)}" placeholder="Dirección">
+    <input name="nss" value="${esc(a.nss)}" placeholder="Nº Seguridad Social">
+    <input name="curso" value="${esc(a.curso || "")}" placeholder="Curso de procedencia">
+    <label class="student-files">Foto<input id="alumnoFoto" type="file" accept="image/*"></label>
+    <label class="student-files">Currículum<input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></label>
+    <select name="empresa"><option value="">Sin empresa</option>${(state.empresas||[]).map(emp=>`<option value="${esc(emp.nombre)}" ${a.empresa===emp.nombre?"selected":""}>${esc(emp.nombre)}</option>`).join("")}</select>
+    <select name="estado">${["sin asignar","propuesta","entrevista","prácticas","finalizado"].map(x=>`<option value="${x}" ${a.estado===x?"selected":""}>${x}</option>`).join("")}</select>
+    <input name="inicio" type="date" value="${esc(a.inicio || "")}">
+    <input name="fin" type="date" value="${esc(a.fin || "")}">
+    <input name="tutor" value="${esc(a.tutor || "")}" placeholder="Tutor">
+    <input name="horas" value="${esc(a.horas || "")}" placeholder="Horas">
+    <textarea name="notas">${esc(a.notas || "")}</textarea>
+  </form>`;
+}
+
+openAlumno = function(aid=null){
+  const editing = (state.alumnos || []).find(x => String(x.id) === String(aid));
+  const a = editing || { id:String(uid()), nombre:"", telefono:"", email:"", direccion:"", nss:"", dni:"", curso:"", estado:"sin asignar", empresa:"", inicio:"", fin:"", tutor:"", notas:"", foto:null, curriculum:null };
+  modal("Alumno", bloom32AlumnoForm(a), async()=>{
+    const values = Object.fromEntries(new FormData($("#alumnoForm")).entries());
+    const oldPhoto = a.foto_path || a.foto?.path;
+    const oldCv = a.cv_path || a.curriculum?.path;
+    Object.assign(a, values);
+    bloom32EnsureId(a);
+    try{
+      setSync("Guardando alumno...", "saving");
+      const foto = $("#alumnoFoto")?.files?.[0];
+      const cv = $("#alumnoCV")?.files?.[0];
+      if(foto){
+        a.foto = await bloom3UploadFile(foto, "alumnos/fotos");
+        a.foto_path = a.foto.path;
+        await bloom32RemoveStoragePaths([oldPhoto]);
+        try{ a.foto.signedUrl = await bloom32SignedUrl(a.foto.path, 900); }catch(e){}
+      }
+      if(cv){
+        a.curriculum = await bloom3UploadFile(cv, "alumnos/cv");
+        a.cv_path = a.curriculum.path;
+        await bloom32RemoveStoragePaths([oldCv]);
+      }
+      await bloom32Upsert("alumnos", a);
+      if(!editing) state.alumnos.unshift(a);
+      state.alumnos = bloom32UniqueItems("alumnos", state.alumnos);
+      log(`Alumno guardado: ${a.nombre}`);
+      closeModal();
+      setSync("Alumno sincronizado", "ok");
+      render();
+      toast("Alumno guardado 🌸");
+    }catch(error){
+      setSync("Error alumno", "error");
+      alert("No se pudo guardar el alumno:\n\n" + error.message);
+    }
+  });
+};
+
 delEmpresa = async function(id){
-  const e = (state.empresas || []).find(x => b31id(x.id, id));
-  if(!confirm(`¿Eliminar definitivamente ${e?.nombre || "esta empresa"}?`)) return;
+  const empresa = (state.empresas || []).find(e => String(e.id) === String(id));
+  if(!confirm(`¿Eliminar definitivamente ${empresa?.nombre || "esta empresa"}?`)) return;
   try{
     setSync("Eliminando empresa...", "saving");
-    await b31DeleteRemote("empresas", id);
-    state.empresas = (state.empresas || []).filter(x => !b31id(x.id, id));
-    localStorage.setItem(KEY, JSON.stringify(state));
-    if(typeof bloom3LoadAll === "function") await bloom3LoadAll();
+    await bloom32Delete("empresas", id);
+    state.empresas = (state.empresas || []).filter(e => String(e.id) !== String(id));
     setSync("Empresa eliminada", "ok");
     render();
+    toast("Empresa eliminada definitivamente 🌸");
   }catch(error){
     setSync("Error eliminando", "error");
     alert("No se pudo eliminar la empresa:\n\n" + error.message);
@@ -4877,380 +4889,95 @@ delEmpresa = async function(id){
 };
 
 delAlumno = async function(id){
-  const a = b31Alumno(id);
-  if(!confirm(`¿Eliminar definitivamente ${a?.nombre || "este alumno"}?`)) return;
+  const alumno = (state.alumnos || []).find(a => String(a.id) === String(id));
+  if(!confirm(`¿Eliminar definitivamente ${alumno?.nombre || "este alumno"}?`)) return;
   try{
     setSync("Eliminando alumno...", "saving");
-    await b31DeleteRemote("alumnos", id);
-    state.alumnos = (state.alumnos || []).filter(x => !b31id(x.id, id));
-    localStorage.setItem(KEY, JSON.stringify(state));
-    if(typeof bloom3LoadAll === "function") await bloom3LoadAll();
+    await bloom32Delete("alumnos", id);
+    await bloom32RemoveStoragePaths([alumno?.foto_path || alumno?.foto?.path, alumno?.cv_path || alumno?.curriculum?.path]);
+    state.alumnos = (state.alumnos || []).filter(a => String(a.id) !== String(id));
     setSync("Alumno eliminado", "ok");
     render();
+    toast("Alumno eliminado definitivamente 🌸");
   }catch(error){
     setSync("Error eliminando", "error");
     alert("No se pudo eliminar el alumno:\n\n" + error.message);
   }
 };
 
-/* ---------- Vista Alumnos profesional ---------- */
-
-function b31DocButtons(a){
-  const hasPhoto = b31PhotoDirect(a) || b31PhotoPath(a);
-  const hasCv = a.curriculum?.data || a.curriculum?.url || a.curriculum?.path || a.curriculum?.signedUrl;
-  return `
-    ${hasPhoto ? `<button class="b31-pill" data-b31-action="photo" data-id="${esc(a.id)}">Foto</button>` : `<span class="b31-muted">Sin foto</span>`}
-    ${hasCv ? `<button class="b31-pill" data-b31-action="cv" data-id="${esc(a.id)}">CV</button>` : `<span class="b31-muted">Sin CV</span>`}
-  `;
-}
-
-renderAlumnos = function(){
-  const q = $("#studentSearch")?.value?.toLowerCase() || "";
-  const list = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
-
-  const total = (state.alumnos || []).length;
-  const sinEmpresa = (state.alumnos || []).filter(a => !a.empresa).length;
-  const enPracticas = (state.alumnos || []).filter(a => b31(a.estado).toLowerCase().includes("pract") || b31(a.estado).toLowerCase().includes("práct")).length;
-  const conCv = (state.alumnos || []).filter(a => a.curriculum?.data || a.curriculum?.url || a.curriculum?.path || a.curriculum?.signedUrl).length;
-
-  $("#alumnos").innerHTML = pageHead("Alumnos","Alumnos","Ficha completa del alumnado") + `
-    <section class="b31-students-page">
-      <div class="b31-kpis">
-        <article><b>${total}</b><span>Alumnos</span></article>
-        <article><b>${sinEmpresa}</b><span>Sin empresa</span></article>
-        <article><b>${enPracticas}</b><span>En prácticas</span></article>
-        <article><b>${conCv}</b><span>Con CV</span></article>
-      </div>
-
-      <section class="card b31-students-card">
-        <div class="toolbar b31-toolbar">
-          <input id="studentSearch" placeholder="Buscar por nombre, DNI, email, empresa..." oninput="renderAlumnos()" value="${esc(q)}">
-          <button class="primary" onclick="openAlumno()">Añadir alumno</button>
-          ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
-          ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
-          ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
-          <button class="soft-btn" onclick="b31ForceReload()">Recargar nube</button>
-        </div>
-
-        <div class="b31-student-list">
-          ${list.map(a => {
-            const progress = b31Progress(a);
-            return `
-              <article class="b31-student-row" data-b31-row="${esc(a.id)}">
-                <div class="b31-student-main">
-                  ${b31Avatar(a, "lg")}
-                  <div class="b31-student-info">
-                    <div class="b31-title">
-                      <h3>${esc(a.nombre || "Sin nombre")}</h3>
-                      <span class="b31-status ${b31StatusClass(a.estado)}">${esc(a.estado || "sin asignar")}</span>
-                    </div>
-                    <div class="b31-meta">
-                      <span>${a.dni ? "DNI: " + esc(a.dni) : "Sin DNI"}</span>
-                      <span>NSS: ${esc(a.nss || "Sin NSS")}</span>
-                      <span>${esc(a.empresa || "Sin empresa")}</span>
-                    </div>
-                    <div class="b31-contact">
-                      <span>📞 ${esc(a.telefono || "Sin teléfono")}</span>
-                      <span>✉ ${esc(a.email || "Sin email")}</span>
-                      <span>🎓 ${esc(a.curso || "Sin curso")}</span>
-                    </div>
-                    <div class="b31-progress">
-                      <i><em style="width:${progress}%"></em></i>
-                      <span>${progress}% prácticas</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="b31-docs" onclick="event.stopPropagation()">
-                  ${b31DocButtons(a)}
-                </div>
-
-                <div class="b31-actions" onclick="event.stopPropagation()">
-                  <button data-b31-action="view" data-id="${esc(a.id)}">Ver ficha</button>
-                  <button data-b31-action="edit" data-id="${esc(a.id)}">Editar</button>
-                  <button data-b31-action="delete" data-id="${esc(a.id)}">Eliminar</button>
-                </div>
-              </article>
-            `;
-          }).join("") || `<div class="b31-empty">No hay alumnos.</div>`}
-        </div>
-      </section>
-    </section>
-  `;
-
-  setTimeout(b31HydrateAvatars, 40);
-  setTimeout(b31HydrateAvatars, 250);
+previewAnyFile = async function(file, title="Documento"){
+  if(!file){ modal("Previsualizar documento", `<p>No hay archivo adjunto.</p>`, () => closeModal()); return; }
+  const path = file.path || file.storage_path;
+  if(file.storage && path){
+    try{
+      const url = await bloom32SignedUrl(path, 900);
+      const name = file.name || title;
+      const type = file.type || "";
+      const isPdf = type.includes("pdf") || /\.pdf$/i.test(name);
+      const isImage = type.includes("image") || /\.(png|jpg|jpeg|webp|gif)$/i.test(name);
+      modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>
+        ${isPdf ? `<div class="student-cv-preview"><iframe src="${url}"></iframe></div>` : isImage ? `<div class="student-cv-image"><img src="${url}"></div>` : `<div class="student-cv-empty"><b>${esc(name)}</b><span>Archivo privado con enlace temporal.</span></div>`}
+        <div class="student-cv-actions"><a href="${url}" target="_blank">Abrir temporal</a><a href="${url}" download="${esc(name)}">Descargar</a></div>
+      </section>`, () => closeModal());
+      return;
+    }catch(error){ alert("No se pudo crear el enlace temporal:\n\n" + error.message); return; }
+  }
+  modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>${filePreviewHTML(file,"modal")}</section>`, () => closeModal());
 };
 
-/* ---------- Alumno 360 ---------- */
+renderAjustes = function(){
+  $("#ajustes").innerHTML = pageHead("Ajustes", "Ajustes", "Bloom CRM 3.2 estable") + `
+    <section class="grid-2">
+      <div class="card table-card">
+        <h3>Supabase privado</h3>
+        <p>Fuente principal: tablas normalizadas con RLS. Storage privado: <b>${BLOOM3_BUCKET}</b>.</p>
+        <button class="primary" onclick="loadCloud()">Recargar desde Supabase</button>
+        <button class="soft-btn" onclick="saveCloud()">Guardar ahora</button>
+        <button class="soft-btn" onclick="bloom32CleanDuplicates()">Limpiar duplicados</button>
+      </div>
+      <div class="card table-card">
+        <h3>Mantenimiento local</h3>
+        <p>La caché local no se usa como base de datos. Sirve solo para compatibilidad temporal.</p>
+        <button class="soft-btn" onclick="clearLocalCacheAndReload?.() || localStorage.removeItem(KEY)">Limpiar caché local</button>
+        <button class="soft-btn" onclick="downloadBackup()">Exportar JSON de emergencia</button>
+      </div>
+    </section>`;
+};
 
-function openStudentProfile(id){
-  const a = b31Alumno(id);
-  if(!a){
-    alert("No se encontró el alumno seleccionado.");
-    return;
-  }
-
-  b31ResolvePhoto(a).then(() => {
-    const empresa = b31EmpresaByName(a.empresa);
-    const convenio = (state.convenios || []).find(c => c.empresa === a.empresa || c.alumno === a.nombre || b31id(c.alumno_id, a.id));
-    const docs = (state.documentos || []).filter(d => d.alumno === a.nombre || d.alumno_id === a.id || d.empresa === a.empresa);
-    const segs = (state.seguimientos || []).filter(s => s.alumno === a.nombre || s.alumno_id === a.id || s.empresa === a.empresa);
-    const photo = b31PhotoDirect(a);
-    const progress = b31Progress(a);
-
-    modal("Alumno 360", `
-      <section class="b31-profile">
-        <aside class="b31-profile-side">
-          <div class="b31-profile-photo" id="b31ProfilePhotoBox">
-            ${photo ? `<img src="${esc(photo)}" alt="" onerror="this.closest('.b31-profile-photo').innerHTML='<span>${esc(b31Initials(a.nombre))}</span>'; this.remove();">` : `<span>${esc(b31Initials(a.nombre))}</span>`}
-          </div>
-
-          <h2>${esc(a.nombre || "Alumno")}</h2>
-          <p>${esc(a.dni || "Sin DNI/NIE")}</p>
-          <span class="b31-status ${b31StatusClass(a.estado)}">${esc(a.estado || "sin asignar")}</span>
-
-          <div class="b31-side-progress">
-            <div><span>Progreso prácticas</span><b>${progress}%</b></div>
-            <i><em style="width:${progress}%"></em></i>
-          </div>
-
-          <label class="b31-change-photo">
-            Cambiar foto
-            <input id="b31ChangePhotoInput" type="file" accept="image/*">
-          </label>
-
-          <button class="primary" onclick="openAlumno('${esc(a.id)}')">Editar alumno</button>
-          ${a.curriculum ? `<button class="soft-btn" onclick="b31PreviewDoc(b31Alumno('${esc(a.id)}').curriculum,'Currículum')">Ver currículum</button>` : ""}
-        </aside>
-
-        <main class="b31-profile-main">
-          <section class="b31-section">
-            <div class="section-head"><div><p>Datos personales</p><h3>Información del alumno</h3></div></div>
-            <div class="b31-grid">
-              ${b31Field("Nombre", a.nombre)}
-              ${b31Field("DNI / NIE", a.dni)}
-              ${b31Field("Teléfono", a.telefono)}
-              ${b31Field("Correo", a.email)}
-              ${b31Field("Dirección", a.direccion)}
-              ${b31Field("Nº Seguridad Social", a.nss)}
-              ${b31Field("Curso", a.curso)}
-            </div>
-          </section>
-
-          <section class="b31-section">
-            <div class="section-head"><div><p>Prácticas</p><h3>Datos académicos y FCT</h3></div></div>
-            <div class="b31-grid">
-              ${b31Field("Estado", a.estado)}
-              ${b31Field("Empresa", a.empresa)}
-              ${b31Field("Tutor centro", a.tutor)}
-              ${b31Field("Tutor empresa", a.tutor_empresa)}
-              ${b31Field("Inicio", a.inicio || convenio?.inicio)}
-              ${b31Field("Fin", a.fin || convenio?.fin)}
-              ${b31Field("Horas", a.horas)}
-              ${b31Field("Evaluación", a.evaluacion)}
-              ${b31Field("Convenio", convenio?.estado)}
-            </div>
-          </section>
-
-          <section class="b31-section">
-            <div class="section-head"><div><p>Empresa</p><h3>Empresa asignada</h3></div></div>
-            ${empresa ? `
-              <article class="item">
-                <div><b>${esc(empresa.nombre)}</b><p>${esc(empresa.contacto || "Sin contacto")} · ${esc(empresa.telefono || "")}${empresa.email ? " · " + esc(empresa.email) : ""}</p></div>
-              </article>
-            ` : `<p class="empty-text">Sin empresa asignada.</p>`}
-          </section>
-
-          <section class="b31-section">
-            <div class="section-head"><div><p>Documentación</p><h3>Archivos y previsualización</h3></div></div>
-            <div class="b31-doc-grid">
-              ${photo ? `<article class="b31-doc-card" onclick="b31PreviewDoc(b31Alumno('${esc(a.id)}').foto,'Foto')"><b>🖼 Foto</b><span>Ver / descargar</span></article>` : `<article class="b31-doc-card muted"><b>🖼 Foto</b><span>No adjuntada</span></article>`}
-              ${a.curriculum ? `<article class="b31-doc-card" onclick="b31PreviewDoc(b31Alumno('${esc(a.id)}').curriculum,'Currículum')"><b>📄 Currículum</b><span>Ver / descargar</span></article>` : `<article class="b31-doc-card muted"><b>📄 Currículum</b><span>No adjuntado</span></article>`}
-              ${docs.map(d => `<article class="b31-doc-card" onclick="b31PreviewDoc(state.documentos.find(x=>String(x.id)===String('${d.id}')).file,'${esc(d.nombre || "Documento")}')"><b>📎 ${esc(d.nombre || "Documento")}</b><span>${esc(d.tipo || "Documento")} · ${esc(d.estado || "")}</span></article>`).join("")}
-            </div>
-          </section>
-
-          <section class="b31-section">
-            <div class="section-head"><div><p>Seguimiento</p><h3>Historial relacionado</h3></div></div>
-            ${b31List(segs.map(s => `<article class="item"><div><b>${esc(s.tipo || "Seguimiento")} · ${esc(s.fecha || "")}</b><p>${esc(s.resultado || "")}${s.proxima ? " · Próxima: " + esc(s.proxima) : ""}</p></div></article>`), "No hay seguimientos relacionados.")}
-          </section>
-
-          <section class="b31-section">
-            <div class="section-head"><div><p>Observaciones</p><h3>Notas privadas</h3></div></div>
-            <p>${esc(a.notas || "Sin observaciones.")}</p>
-          </section>
-        </main>
-      </section>
-    `, () => closeModal());
-
-    setTimeout(() => {
-      const input = $("#b31ChangePhotoInput");
-      const box = $("#b31ProfilePhotoBox");
-      if(input && box){
-        input.addEventListener("change", async () => {
-          const file = input.files?.[0];
-          if(!file) return;
-
-          const data = await fileToData(file);
-          a.foto = data;
-          a.foto_url = data?.data || "";
-          box.innerHTML = `<img src="${esc(data.data)}" alt="">`;
-          save();
-          toast("Foto actualizada 🌸");
-          setTimeout(renderAlumnos, 80);
-        });
+async function bloom32CleanDuplicates(){
+  try{
+    setSync("Limpiando duplicados...", "saving");
+    for(const kind of ["empresas", "alumnos"]){
+      const table = bloom3Tables[kind];
+      const rows = await bloom3LoadKind(kind);
+      const keep = bloom32UniqueItems(kind, rows);
+      const keepIds = new Set(keep.map(x => String(x.id)));
+      const duplicates = rows.filter(x => !keepIds.has(String(x.id)));
+      for(const dup of duplicates){
+        if(kind === "alumnos") await bloom32RemoveStoragePaths([dup.foto_path || dup.foto?.path, dup.cv_path || dup.curriculum?.path]);
+        await bloom32Delete(kind, dup.id);
       }
-    }, 60);
-  });
-}
-
-window.openStudentProfile = openStudentProfile;
-
-/* Edición robusta */
-function openAlumno(id=null){
-  const existing = id !== null && id !== undefined && id !== "" ? b31Alumno(id) : null;
-  const a = existing || {
-    nombre:"", dni:"", telefono:"", email:"", direccion:"", nss:"", curso:"",
-    estado:"sin asignar", empresa:"", inicio:"", fin:"", tutor:"", tutor_empresa:"",
-    horas:"", evaluacion:"", notas:"", foto:null, curriculum:null
-  };
-
-  b31ResolvePhoto(a).then(() => {
-    const photo = b31PhotoDirect(a);
-
-    modal(existing ? "Editar alumno" : "Alumno", `
-      <form id="alumnoForm" class="form-grid b31-edit-form">
-        <div class="student-photo-preview" id="b31EditPhotoBox">
-          ${photo ? `<img src="${esc(photo)}" alt="">` : "Foto"}
-        </div>
-        <input name="nombre" value="${esc(a.nombre || "")}" placeholder="Nombre" required>
-        <input name="dni" value="${esc(a.dni || "")}" placeholder="DNI / NIE">
-        <input name="telefono" value="${esc(a.telefono || "")}" placeholder="Teléfono">
-        <input name="email" value="${esc(a.email || "")}" placeholder="Correo">
-        <input name="direccion" value="${esc(a.direccion || "")}" placeholder="Dirección">
-        <input name="nss" value="${esc(a.nss || "")}" placeholder="Nº Seguridad Social">
-        <input name="curso" value="${esc(a.curso || "")}" placeholder="Curso">
-        <label class="student-files">Foto<input id="alumnoFoto" type="file" accept="image/*"></label>
-        <label class="student-files">Currículum<input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></label>
-        <select name="empresa"><option value="">Sin empresa</option>${(state.empresas || []).map(e => `<option ${a.empresa === e.nombre ? "selected" : ""}>${esc(e.nombre)}</option>`).join("")}</select>
-        <select name="estado">${["sin asignar","propuesta","entrevista","prácticas","finalizado","archivado"].map(x => `<option ${a.estado === x ? "selected" : ""}>${x}</option>`).join("")}</select>
-        <input name="inicio" type="date" value="${esc(a.inicio || "")}">
-        <input name="fin" type="date" value="${esc(a.fin || "")}">
-        <input name="tutor" value="${esc(a.tutor || "")}" placeholder="Tutor centro">
-        <input name="tutor_empresa" value="${esc(a.tutor_empresa || "")}" placeholder="Tutor empresa">
-        <input name="horas" value="${esc(a.horas || "")}" placeholder="Horas">
-        <input name="evaluacion" value="${esc(a.evaluacion || "")}" placeholder="Evaluación">
-        <textarea name="notas" placeholder="Notas">${esc(a.notas || "")}</textarea>
-      </form>
-    `, async () => {
-      const data = Object.fromEntries(new FormData($("#alumnoForm")).entries());
-      Object.keys(data).forEach(k => data[k] = String(data[k] || "").trim());
-      data.dni = String(data.dni || "").toUpperCase();
-
-      let target = existing;
-      if(!target){
-        target = { id:uid(), foto:null, curriculum:null };
-        state.alumnos.unshift(target);
-      }
-
-      Object.assign(target, data, { data:Object.assign({}, target.data || {}, data) });
-
-      const foto = $("#alumnoFoto")?.files?.[0];
-      const cv = $("#alumnoCV")?.files?.[0];
-
-      if(foto){
-        target.foto = await fileToData(foto);
-        target.foto_url = target.foto?.data || "";
-      }
-      if(cv) target.curriculum = await fileToData(cv);
-
-      log(`Alumno guardado: ${target.nombre}`);
-      save();
-      closeModal();
-      render();
-      toast(existing ? "Alumno modificado 🌸" : "Alumno creado 🌸");
-    });
-
-    setTimeout(() => {
-      const input = $("#alumnoFoto");
-      const box = $("#b31EditPhotoBox");
-      if(input && box){
-        input.addEventListener("change", () => {
-          const file = input.files?.[0];
-          if(!file) return;
-          const reader = new FileReader();
-          reader.onload = () => box.innerHTML = `<img src="${reader.result}" alt="">`;
-          reader.readAsDataURL(file);
-        });
-      }
-    }, 60);
-  });
-}
-
-window.openAlumno = openAlumno;
-
-/* Preview privado */
-async function b31PreviewDoc(file, title="Documento"){
-  if(!file) return previewAnyFile(file, title);
-  const url = await b31ResolveDoc(file);
-  if(url && typeof file === "object" && !file.data) file.data = url;
-  previewAnyFile(file, title);
-}
-window.b31PreviewDoc = b31PreviewDoc;
-
-/* Eventos vista alumnos */
-document.addEventListener("click", function(event){
-  const btn = event.target.closest("[data-b31-action]");
-  if(btn){
-    event.preventDefault();
-    event.stopPropagation();
-    const a = b31Alumno(btn.dataset.id);
-    if(!a) return;
-    const action = btn.dataset.b31Action;
-    if(action === "view") return openStudentProfile(a.id);
-    if(action === "edit") return openAlumno(a.id);
-    if(action === "delete") return delAlumno(a.id);
-    if(action === "photo") return b31PreviewDoc(a.foto, "Foto");
-    if(action === "cv") return b31PreviewDoc(a.curriculum, "Currículum");
-  }
-
-  const row = event.target.closest(".b31-student-row[data-b31-row]");
-  if(row && !event.target.closest("button, a, input, select, textarea, label")){
-    event.preventDefault();
-    event.stopPropagation();
-    openStudentProfile(row.dataset.b31Row);
-  }
-}, true);
-
-/* Ajustes: controles de nube */
-const b31RenderAjustesOriginal = typeof renderAjustes === "function" ? renderAjustes : null;
-if(b31RenderAjustesOriginal){
-  renderAjustes = function(){
-    b31RenderAjustesOriginal();
-    const target = $("#ajustes .grid-2") || $("#ajustes");
-    if(target && !$("#b31SyncCard")){
-      target.insertAdjacentHTML("afterbegin", `
-        <section id="b31SyncCard" class="card table-card b31-sync-card">
-          <div class="section-head"><div><p>Sincronización</p><h3>Casa / trabajo</h3></div></div>
-          <p>Supabase debe ser la fuente principal. Usa estas acciones si cambias de ordenador o ves datos antiguos.</p>
-          <div class="settings-row">
-            <button class="primary" onclick="b31ForceReload()">Recargar desde nube</button>
-            <button class="soft-btn" onclick="b31ClearCache()">Limpiar caché local</button>
-            <button class="soft-btn" onclick="b31CleanDuplicates().then(()=>render())">Limpiar duplicados</button>
-            <button class="soft-btn" onclick="saveCloud()">Guardar ahora</button>
-          </div>
-        </section>
-      `);
+      state[kind] = keep;
+      await bloom3SaveKind(kind);
     }
+    await bloom32HydrateStudentFiles();
+    setSync("Duplicados limpios", "ok");
+    render();
+    toast("Duplicados revisados 🌸");
+  }catch(error){
+    setSync("Error duplicados", "error");
+    alert("No se pudieron limpiar duplicados:\n\n" + error.message);
+  }
+}
+window.bloom32CleanDuplicates = bloom32CleanDuplicates;
+
+/* Inicialización reforzada: tras login, siempre recarga Supabase y no localStorage. */
+const bloom32OldUnlock = typeof bloom3Unlock === "function" ? bloom3Unlock : null;
+if(bloom32OldUnlock){
+  bloom3Unlock = function(){
+    bloom32OldUnlock();
+    setTimeout(() => { if(bloom3Session?.user) loadCloud().catch(console.error); }, 50);
   };
 }
 
-/* Rehidratar miniaturas tras render general */
-const b31RenderOriginal = typeof render === "function" ? render : null;
-if(b31RenderOriginal){
-  render = function(){
-    b31RenderOriginal();
-    setTimeout(b31HydrateAvatars, 80);
-  };
-}
+document.title = "Bloom CRM 3.2";

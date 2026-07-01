@@ -4344,3 +4344,262 @@ document.addEventListener("click", function(event){
   event.stopPropagation();
   openStudentProfile(row.dataset.alumnoRowId);
 }, true);
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — Alumnos CRM profesional
+   Reconstruye la pestaña Alumnos para que:
+   - Se vea la foto real en miniatura.
+   - Si falla la imagen, aparecen iniciales limpias.
+   - Cada alumno se muestra como tarjeta CRM profesional.
+   - Click en tarjeta abre ficha completa.
+   - Botones Editar / Ver ficha / Foto / CV funcionan sin romper el click.
+========================================================= */
+
+const BLOOM_STUDENT_PHOTO_SIGNED_CACHE = new Map();
+
+function bloomProClean(value, fallback=""){
+  if(value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  if(!text || text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return fallback;
+  return text;
+}
+
+function bloomProInitials(name){
+  const parts = bloomProClean(name, "A").split(/\s+/).filter(Boolean);
+  return parts.slice(0,2).map(p => p[0]).join("").toUpperCase() || "A";
+}
+
+function bloomProPhotoDirect(a){
+  if(!a) return "";
+  if(a.foto?.data) return a.foto.data;
+  if(a.foto?.url) return a.foto.url;
+  if(a.foto?.signedUrl) return a.foto.signedUrl;
+  if(a.foto_signed_url) return a.foto_signed_url;
+  if(a.foto_url) return a.foto_url;
+  if(a.fotoUrl) return a.fotoUrl;
+  if(typeof a.foto === "string") return bloomProClean(a.foto);
+  return "";
+}
+
+function bloomProPhotoPath(a){
+  if(!a) return "";
+  return bloomProClean(a.foto_path || a.fotoPath || a.foto?.path || a.foto?.storage_path || a.foto?.storagePath);
+}
+
+async function bloomProSignedPhoto(path){
+  if(!path) return "";
+  const cached = BLOOM_STUDENT_PHOTO_SIGNED_CACHE.get(path);
+  if(cached && cached.exp > Date.now() + 30000) return cached.url;
+
+  try{
+    let url = "";
+    if(typeof bloom3SignedUrl === "function"){
+      url = await bloom3SignedUrl(path);
+    }else if(typeof bloom3Client !== "undefined" && bloom3Client){
+      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+      const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, 300);
+      if(error) throw error;
+      url = data.signedUrl;
+    }
+
+    if(url){
+      BLOOM_STUDENT_PHOTO_SIGNED_CACHE.set(path, { url, exp: Date.now() + 280000 });
+      return url;
+    }
+  }catch(error){
+    console.warn("No se pudo obtener miniatura privada", error);
+  }
+  return "";
+}
+
+function bloomProStudentById(id){
+  return (state.alumnos || []).find(a => String(a.id) === String(id));
+}
+
+function bloomProAvatar(a, size="md"){
+  const direct = bloomProPhotoDirect(a);
+  const initials = bloomProInitials(a?.nombre);
+  return `
+    <div class="student-pro-avatar ${size}" data-pro-avatar-id="${esc(a?.id || "")}" data-pro-photo-path="${esc(bloomProPhotoPath(a))}">
+      ${direct
+        ? `<img src="${esc(direct)}" alt="" loading="lazy" onerror="this.closest('.student-pro-avatar').innerHTML='<span>${esc(initials)}</span>'; this.remove();">`
+        : `<span>${esc(initials)}</span>`}
+    </div>
+  `;
+}
+
+async function bloomProHydrateAvatars(){
+  const avatars = [...document.querySelectorAll(".student-pro-avatar[data-pro-avatar-id]")];
+  for(const avatar of avatars){
+    if(avatar.querySelector("img")) continue;
+
+    const alumno = bloomProStudentById(avatar.dataset.proAvatarId);
+    if(!alumno) continue;
+
+    const path = bloomProPhotoPath(alumno);
+    if(!path) continue;
+
+    const url = await bloomProSignedPhoto(path);
+    if(url){
+      alumno.foto = Object.assign({}, alumno.foto || {}, {
+        path,
+        signedUrl:url,
+        storage:true,
+        type:"image/*",
+        name:"Foto alumno"
+      });
+      alumno.foto_signed_url = url;
+      avatar.innerHTML = `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.closest('.student-pro-avatar').innerHTML='<span>${esc(bloomProInitials(alumno.nombre))}</span>'; this.remove();">`;
+      avatar.classList.add("has-photo");
+    }
+  }
+}
+
+function bloomProProgress(a){
+  if(!a.inicio || !a.fin) return 0;
+  const start = new Date(a.inicio);
+  const end = new Date(a.fin);
+  const now = new Date();
+  if(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return 0;
+  if(now <= start) return 0;
+  if(now >= end) return 100;
+  return Math.round(((now - start) / (end - start)) * 100);
+}
+
+function bloomProStatusClass(status){
+  const s = bloomProClean(status).toLowerCase();
+  if(s.includes("práct") || s.includes("pract")) return "active";
+  if(s.includes("final")) return "done";
+  if(s.includes("entrevista") || s.includes("propuesta")) return "pending";
+  return "none";
+}
+
+function bloomProDocButton(a, kind){
+  if(kind === "foto"){
+    const hasPhoto = bloomProPhotoDirect(a) || bloomProPhotoPath(a);
+    return hasPhoto ? `<button class="mini-pill" data-action="photo" data-id="${esc(a.id)}">Foto</button>` : `<span class="mini-muted">Sin foto</span>`;
+  }
+  if(kind === "cv"){
+    const hasCv = a.curriculum?.data || a.curriculum?.url || a.curriculum?.path;
+    return hasCv ? `<button class="mini-pill" data-action="cv" data-id="${esc(a.id)}">CV</button>` : `<span class="mini-muted">Sin CV</span>`;
+  }
+  return "";
+}
+
+function renderAlumnos(){
+  const q = $("#studentSearch")?.value?.toLowerCase() || "";
+  const alumnos = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+
+  const total = (state.alumnos || []).length;
+  const sinEmpresa = (state.alumnos || []).filter(a => !a.empresa).length;
+  const enPracticas = (state.alumnos || []).filter(a => String(a.estado || "").toLowerCase().includes("práct") || String(a.estado || "").toLowerCase().includes("pract")).length;
+  const conCv = (state.alumnos || []).filter(a => a.curriculum?.data || a.curriculum?.url || a.curriculum?.path).length;
+
+  $("#alumnos").innerHTML = pageHead("Alumnos", "Alumnos", "Ficha completa del alumnado") + `
+    <section class="students-pro-page">
+      <div class="students-pro-kpis">
+        <article><b>${total}</b><span>Alumnos</span></article>
+        <article><b>${sinEmpresa}</b><span>Sin empresa</span></article>
+        <article><b>${enPracticas}</b><span>En prácticas</span></article>
+        <article><b>${conCv}</b><span>Con CV</span></article>
+      </div>
+
+      <section class="card students-pro-card">
+        <div class="toolbar students-pro-toolbar">
+          <input id="studentSearch" placeholder="Buscar por nombre, DNI, email, empresa..." oninput="renderAlumnos()" value="${esc(q)}">
+          <button class="primary" onclick="openAlumno()">Añadir alumno</button>
+          ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
+          ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
+          ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
+        </div>
+
+        <div class="students-pro-list">
+          ${alumnos.map(a => {
+            const progress = bloomProProgress(a);
+            return `
+              <article class="student-pro-row" data-student-pro-id="${esc(a.id)}">
+                <div class="student-pro-main">
+                  ${bloomProAvatar(a, "lg")}
+                  <div class="student-pro-info">
+                    <div class="student-pro-title">
+                      <h3>${esc(a.nombre || "Sin nombre")}</h3>
+                      <span class="student-status ${bloomProStatusClass(a.estado)}">${esc(a.estado || "sin asignar")}</span>
+                    </div>
+
+                    <div class="student-pro-meta">
+                      <span>${a.dni ? "DNI: " + esc(a.dni) : "Sin DNI"}</span>
+                      <span>NSS: ${esc(a.nss || "Sin NSS")}</span>
+                      <span>${esc(a.empresa || "Sin empresa")}</span>
+                    </div>
+
+                    <div class="student-pro-contact">
+                      <span>📞 ${esc(a.telefono || "Sin teléfono")}</span>
+                      <span>✉ ${esc(a.email || "Sin email")}</span>
+                      <span>🎓 ${esc(a.curso || "Sin curso")}</span>
+                    </div>
+
+                    <div class="student-pro-progress">
+                      <i><em style="width:${progress}%"></em></i>
+                      <span>${progress}% prácticas</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="student-pro-docs" onclick="event.stopPropagation()">
+                  ${bloomProDocButton(a, "foto")}
+                  ${bloomProDocButton(a, "cv")}
+                </div>
+
+                <div class="student-pro-actions" onclick="event.stopPropagation()">
+                  <button data-action="view" data-id="${esc(a.id)}">Ver ficha</button>
+                  <button data-action="edit" data-id="${esc(a.id)}">Editar</button>
+                  <button data-action="delete" data-id="${esc(a.id)}">Eliminar</button>
+                </div>
+              </article>
+            `;
+          }).join("") || `<div class="students-empty">No hay alumnos.</div>`}
+        </div>
+      </section>
+    </section>
+  `;
+
+  setTimeout(bloomProHydrateAvatars, 50);
+  setTimeout(bloomProHydrateAvatars, 250);
+}
+
+/* Eventos seguros para la nueva vista */
+document.addEventListener("click", function(event){
+  const btn = event.target.closest(".student-pro-actions button, .student-pro-docs button");
+  if(btn){
+    event.preventDefault();
+    event.stopPropagation();
+
+    const alumno = bloomProStudentById(btn.dataset.id);
+    if(!alumno) return;
+
+    const action = btn.dataset.action;
+    if(action === "view") return openStudentProfile(alumno.id);
+    if(action === "edit") return openAlumno(alumno.id);
+    if(action === "delete") return delAlumno(alumno.id);
+    if(action === "photo") return previewAnyFile(alumno.foto, "Foto");
+    if(action === "cv") return previewAnyFile(alumno.curriculum, "CV");
+  }
+
+  const row = event.target.closest(".student-pro-row[data-student-pro-id]");
+  if(row && !event.target.closest("button, a, input, select, textarea, label")){
+    event.preventDefault();
+    event.stopPropagation();
+    openStudentProfile(row.dataset.studentProId);
+  }
+}, true);
+
+/* Rehidratar miniaturas después de renders generales */
+const bloomProOriginalRender = typeof render === "function" ? render : null;
+if(bloomProOriginalRender){
+  render = function(){
+    bloomProOriginalRender();
+    setTimeout(bloomProHydrateAvatars, 80);
+  };
+}

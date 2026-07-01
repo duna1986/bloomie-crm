@@ -935,3 +935,276 @@ body.auth-locked .overlay{
     min-width:980px;
   }
 }
+
+
+
+/* Bloom CRM 3.0 — Alumnos CRM profesional con miniatura real */
+.students-pro-page{
+  display:grid;
+  gap:16px;
+}
+
+.students-pro-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.students-pro-kpis article{
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:rgba(255,255,255,.72);
+  padding:16px;
+  box-shadow:0 12px 34px rgba(188,86,122,.08);
+}
+
+.students-pro-kpis b{
+  display:block;
+  color:var(--pink);
+  font-size:28px;
+}
+
+.students-pro-kpis span{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.students-pro-card{
+  padding:18px;
+}
+
+.students-pro-toolbar{
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+
+.students-pro-toolbar input{
+  min-width:240px;
+}
+
+.students-pro-list{
+  display:grid;
+  gap:12px;
+}
+
+.student-pro-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:16px;
+  align-items:center;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:24px;
+  background:rgba(255,255,255,.74);
+  transition:.18s ease;
+  cursor:pointer;
+}
+
+.student-pro-row:hover{
+  transform:translateY(-2px);
+  background:rgba(255,231,240,.38);
+  box-shadow:0 16px 38px rgba(188,86,122,.10);
+}
+
+.student-pro-main{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  min-width:0;
+}
+
+.student-pro-avatar{
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:linear-gradient(135deg,#ffe7f0,#fff);
+  border:1px solid var(--line);
+  color:var(--pink);
+  font-weight:950;
+  box-shadow:0 12px 26px rgba(188,86,122,.12);
+}
+
+.student-pro-avatar.lg{
+  width:76px;
+  height:76px;
+  border-radius:24px;
+  font-size:22px;
+}
+
+.student-pro-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.student-pro-info{
+  min-width:0;
+  display:grid;
+  gap:7px;
+}
+
+.student-pro-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.student-pro-title h3{
+  margin:0;
+  font-size:16px;
+  line-height:1.2;
+}
+
+.student-status{
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  background:var(--rose);
+  color:var(--pink);
+}
+
+.student-status.active{
+  background:var(--greenSoft);
+  color:var(--green);
+}
+
+.student-status.done{
+  background:var(--blueSoft);
+  color:var(--blue);
+}
+
+.student-status.pending{
+  background:var(--orangeSoft);
+  color:var(--orange);
+}
+
+.student-pro-meta,
+.student-pro-contact{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 14px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.student-pro-meta span{
+  font-weight:850;
+}
+
+.student-pro-progress{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.student-pro-progress i{
+  width:160px;
+  max-width:45vw;
+  height:8px;
+  border-radius:999px;
+  overflow:hidden;
+  background:var(--rose);
+}
+
+.student-pro-progress em{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(135deg,var(--pink),var(--pink2));
+}
+
+.student-pro-progress span{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:850;
+}
+
+.student-pro-docs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:flex-end;
+}
+
+.mini-pill,
+.student-pro-actions button{
+  height:36px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--pink);
+  padding:0 12px;
+  font-weight:850;
+  white-space:nowrap;
+}
+
+.mini-muted{
+  display:inline-flex;
+  align-items:center;
+  min-height:36px;
+  color:var(--muted);
+  font-size:12px;
+  white-space:nowrap;
+}
+
+.student-pro-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:flex-end;
+}
+
+.student-pro-actions button:first-child{
+  background:linear-gradient(135deg,var(--pink),var(--pink2));
+  color:#fff;
+  border-color:transparent;
+}
+
+.students-empty{
+  padding:22px;
+  text-align:center;
+  color:var(--muted);
+}
+
+@media(max-width:980px){
+  .students-pro-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .student-pro-row{
+    grid-template-columns:1fr;
+  }
+
+  .student-pro-docs,
+  .student-pro-actions{
+    justify-content:flex-start;
+  }
+}
+
+@media(max-width:620px){
+  .students-pro-kpis{
+    grid-template-columns:1fr;
+  }
+
+  .student-pro-main{
+    align-items:flex-start;
+  }
+
+  .student-pro-avatar.lg{
+    width:64px;
+    height:64px;
+    border-radius:20px;
+  }
+
+  .student-pro-progress i{
+    width:120px;
+  }
+}

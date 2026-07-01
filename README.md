@@ -311,3 +311,18 @@ Corrige la vista de la tabla de alumnos:
 - La tabla usa columnas estables.
 - Los botones Modificar, Ver ficha y Eliminar ya no se salen de la tabla.
 - La fila completa sigue abriendo la ficha del alumno.
+
+
+## Mejora — Alumnos CRM profesional
+
+Se reconstruye visualmente la pestaña Alumnos:
+
+- Vista tipo CRM con tarjetas profesionales.
+- Foto real en miniatura grande.
+- Fallback a iniciales si no hay foto o si la imagen falla.
+- Compatible con fotos en Base64 y Supabase Storage privado.
+- KPIs superiores: total, sin empresa, en prácticas y con CV.
+- Datos visibles: DNI, NSS, teléfono, email, curso, empresa y estado.
+- Indicador de progreso de prácticas.
+- Botones: Ver ficha, Editar, Eliminar, Foto y CV.
+- Clic en toda la tarjeta abre la ficha del alumno.

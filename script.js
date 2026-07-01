@@ -3900,324 +3900,300 @@ window.renderAlumnos = renderAlumnos;
 
 
 /* =========================================================
-   Bloom CRM 3.0 — Modo ficha del alumno
-   Añade:
-   - Botón "Ver ficha" en cada alumno.
-   - Clic sobre la fila del alumno abre su ficha completa.
-   - Vista tipo ficha/360 con foto, datos personales, prácticas,
-     empresa, CV, documentos, seguimiento y observaciones.
-   - Mantiene el botón Editar separado para modificar datos.
+   Bloom CRM 3.0 — FIX sincronización real + borrado definitivo
+   Corrige:
+   - Empresas que vuelven a aparecer tras eliminarlas.
+   - Duplicados por sincronización entre ordenador de casa/trabajo.
+   - Carga nube sustituyendo estado local, no mezclando.
+   - Botones para recargar nube y limpiar caché local.
 ========================================================= */
 
-function bloomFichaIdEq(a,b){ return String(a) === String(b); }
+const BLOOM_SYNC_KINDS = ["empresas","alumnos","convenios","carpetas","documentos","seguimientos","emails"];
 
-function bloomFichaAlumnoGet(id){
-  return (state.alumnos || []).find(a => bloomFichaIdEq(a.id, id));
+function bloomSyncText(value){
+  return String(value || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function bloomFichaClean(value, fallback="Sin dato"){
-  if(value === null || value === undefined) return fallback;
-  const text = String(value).trim();
-  if(!text || text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return fallback;
-  return text;
+function bloomSyncKey(kind, item){
+  if(!item) return "";
+  if(kind === "empresas"){
+    return bloomSyncText(item.nombre || item.data?.nombre || item.data?.nombre_empresa);
+  }
+  if(kind === "alumnos"){
+    return bloomSyncText(item.dni || item.email || item.nombre || item.data?.dni || item.data?.email || item.data?.nombre);
+  }
+  return String(item.id || "");
 }
 
-function bloomFichaInitials(name){
-  const parts = String(name || "A").trim().split(/\s+/).filter(Boolean);
-  return (parts.length ? parts.slice(0,2).map(p => p[0]).join("") : "A").toUpperCase();
+function bloomSyncDedupe(kind, list){
+  const seen = new Map();
+  const duplicates = [];
+
+  (list || []).forEach(item => {
+    const key = bloomSyncKey(kind, item) || String(item.id || "");
+    if(!key){
+      duplicates.push(item);
+      return;
+    }
+
+    if(!seen.has(key)){
+      seen.set(key, item);
+    }else{
+      duplicates.push(item);
+    }
+  });
+
+  return {
+    clean: [...seen.values()],
+    duplicates
+  };
 }
 
-function bloomFichaPhotoSrc(a){
-  if(!a) return "";
-  if(a.foto?.data) return a.foto.data;
-  if(a.foto?.url) return a.foto.url;
-  if(a.foto?.signedUrl) return a.foto.signedUrl;
-  if(a.foto_signed_url) return a.foto_signed_url;
-  if(a.foto_url) return a.foto_url;
-  if(a.fotoUrl) return a.fotoUrl;
-  if(typeof a.foto === "string" && a.foto.trim()) return a.foto;
-  return "";
+async function bloomSyncDeleteRemote(kind, ids){
+  if(!ids?.length || !bloom3Client || !bloom3Session?.user) return;
+
+  const table = bloom3Tables?.[kind];
+  if(!table) return;
+
+  for(const id of ids){
+    const { error } = await bloom3Client.from(table).delete().eq("id", String(id));
+    if(error) console.warn(`No se pudo eliminar duplicado remoto ${kind}/${id}`, error);
+  }
 }
 
-function bloomFichaPhotoPath(a){
-  if(!a) return "";
-  return a.foto_path || a.fotoPath || a.foto?.path || a.foto?.storage_path || a.foto?.storagePath || "";
+async function bloomSyncCleanDuplicates(){
+  if(!bloom3Ready || !bloom3Client || !bloom3Session?.user) return;
+
+  let removed = 0;
+
+  for(const kind of ["empresas","alumnos"]){
+    const result = bloomSyncDedupe(kind, state[kind] || []);
+    state[kind] = result.clean;
+
+    const duplicateIds = result.duplicates
+      .map(x => x?.id)
+      .filter(id => id !== undefined && id !== null && id !== "");
+
+    if(duplicateIds.length){
+      removed += duplicateIds.length;
+      await bloomSyncDeleteRemote(kind, duplicateIds);
+    }
+  }
+
+  if(removed){
+    localStorage.setItem(KEY, JSON.stringify(state));
+    setSync(`Duplicados limpiados: ${removed}`, "ok");
+    toast(`Duplicados eliminados: ${removed} 🌸`);
+  }
 }
 
-async function bloomFichaResolvePhoto(a){
-  const direct = bloomFichaPhotoSrc(a);
-  if(direct) return direct;
+/* Carga estricta desde Supabase: sustituye el estado local */
+const bloomSyncOriginalLoadAll = bloom3LoadAll;
+bloom3LoadAll = async function(){
+  await bloomSyncOriginalLoadAll();
 
-  const path = bloomFichaPhotoPath(a);
-  if(!path) return "";
+  for(const kind of ["empresas","alumnos"]){
+    const result = bloomSyncDedupe(kind, state[kind] || []);
+    state[kind] = result.clean;
 
+    const duplicateIds = result.duplicates
+      .map(x => x?.id)
+      .filter(Boolean);
+
+    if(duplicateIds.length){
+      await bloomSyncDeleteRemote(kind, duplicateIds);
+    }
+  }
+
+  localStorage.setItem(KEY, JSON.stringify(state));
+  setSync("Nube cargada", "ok");
+};
+
+/* Guardado: deduplica antes de subir */
+const bloomSyncOriginalSaveAll = bloom3SaveAll;
+bloom3SaveAll = async function(silent=false){
+  for(const kind of ["empresas","alumnos"]){
+    const result = bloomSyncDedupe(kind, state[kind] || []);
+    state[kind] = result.clean;
+  }
+
+  localStorage.setItem(KEY, JSON.stringify(state));
+  await bloomSyncOriginalSaveAll(silent);
+};
+
+/* LocalStorage solo caché. No debe restaurar datos antiguos si ya hay sesión. */
+function bloomSyncCacheWrite(){
   try{
-    let url = "";
-    if(typeof bloom3SignedUrl === "function"){
-      url = await bloom3SignedUrl(path);
-    }else if(typeof bloom3Client !== "undefined" && bloom3Client){
-      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
-      const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, 300);
-      if(error) throw error;
-      url = data.signedUrl;
-    }
-    if(url){
-      a.foto = Object.assign({}, a.foto || {}, { path, signedUrl:url, storage:true, type:"image/*", name:"Foto alumno" });
-      a.foto_signed_url = url;
-      return url;
-    }
+    localStorage.setItem(KEY, JSON.stringify(state));
   }catch(error){
-    console.warn("No se pudo cargar la foto del alumno", error);
-  }
-
-  return "";
-}
-
-function bloomFichaAvatar(a, size="sm"){
-  const src = bloomFichaPhotoSrc(a);
-  return `
-    <div class="bloom-ficha-avatar ${size}" data-ficha-avatar-id="${esc(a?.id || "")}">
-      ${src ? `<img src="${esc(src)}" alt="Foto de ${esc(a?.nombre || "alumno")}" loading="lazy">` : `<span>${esc(bloomFichaInitials(a?.nombre))}</span>`}
-    </div>
-  `;
-}
-
-async function bloomFichaHydrateAvatars(){
-  const avatars = [...document.querySelectorAll("[data-ficha-avatar-id]")];
-  for(const avatar of avatars){
-    if(avatar.querySelector("img")) continue;
-    const alumno = bloomFichaAlumnoGet(avatar.dataset.fichaAvatarId);
-    if(!alumno) continue;
-    const url = await bloomFichaResolvePhoto(alumno);
-    if(url){
-      avatar.innerHTML = `<img src="${esc(url)}" alt="Foto de ${esc(alumno.nombre || "alumno")}" loading="lazy">`;
-      avatar.classList.add("has-photo");
-    }
+    console.warn("No se pudo escribir caché local", error);
   }
 }
 
-function bloomFichaField(label, value){
-  return `
-    <article>
-      <b>${esc(label)}</b>
-      <span>${esc(bloomFichaClean(value))}</span>
-    </article>
-  `;
-}
-
-function bloomFichaProgress(a){
-  if(!a.inicio || !a.fin) return 0;
-  const start = new Date(a.inicio);
-  const end = new Date(a.fin);
-  const now = new Date();
-  if(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return 0;
-  if(now <= start) return 0;
-  if(now >= end) return 100;
-  return Math.round(((now - start) / (end - start)) * 100);
-}
-
-function bloomFichaList(items, empty){
-  return items.length ? `<div class="list">${items.join("")}</div>` : `<p class="empty-text">${esc(empty)}</p>`;
-}
-
-function openAlumnoFichaModo(id){
-  const a = bloomFichaAlumnoGet(id);
-  if(!a){
-    alert("No se encontró el alumno seleccionado.");
+async function forceCloudReload(){
+  if(!bloom3Session?.user){
+    alert("Inicia sesión para recargar desde la nube.");
     return;
   }
 
-  bloomFichaResolvePhoto(a).then(() => {
-    const empresa = (state.empresas || []).find(e => e.nombre === a.empresa || String(e.id) === String(a.empresa_id || ""));
-    const convenio = (state.convenios || []).find(c => c.empresa === a.empresa || c.alumno === a.nombre || String(c.alumno_id || "") === String(a.id));
-    const docs = (state.documentos || []).filter(d => d.alumno === a.nombre || d.alumno_id === a.id || d.empresa === a.empresa);
-    const segs = (state.seguimientos || []).filter(s => s.alumno === a.nombre || s.alumno_id === a.id || s.empresa === a.empresa);
-    const progress = bloomFichaProgress(a);
-    const photo = bloomFichaPhotoSrc(a);
+  if(!confirm("Esto sustituirá la copia local por la versión actual de Supabase. ¿Continuar?")) return;
 
-    modal("Ficha del alumno", `
-      <section class="alumno-ficha360">
-        <aside class="alumno-ficha-side">
-          <div class="alumno-ficha-photo">
-            ${photo ? `<img src="${esc(photo)}" alt="Foto de ${esc(a.nombre || "alumno")}">` : `<span>${esc(bloomFichaInitials(a.nombre))}</span>`}
-          </div>
-          <h2>${esc(a.nombre || "Alumno")}</h2>
-          <p>${esc(a.dni || "Sin DNI/NIE")}</p>
-          <span class="badge">${esc(a.estado || "sin asignar")}</span>
-
-          <div class="alumno-ficha-progress">
-            <div><span>Progreso prácticas</span><b>${progress}%</b></div>
-            <i><em style="width:${progress}%"></em></i>
-          </div>
-
-          <button class="primary" onclick="openAlumno('${esc(a.id)}')">Modificar datos</button>
-          ${a.curriculum ? `<button class="soft-btn" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').curriculum,'Currículum')">Ver currículum</button>` : ""}
-          ${photo ? `<button class="soft-btn" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').foto,'Foto')">Ver foto</button>` : ""}
-        </aside>
-
-        <main class="alumno-ficha-main">
-          <section class="alumno-ficha-section">
-            <div class="section-head"><div><p>Datos personales</p><h3>Información general</h3></div></div>
-            <div class="alumno-ficha-grid">
-              ${bloomFichaField("Nombre", a.nombre)}
-              ${bloomFichaField("DNI / NIE", a.dni)}
-              ${bloomFichaField("Teléfono", a.telefono)}
-              ${bloomFichaField("Correo", a.email)}
-              ${bloomFichaField("Dirección", a.direccion)}
-              ${bloomFichaField("Nº Seguridad Social", a.nss)}
-              ${bloomFichaField("Curso", a.curso)}
-            </div>
-          </section>
-
-          <section class="alumno-ficha-section">
-            <div class="section-head"><div><p>Prácticas</p><h3>Datos académicos y FCT</h3></div></div>
-            <div class="alumno-ficha-grid">
-              ${bloomFichaField("Estado", a.estado)}
-              ${bloomFichaField("Empresa", a.empresa)}
-              ${bloomFichaField("Tutor centro", a.tutor)}
-              ${bloomFichaField("Tutor empresa", a.tutor_empresa)}
-              ${bloomFichaField("Inicio", a.inicio || convenio?.inicio)}
-              ${bloomFichaField("Fin", a.fin || convenio?.fin)}
-              ${bloomFichaField("Horas", a.horas)}
-              ${bloomFichaField("Evaluación", a.evaluacion)}
-              ${bloomFichaField("Convenio", convenio?.estado)}
-            </div>
-          </section>
-
-          <section class="alumno-ficha-section">
-            <div class="section-head"><div><p>Empresa</p><h3>Empresa asignada</h3></div></div>
-            ${empresa ? `
-              <article class="item">
-                <div>
-                  <b>${esc(empresa.nombre)}</b>
-                  <p>${esc(empresa.contacto || "Sin contacto")} · ${esc(empresa.telefono || "")}${empresa.email ? " · " + esc(empresa.email) : ""}</p>
-                </div>
-              </article>
-            ` : `<p class="empty-text">Sin empresa asignada.</p>`}
-          </section>
-
-          <section class="alumno-ficha-section">
-            <div class="section-head"><div><p>Documentación</p><h3>Archivos y previsualización</h3></div></div>
-            <div class="alumno-doc-grid">
-              ${photo ? `
-                <article class="alumno-doc-card" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').foto,'Foto')">
-                  <b>🖼 Foto</b><span>Ver / descargar</span>
-                </article>
-              ` : `
-                <article class="alumno-doc-card muted"><b>🖼 Foto</b><span>No adjuntada</span></article>
-              `}
-              ${a.curriculum ? `
-                <article class="alumno-doc-card" onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').curriculum,'Currículum')">
-                  <b>📄 Currículum</b><span>Ver / descargar</span>
-                </article>
-              ` : `
-                <article class="alumno-doc-card muted"><b>📄 Currículum</b><span>No adjuntado</span></article>
-              `}
-              ${docs.map(d => `
-                <article class="alumno-doc-card" onclick="previewAnyFile(state.documentos.find(x=>String(x.id)===String('${d.id}')).file,'${esc(d.nombre)}')">
-                  <b>📎 ${esc(d.nombre || "Documento")}</b><span>${esc(d.tipo || "Documento")} · ${esc(d.estado || "")}</span>
-                </article>
-              `).join("")}
-            </div>
-          </section>
-
-          <section class="alumno-ficha-section">
-            <div class="section-head"><div><p>Seguimiento</p><h3>Historial relacionado</h3></div></div>
-            ${bloomFichaList(segs.map(s => `
-              <article class="item">
-                <div>
-                  <b>${esc(s.tipo || "Seguimiento")} · ${esc(s.fecha || "")}</b>
-                  <p>${esc(s.resultado || "")}${s.proxima ? " · Próxima: " + esc(s.proxima) : ""}</p>
-                </div>
-              </article>
-            `), "No hay seguimientos relacionados.")}
-          </section>
-
-          <section class="alumno-ficha-section">
-            <div class="section-head"><div><p>Observaciones</p><h3>Notas privadas</h3></div></div>
-            <p>${esc(a.notas || "Sin observaciones.")}</p>
-          </section>
-        </main>
-      </section>
-    `, () => closeModal());
-  });
+  try{
+    setSync("Recargando nube...", "saving");
+    await bloom3LoadAll();
+    render();
+    toast("Datos recargados desde Supabase 🌸");
+  }catch(error){
+    setSync("Error nube", "error");
+    alert("No se pudo recargar desde Supabase:\n\n" + error.message);
+  }
 }
 
-/* Alias global: cualquier llamada previa abre la ficha nueva */
-window.openAlumnoFichaModo = openAlumnoFichaModo;
-window.openStudentProfile = openAlumnoFichaModo;
+function clearLocalCacheAndReload(){
+  if(!confirm("Esto limpiará la caché local de este navegador y recargará la nube. ¿Continuar?")) return;
+  localStorage.removeItem(KEY);
+  forceCloudReload();
+}
 
-/* Tabla alumnos con acceso explícito a ficha */
-const bloomFichaRenderAlumnosOriginal = typeof renderAlumnos === "function" ? renderAlumnos : null;
-renderAlumnos = function(){
-  const q = $("#studentSearch")?.value?.toLowerCase() || "";
-  const alumnos = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+/* Borrado definitivo remoto */
+async function bloomDeleteRemoteItem(kind, id){
+  if(!bloom3Ready || !bloom3Client || !bloom3Session?.user){
+    return false;
+  }
 
-  $("#alumnos").innerHTML = pageHead("Alumnos", "Alumnos", "Ficha completa del alumnado") + `
-    <section class="card table-card">
-      <div class="toolbar">
-        <input id="studentSearch" placeholder="Buscar alumno..." oninput="renderAlumnos()" value="${esc(q)}">
-        <button class="primary" onclick="openAlumno()">Añadir alumno</button>
-        ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
-        ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
-        ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
-      </div>
+  const table = bloom3Tables?.[kind];
+  if(!table) return false;
 
-      <table>
-        <thead>
-          <tr>
-            <th>Alumno</th>
-            <th>Contacto</th>
-            <th>Empresa</th>
-            <th>Estado</th>
-            <th>Archivos</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${alumnos.map(a => `
-            <tr class="student-row clickable-row" data-alumno-row-id="${esc(a.id)}">
-              <td>
-                <div class="student-cell">
-                  ${bloomFichaAvatar(a)}
-                  <div>
-                    <b>${esc(a.nombre || "Sin nombre")}</b><br>
-                    <small>${a.dni ? "DNI: " + esc(a.dni) + " · " : ""}NSS: ${esc(a.nss || "Sin NSS")}</small>
-                  </div>
-                </div>
-              </td>
-              <td>${esc(a.telefono || "")}<br><small>${esc(a.email || "")}</small></td>
-              <td>${esc(a.empresa || "Sin empresa")}</td>
-              <td><span class="badge">${esc(a.estado || "sin asignar")}</span></td>
-              <td>
-                <div class="student-files" onclick="event.stopPropagation()">
-                  ${(bloomFichaPhotoSrc(a) || bloomFichaPhotoPath(a)) ? `<button onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').foto,'Foto')">Foto</button>` : `<span>Sin foto</span>`}
-                  ${a.curriculum?.data || a.curriculum?.url || a.curriculum?.path ? `<button onclick="previewAnyFile(bloomFichaAlumnoGet('${esc(a.id)}').curriculum,'CV')">CV</button>` : `<span>Sin CV</span>`}
-                </div>
-              </td>
-              <td class="row-actions" onclick="event.stopPropagation()">
-                <button onclick="openAlumno('${esc(a.id)}')">Modificar</button>
-                <button onclick="openAlumnoFichaModo('${esc(a.id)}')">Ver ficha</button>
-                <button onclick="delAlumno('${esc(a.id)}')">Eliminar</button>
-              </td>
-            </tr>
-          `).join("") || `<tr><td colspan="6">No hay alumnos.</td></tr>`}
-        </tbody>
-      </table>
-      <p class="hint-click">Haz clic sobre cualquier alumno o usa “Ver ficha” para visualizar todos sus datos en modo ficha.</p>
-    </section>
-  `;
+  const { error } = await bloom3Client
+    .from(table)
+    .delete()
+    .eq("id", String(id));
 
-  bloomFichaHydrateAvatars();
+  if(error) throw error;
+  return true;
+}
+
+/* Empresas: eliminar de Supabase, no solo local */
+delEmpresa = async function(id){
+  const empresa = (state.empresas || []).find(e => String(e.id) === String(id));
+  const nombre = empresa?.nombre || "esta empresa";
+
+  if(!confirm(`¿Eliminar definitivamente ${nombre}?`)) return;
+
+  try{
+    setSync("Eliminando empresa...", "saving");
+
+    await bloomDeleteRemoteItem("empresas", id);
+
+    state.empresas = (state.empresas || []).filter(e => String(e.id) !== String(id));
+    bloomSyncCacheWrite();
+
+    setSync("Empresa eliminada", "ok");
+    toast("Empresa eliminada definitivamente 🌸");
+
+    await bloom3LoadAll();
+    render();
+  }catch(error){
+    setSync("Error eliminando", "error");
+    alert("No se pudo eliminar la empresa en Supabase:\n\n" + error.message);
+  }
 };
 
-/* Delegación de seguridad por si otra función vuelve a pintar filas */
-document.addEventListener("click", function(event){
-  const row = event.target.closest("#alumnos tr[data-alumno-row-id]");
-  if(!row) return;
-  if(event.target.closest("button, a, input, select, textarea, label")) return;
+/* Alumnos: mismo comportamiento seguro */
+delAlumno = async function(id){
+  const alumno = (state.alumnos || []).find(a => String(a.id) === String(id));
+  const nombre = alumno?.nombre || "este alumno";
 
-  event.preventDefault();
-  event.stopPropagation();
-  openAlumnoFichaModo(row.dataset.alumnoRowId);
-}, true);
+  if(!confirm(`¿Eliminar definitivamente ${nombre}?`)) return;
+
+  try{
+    setSync("Eliminando alumno...", "saving");
+
+    await bloomDeleteRemoteItem("alumnos", id);
+
+    state.alumnos = (state.alumnos || []).filter(a => String(a.id) !== String(id));
+    bloomSyncCacheWrite();
+
+    setSync("Alumno eliminado", "ok");
+    toast("Alumno eliminado definitivamente 🌸");
+
+    await bloom3LoadAll();
+    render();
+  }catch(error){
+    setSync("Error eliminando", "error");
+    alert("No se pudo eliminar el alumno en Supabase:\n\n" + error.message);
+  }
+};
+
+/* Guardar sin resucitar duplicados locales */
+const bloomSyncOriginalSave = save;
+save = function(){
+  for(const kind of ["empresas","alumnos"]){
+    const result = bloomSyncDedupe(kind, state[kind] || []);
+    state[kind] = result.clean;
+  }
+
+  bloomSyncCacheWrite();
+
+  if(!bloom3Ready || !bloom3Session?.user){
+    bloomSyncOriginalSave();
+    return;
+  }
+
+  setSync("Guardando nube...", "saving");
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(() => bloom3SaveAll(true), 250);
+};
+
+/* Reforzar botones en ajustes */
+const bloomSyncRenderAjustesBase = typeof renderAjustes === "function" ? renderAjustes : null;
+if(bloomSyncRenderAjustesBase){
+  renderAjustes = function(){
+    bloomSyncRenderAjustesBase();
+
+    const target = document.querySelector("#ajustes .grid-2") || document.querySelector("#ajustes");
+    if(target && !document.querySelector("#bloomSyncFixCard")){
+      target.insertAdjacentHTML("afterbegin", `
+        <section id="bloomSyncFixCard" class="card table-card sync-fix-card">
+          <div class="section-head">
+            <div>
+              <p>Sincronización</p>
+              <h3>Casa / trabajo</h3>
+            </div>
+          </div>
+          <p>Usa Supabase como fuente principal. Si cambias de ordenador, pulsa <b>Recargar desde nube</b>. Si ves datos antiguos, pulsa <b>Limpiar caché local</b>.</p>
+          <div class="settings-row">
+            <button class="primary" onclick="forceCloudReload()">Recargar desde nube</button>
+            <button class="soft-btn" onclick="clearLocalCacheAndReload()">Limpiar caché local</button>
+            <button class="soft-btn" onclick="bloomSyncCleanDuplicates().then(()=>render())">Limpiar duplicados</button>
+            <button class="soft-btn" onclick="saveCloud()">Guardar ahora</button>
+          </div>
+        </section>
+      `);
+    }
+  };
+}
+
+/* Botón visible también en Empresas */
+const bloomSyncRenderEmpresasBase = typeof renderEmpresas === "function" ? renderEmpresas : null;
+if(bloomSyncRenderEmpresasBase){
+  renderEmpresas = function(){
+    bloomSyncRenderEmpresasBase();
+
+    const toolbar = document.querySelector("#empresas .toolbar");
+    if(toolbar && !toolbar.querySelector("[data-sync-fix]")){
+      toolbar.insertAdjacentHTML("beforeend", `
+        <button class="soft-btn" data-sync-fix onclick="forceCloudReload()">Recargar nube</button>
+        <button class="soft-btn" data-sync-fix onclick="bloomSyncCleanDuplicates().then(()=>render())">Limpiar duplicados</button>
+      `);
+    }
+  };
+}
+
+window.forceCloudReload = forceCloudReload;
+window.clearLocalCacheAndReload = clearLocalCacheAndReload;
+window.bloomSyncCleanDuplicates = bloomSyncCleanDuplicates;

@@ -280,21 +280,23 @@ Se corrige el problema introducido por el fix de miniaturas:
 - Se mantiene compatibilidad con foto en Base64 y Supabase Storage privado.
 
 
-## Mejora — modo ficha del alumno
+## Fix — sincronización casa/trabajo y borrado definitivo
 
-Añadido sobre estos archivos:
+Se corrige el problema de empresas duplicadas y registros que reaparecen tras eliminarlos.
 
-- Al hacer clic en un alumno se abre una ficha visual completa.
-- Nuevo botón **Ver ficha** en la tabla de alumnos.
-- Botón **Modificar** separado para editar los datos.
-- Ficha con:
-  - foto,
-  - DNI/NIE,
-  - datos personales,
-  - prácticas,
-  - empresa asignada,
-  - documentación,
-  - currículum,
-  - seguimiento,
-  - observaciones.
-- Compatible con fotos en Base64 y Supabase Storage privado mediante Signed URLs.
+Cambios:
+- La carga desde Supabase sustituye la copia local.
+- Al eliminar una empresa se ejecuta `DELETE` real en Supabase.
+- Al eliminar un alumno se ejecuta `DELETE` real en Supabase.
+- Se limpian duplicados por nombre de empresa.
+- Se limpian duplicados de alumnos por DNI, email o nombre.
+- `localStorage` queda como caché local, no como origen principal.
+- Añadidos botones:
+  - Recargar desde nube.
+  - Limpiar caché local.
+  - Limpiar duplicados.
+  - Guardar ahora.
+
+Recomendación:
+- Al cambiar de casa a trabajo o de trabajo a casa, entra en Ajustes y pulsa **Recargar desde nube**.
+- Si ves información antigua, pulsa **Limpiar caché local**.

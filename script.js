@@ -5166,3 +5166,161 @@ document.title = "Bloom CRM 3.2";
 /* Bloom CRM 3.2.2 paquete raíz reparado: cache-bust + supabase/schema.sql incluido */
 window.BLOOM_CRM_BUILD="3.2.2-reparado-final";
 console.info("Bloom CRM build", window.BLOOM_CRM_BUILD);
+
+/* =========================================================
+   Bloom CRM 3.2.3 — Reparación definitiva previsualización Documentos
+   - Corrige botones con IDs no numéricos.
+   - Soporta documentos guardados como file.path, storage_path, path, url o data.
+   - Genera Signed URL antes de abrir/descargar archivos privados.
+========================================================= */
+(function(){
+  const BUILD = "3.2.3-documentos-preview";
+
+  function bloomDocById(id){
+    return (state.documentos || []).find(d => String(d.id) === String(id));
+  }
+
+  function bloomDocFile(docOrFile){
+    if(!docOrFile) return null;
+    if(docOrFile.file) return docOrFile.file;
+    return docOrFile;
+  }
+
+  function bloomDocPath(docOrFile){
+    const obj = docOrFile || {};
+    const file = bloomDocFile(obj) || {};
+    return file.path || file.storage_path || file.storagePath || obj.path || obj.storage_path || obj.storagePath || obj.file_path || obj.documento_path || "";
+  }
+
+  async function bloomDocSignedUrl(path, ttl=900){
+    if(!path) return "";
+    if(typeof bloom32SignedUrl === "function") return await bloom32SignedUrl(path, ttl);
+    if(typeof bloom3SignedUrl === "function") return await bloom3SignedUrl(path, ttl);
+    const client = typeof bloom32Client === "function" ? bloom32Client() : bloom3Client;
+    const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+    const { data, error } = await client.storage.from(bucket).createSignedUrl(path, ttl);
+    if(error) throw error;
+    return data?.signedUrl || "";
+  }
+
+  async function bloomDocUrl(docOrFile){
+    const file = bloomDocFile(docOrFile);
+    if(!file) return "";
+    if(file.data) return file.data;
+    if(file.url) return file.url;
+    if(file.signedUrl) return file.signedUrl;
+    const path = bloomDocPath(docOrFile);
+    if(path) return await bloomDocSignedUrl(path, 900);
+    return "";
+  }
+
+  function bloomDocName(docOrFile, fallback="Documento"){
+    const file = bloomDocFile(docOrFile) || {};
+    return file.name || docOrFile?.nombre || fallback;
+  }
+
+  function bloomDocType(docOrFile){
+    const file = bloomDocFile(docOrFile) || {};
+    return file.type || docOrFile?.mime_type || docOrFile?.tipo_mime || "";
+  }
+
+  window.previewAnyFile = async function(fileOrDoc, title="Documento"){
+    const file = bloomDocFile(fileOrDoc);
+    if(!file){
+      modal("Previsualizar documento", `<p>No hay archivo adjunto.</p>`, () => closeModal());
+      return;
+    }
+    try{
+      const url = await bloomDocUrl(fileOrDoc);
+      const name = bloomDocName(fileOrDoc, title);
+      const type = bloomDocType(fileOrDoc);
+      if(!url){
+        modal("Previsualizar documento", `<section><h2>${esc(title)}</h2><div class="student-cv-empty"><b>${esc(name)}</b><span>No se encontró la ruta del archivo.</span></div></section>`, () => closeModal());
+        return;
+      }
+      const isPdf = type.includes("pdf") || /\.pdf$/i.test(name);
+      const isImage = type.includes("image") || /\.(png|jpg|jpeg|webp|gif)$/i.test(name);
+      const body = isPdf
+        ? `<div class="student-cv-preview"><iframe src="${url}"></iframe></div>`
+        : isImage
+          ? `<div class="student-cv-image"><img src="${url}" alt="${esc(name)}"></div>`
+          : `<div class="student-cv-empty"><b>${esc(name)}</b><span>Este tipo de archivo no tiene vista integrada. Puedes abrirlo o descargarlo.</span></div>`;
+      modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>${body}<div class="student-cv-actions"><a href="${url}" target="_blank" rel="noopener">Abrir</a><a href="${url}" download="${esc(name)}">Descargar</a></div></section>`, () => closeModal());
+    }catch(error){
+      console.error("previewAnyFile", error);
+      alert("No se pudo previsualizar el documento:\n\n" + (error?.message || error));
+    }
+  };
+
+  window.bloomPreviewDoc = function(id){
+    const doc = bloomDocById(id);
+    if(!doc) return alert("No se encontró el documento.");
+    return window.previewAnyFile(doc, doc.nombre || "Documento");
+  };
+
+  window.bloomDownloadDoc = async function(id){
+    const doc = bloomDocById(id);
+    if(!doc) return alert("No se encontró el documento.");
+    try{
+      const url = await bloomDocUrl(doc);
+      if(!url) return alert("No se encontró la ruta del archivo.");
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.download = bloomDocName(doc, doc.nombre || "documento");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }catch(error){
+      alert("No se pudo descargar el documento:\n\n" + (error?.message || error));
+    }
+  };
+
+  window.docCard = function(d){
+    const id = String(d.id).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    const hasFile = !!(d.file || d.path || d.storage_path || d.file_path || d.url || d.data);
+    return `<article class="card doc-card">
+      <h3>${esc(d.nombre || "Documento")}</h3>
+      <p>${esc(d.tipo || "")} · ${esc(d.estado || "")}</p>
+      <p>${esc(d.empresa || d.alumno || "General")} · ${esc(d.fecha || "")}</p>
+      <p>${esc(d.notas || "")}</p>
+      <div class="doc-actions">
+        <button ${hasFile ? "" : "disabled"} onclick="bloomPreviewDoc('${id}')">Previsualizar</button>
+        <button ${hasFile ? "" : "disabled"} onclick="bloomDownloadDoc('${id}')">Descargar</button>
+        <button onclick="editDoc('${id}')">Modificar</button>
+        <button onclick="replaceDoc('${id}')">Reemplazar archivo</button>
+        <button onclick="delDoc('${id}')">Eliminar</button>
+      </div>
+    </article>`;
+  };
+
+  const previousReplaceDoc = window.replaceDoc;
+  window.replaceDoc = function(id){
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.onchange = async () => {
+      const d = bloomDocById(id);
+      if(!d || !inp.files?.[0]) return;
+      try{
+        setSync("Reemplazando documento...", "saving");
+        const oldPath = bloomDocPath(d);
+        d.file = await fileToData(inp.files[0]);
+        d.nombre = d.nombre || d.file?.name || "Documento";
+        if(oldPath && d.file?.path !== oldPath && typeof bloom32RemoveStoragePaths === "function") await bloom32RemoveStoragePaths([oldPath]);
+        if(typeof bloom32Upsert === "function") await bloom32Upsert("documentos", d); else save();
+        render();
+        setSync("Documento reemplazado", "ok");
+        toast("Documento reemplazado 🌸");
+      }catch(error){
+        console.error(error);
+        setSync("Error documento", "error");
+        alert("No se pudo reemplazar el documento:\n\n" + (error?.message || error));
+        if(previousReplaceDoc) return previousReplaceDoc(id);
+      }
+    };
+    inp.click();
+  };
+
+  window.BLOOM_CRM_BUILD = BUILD;
+  console.info("Bloom CRM build", BUILD);
+})();

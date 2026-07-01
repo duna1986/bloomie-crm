@@ -5324,3 +5324,203 @@ console.info("Bloom CRM build", window.BLOOM_CRM_BUILD);
   window.BLOOM_CRM_BUILD = BUILD;
   console.info("Bloom CRM build", BUILD);
 })();
+
+/* =========================================================
+   Bloom CRM 3.2.4 — Documentos: reparación sin onclick inline
+   - Rehace la pestaña Documentos con botones enlazados por addEventListener.
+   - El botón Previsualizar recibe el documento completo, no solo file.
+   - Soporta IDs numéricos, UUID/texto y rutas en file.path/storage_path.
+========================================================= */
+(function(){
+  const BUILD = "3.2.4-documentos-final";
+
+  const byId = (id) => (state.documentos || []).find(d => String(d.id) === String(id));
+  const docPath = (doc) => {
+    const f = doc?.file || {};
+    return f.path || f.storage_path || f.storagePath || doc?.storage_path || doc?.path || doc?.file_path || doc?.documento_path || "";
+  };
+  const docFile = (doc) => doc?.file || (doc ? {
+    name: doc.nombre || "Documento",
+    type: doc.mime_type || doc.tipo_mime || "",
+    path: docPath(doc),
+    data: doc.data || "",
+    url: doc.url || "",
+    signedUrl: doc.signedUrl || doc.signed_url || "",
+    storage: !!docPath(doc)
+  } : null);
+  const htmlId = (id) => esc(String(id));
+
+  async function docUrl(doc){
+    const f = docFile(doc);
+    if(!f) return "";
+    if(f.data) return f.data;
+    if(f.url) return f.url;
+    if(f.signedUrl) return f.signedUrl;
+    const path = docPath(doc);
+    if(!path) return "";
+    if(typeof bloom32SignedUrl === "function") return await bloom32SignedUrl(path, 900);
+    if(typeof bloom3SignedUrl === "function") return await bloom3SignedUrl(path);
+    const client = typeof bloom32Client === "function" ? bloom32Client() : bloom3Client;
+    const { data, error } = await client.storage.from(BLOOM3_BUCKET).createSignedUrl(path, 900);
+    if(error) throw error;
+    return data?.signedUrl || "";
+  }
+
+  window.previewAnyFile = async function(fileOrDoc, title="Documento"){
+    const doc = fileOrDoc?.file ? fileOrDoc : null;
+    const f = doc ? docFile(doc) : fileOrDoc;
+    if(!f){
+      modal("Previsualizar documento", `<p>No hay archivo adjunto.</p>`, () => closeModal());
+      return;
+    }
+    try{
+      const source = doc || f;
+      const url = doc ? await docUrl(doc) : (f.data || f.url || f.signedUrl || (f.path ? await docUrl({file:f}) : ""));
+      const name = f.name || doc?.nombre || title || "Documento";
+      const type = f.type || doc?.mime_type || "";
+      const isPdf = type.includes("pdf") || /\.pdf$/i.test(name);
+      const isImage = type.includes("image") || /\.(png|jpg|jpeg|webp|gif)$/i.test(name);
+      let body = "";
+      if(!url){
+        body = `<div class="student-cv-empty"><b>${esc(name)}</b><span>No se encontró una ruta o URL válida para este archivo.</span></div>`;
+      }else if(isPdf){
+        body = `<div class="student-cv-preview"><iframe src="${url}"></iframe></div>`;
+      }else if(isImage){
+        body = `<div class="student-cv-image"><img src="${url}" alt="${esc(name)}"></div>`;
+      }else{
+        body = `<div class="student-cv-empty"><b>${esc(name)}</b><span>Este tipo de archivo no tiene vista integrada. Usa Abrir o Descargar.</span></div>`;
+      }
+      modal("Previsualizar documento", `<section><h2>${esc(title || name)}</h2>${body}${url ? `<div class="student-cv-actions"><a href="${url}" target="_blank" rel="noopener">Abrir</a><a href="${url}" download="${esc(name)}">Descargar</a></div>` : ""}</section>`, () => closeModal());
+    }catch(error){
+      console.error("previewAnyFile/documentos", error);
+      alert("No se pudo previsualizar el documento:\n\n" + (error?.message || error));
+    }
+  };
+
+  function docCardSafe(d){
+    const hasFile = !!(d.file || d.path || d.storage_path || d.file_path || d.url || d.data || docPath(d));
+    return `<article class="card doc-card" data-doc-id="${htmlId(d.id)}">
+      <h3>${esc(d.nombre || "Documento")}</h3>
+      <p>${esc(d.tipo || "")} · ${esc(d.estado || "")}</p>
+      <p>${esc(d.empresa || d.alumno || "General")} · ${esc(d.fecha || "")}</p>
+      <p>${esc(d.notas || "")}</p>
+      <div class="doc-actions">
+        <button type="button" data-doc-action="preview" ${hasFile ? "" : "disabled"}>Previsualizar</button>
+        <button type="button" data-doc-action="download" ${hasFile ? "" : "disabled"}>Descargar</button>
+        <button type="button" data-doc-action="edit">Modificar</button>
+        <button type="button" data-doc-action="replace">Reemplazar archivo</button>
+        <button type="button" data-doc-action="delete">Eliminar</button>
+      </div>
+    </article>`;
+  }
+  window.docCard = docCard = docCardSafe;
+
+  function bindDocButtons(){
+    document.querySelectorAll("#documentos [data-doc-action]").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const card = btn.closest("[data-doc-id]");
+        const id = card?.dataset?.docId;
+        const doc = byId(id);
+        if(!doc) return alert("No se encontró el documento.");
+        const action = btn.dataset.docAction;
+        if(action === "preview") return window.previewAnyFile(doc, doc.nombre || "Documento");
+        if(action === "download"){
+          try{
+            const url = await docUrl(doc);
+            if(!url) return alert("No se encontró la ruta del archivo.");
+            const a = document.createElement("a");
+            a.href = url;
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.download = (docFile(doc)?.name || doc.nombre || "documento");
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }catch(error){ alert("No se pudo descargar el documento:\n\n" + (error?.message || error)); }
+          return;
+        }
+        if(action === "edit") return editDoc(id);
+        if(action === "replace") return replaceDoc(id);
+        if(action === "delete") return delDoc(id);
+      });
+    });
+  }
+
+  const oldRenderDocumentos = renderDocumentos;
+  renderDocumentos = function(){
+    try{
+      const q = document.querySelector("#docSearch")?.value?.toLowerCase() || "";
+      const t = document.querySelector("#docTypeFilter")?.value || "Todos";
+      const folders = Array.isArray(state.carpetas) ? state.carpetas : [];
+      const docs = (state.documentos || []).filter(d =>
+        (activeFolder === "all" || (!d.carpeta && activeFolder === "sin") || String(d.carpeta) === String(activeFolder)) &&
+        (!q || JSON.stringify(d).toLowerCase().includes(q)) &&
+        (t === "Todos" || d.tipo === t)
+      );
+      const root = document.querySelector("#documentos");
+      if(!root) return;
+      root.innerHTML = pageHead("Documentos", "Documentos", "Archivo con carpetas y previsualización") + `
+        <section class="doc-layout">
+          <aside class="card table-card folders">
+            <div class="section-head"><div><p>Carpetas</p><h3>Archivo</h3></div></div>
+            <form class="form-grid" id="folderCreateForm"><input id="folderName" placeholder="Nueva carpeta" required><button class="primary">Crear</button></form>
+            <div class="folder-list">${folders.map(f => `<div class="folder ${String(activeFolder) === String(f.id) ? "active" : ""}" data-folder-id="${htmlId(f.id)}">
+              <span>📁 ${esc(f.nombre)}</span>
+              <div class="folder-actions">
+                <b>${(state.documentos || []).filter(d => f.id === "all" || (!d.carpeta && f.id === "sin") || String(d.carpeta) === String(f.id)).length}</b>
+                ${!["all","sin"].includes(String(f.id)) ? `<button type="button" data-folder-action="edit">✎</button><button type="button" data-folder-action="delete">×</button>` : ""}
+              </div>
+            </div>`).join("")}</div>
+          </aside>
+          <main>
+            <section class="card table-card">
+              <div class="section-head"><div><p>Subir</p><h3>Nuevo documento</h3></div></div>
+              <form class="form-grid" id="docUploadForm">
+                <input id="docNombre" placeholder="Nombre visible">
+                <select id="docCarpeta">${folders.filter(f => !["all","sin"].includes(String(f.id))).map(f => `<option value="${htmlId(f.id)}">${esc(f.nombre)}</option>`).join("")}</select>
+                <select id="docTipo"><option>convenio firmado</option><option>DNI/NIF</option><option>seguro</option><option>acuerdo formativo</option><option>evaluación</option><option>anexo de prácticas</option><option>cv</option><option>otro</option></select>
+                <select id="docEmpresa"><option value="">Sin empresa</option>${(state.empresas || []).map(e => `<option>${esc(e.nombre)}</option>`).join("")}</select>
+                <select id="docAlumno"><option value="">Sin alumno</option>${(state.alumnos || []).map(a => `<option>${esc(a.nombre)}</option>`).join("")}</select>
+                <select id="docEstado"><option>pendiente</option><option>para enviar</option><option>enviado</option><option>firmado</option><option>caducado</option></select>
+                <input id="docFecha" type="date" value="${today()}">
+                <input id="docUser" placeholder="Subido por">
+                <label>Archivo<input id="docFile" type="file" required></label>
+                <textarea id="docNotas" placeholder="Notas"></textarea>
+                <button class="primary">Guardar documento</button>
+              </form>
+            </section>
+            <section class="card table-card" style="margin-top:18px">
+              <div class="toolbar"><input id="docSearch" placeholder="Buscar..." value="${esc(q)}"><select id="docTypeFilter"><option>Todos</option><option>convenio firmado</option><option>DNI/NIF</option><option>seguro</option><option>cv</option></select></div>
+              <div class="doc-grid">${docs.map(docCardSafe).join("") || "<p>No hay documentos.</p>"}</div>
+            </section>
+          </main>
+        </section>`;
+      const typeSel = document.querySelector("#docTypeFilter");
+      if(typeSel) typeSel.value = t;
+      document.querySelector("#docSearch")?.addEventListener("input", renderDocumentos);
+      typeSel?.addEventListener("change", renderDocumentos);
+      document.querySelector("#docUploadForm")?.addEventListener("submit", addDoc);
+      document.querySelector("#folderCreateForm")?.addEventListener("submit", addFolder);
+      document.querySelectorAll("#documentos [data-folder-id]").forEach(el => {
+        el.addEventListener("click", () => { activeFolder = el.dataset.folderId; renderDocumentos(); });
+        el.querySelector('[data-folder-action="edit"]')?.addEventListener("click", ev => { ev.stopPropagation(); editFolder(el.dataset.folderId); });
+        el.querySelector('[data-folder-action="delete"]')?.addEventListener("click", ev => { ev.stopPropagation(); deleteFolder(el.dataset.folderId); });
+      });
+      bindDocButtons();
+    }catch(error){
+      console.error("renderDocumentos 3.2.4", error);
+      if(oldRenderDocumentos) oldRenderDocumentos();
+    }
+  };
+
+  window.bloomPreviewDoc = function(id){
+    const doc = byId(id);
+    if(!doc) return alert("No se encontró el documento.");
+    return window.previewAnyFile(doc, doc.nombre || "Documento");
+  };
+
+  window.BLOOM_CRM_BUILD = BUILD;
+  console.info("Bloom CRM build", BUILD);
+})();

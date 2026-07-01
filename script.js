@@ -4603,3 +4603,654 @@ if(bloomProOriginalRender){
     setTimeout(bloomProHydrateAvatars, 80);
   };
 }
+
+
+
+/* =========================================================
+   Bloom CRM 3.1 — Alumno 360 + Fotos + Sincronización
+   Entrega consolidada sobre los archivos actuales.
+   - Miniaturas reales desde Base64, URL pública o Supabase Storage privado.
+   - Foto grande en ficha Alumno 360.
+   - Cambio de foto desde la ficha.
+   - Edición de alumno estable.
+   - Eliminación definitiva en Supabase.
+   - Recarga nube y limpieza de caché local.
+========================================================= */
+
+const BLOOM31_PHOTO_CACHE = new Map();
+
+function b31(value, fallback=""){
+  if(value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  if(!text || text.toLowerCase() === "null" || text.toLowerCase() === "undefined") return fallback;
+  return text;
+}
+
+function b31id(a,b){ return String(a) === String(b); }
+
+function b31Initials(name){
+  const parts = b31(name, "A").split(/\s+/).filter(Boolean);
+  return (parts.length ? parts.slice(0,2).map(p => p[0]).join("") : "A").toUpperCase();
+}
+
+function b31Alumno(id){
+  return (state.alumnos || []).find(a => b31id(a.id, id));
+}
+
+function b31EmpresaByName(name){
+  return (state.empresas || []).find(e => e.nombre === name);
+}
+
+function b31PhotoDirect(a){
+  if(!a) return "";
+  if(a.foto?.data) return a.foto.data;
+  if(a.foto?.url) return a.foto.url;
+  if(a.foto?.signedUrl) return a.foto.signedUrl;
+  if(a.foto_signed_url) return a.foto_signed_url;
+  if(a.foto_url) return a.foto_url;
+  if(a.fotoUrl) return a.fotoUrl;
+  if(typeof a.foto === "string") return b31(a.foto);
+  return "";
+}
+
+function b31PhotoPath(a){
+  if(!a) return "";
+  return b31(a.foto_path || a.fotoPath || a.foto?.path || a.foto?.storage_path || a.foto?.storagePath);
+}
+
+function b31DocDirect(file){
+  if(!file) return "";
+  if(file.data) return file.data;
+  if(file.url) return file.url;
+  if(file.signedUrl) return file.signedUrl;
+  if(typeof file === "string") return file;
+  return "";
+}
+
+function b31DocPath(file){
+  if(!file) return "";
+  return b31(file.path || file.storage_path || file.storagePath);
+}
+
+async function b31SignedUrl(path, seconds=900){
+  if(!path) return "";
+  const cached = BLOOM31_PHOTO_CACHE.get(path);
+  if(cached && cached.exp > Date.now() + 30000) return cached.url;
+
+  try{
+    let url = "";
+    if(typeof bloom3SignedUrl === "function"){
+      url = await bloom3SignedUrl(path);
+    }else if(typeof bloom3Client !== "undefined" && bloom3Client){
+      const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+      const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, seconds);
+      if(error) throw error;
+      url = data.signedUrl;
+    }
+    if(url){
+      BLOOM31_PHOTO_CACHE.set(path, { url, exp: Date.now() + (seconds - 30) * 1000 });
+      return url;
+    }
+  }catch(error){
+    console.warn("Bloom 3.1: no se pudo crear Signed URL", error);
+  }
+
+  return "";
+}
+
+async function b31ResolvePhoto(a){
+  const direct = b31PhotoDirect(a);
+  if(direct) return direct;
+
+  const path = b31PhotoPath(a);
+  if(!path) return "";
+
+  const url = await b31SignedUrl(path, 900);
+  if(url){
+    a.foto = Object.assign({}, a.foto || {}, { path, signedUrl:url, storage:true, type:"image/*", name:"Foto alumno" });
+    a.foto_signed_url = url;
+  }
+  return url;
+}
+
+async function b31ResolveDoc(file){
+  const direct = b31DocDirect(file);
+  if(direct) return direct;
+  const path = b31DocPath(file);
+  if(!path) return "";
+  const url = await b31SignedUrl(path, 900);
+  if(url && typeof file === "object") file.signedUrl = url;
+  return url;
+}
+
+function b31Avatar(a, size="md"){
+  const src = b31PhotoDirect(a);
+  const initials = b31Initials(a?.nombre);
+  return `
+    <div class="b31-avatar ${size}" data-b31-avatar="${esc(a?.id || "")}">
+      ${src
+        ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.closest('.b31-avatar').innerHTML='<span>${esc(initials)}</span>'; this.remove();">`
+        : `<span>${esc(initials)}</span>`}
+    </div>
+  `;
+}
+
+async function b31HydrateAvatars(){
+  const avatars = [...document.querySelectorAll(".b31-avatar[data-b31-avatar]")];
+  for(const avatar of avatars){
+    if(avatar.querySelector("img")) continue;
+    const alumno = b31Alumno(avatar.dataset.b31Avatar);
+    if(!alumno) continue;
+    const url = await b31ResolvePhoto(alumno);
+    if(url){
+      avatar.innerHTML = `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.closest('.b31-avatar').innerHTML='<span>${esc(b31Initials(alumno.nombre))}</span>'; this.remove();">`;
+      avatar.classList.add("has-photo");
+    }
+  }
+}
+
+function b31Progress(a){
+  if(!a.inicio || !a.fin) return 0;
+  const s = new Date(a.inicio);
+  const e = new Date(a.fin);
+  const n = new Date();
+  if(Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e <= s) return 0;
+  if(n <= s) return 0;
+  if(n >= e) return 100;
+  return Math.round(((n - s) / (e - s)) * 100);
+}
+
+function b31Field(label, value){
+  return `<article><b>${esc(label)}</b><span>${esc(b31(value, "Sin dato"))}</span></article>`;
+}
+
+function b31List(items, empty){
+  return items.length ? `<div class="list">${items.join("")}</div>` : `<p class="empty-text">${esc(empty)}</p>`;
+}
+
+function b31StatusClass(status){
+  const s = b31(status).toLowerCase();
+  if(s.includes("práct") || s.includes("pract")) return "active";
+  if(s.includes("final")) return "done";
+  if(s.includes("entrevista") || s.includes("propuesta")) return "pending";
+  return "none";
+}
+
+/* ---------- Sincronización real casa/trabajo ---------- */
+
+function b31SyncKey(kind, item){
+  if(kind === "empresas") return b31(item.nombre || item.data?.nombre || item.data?.nombre_empresa).toLowerCase();
+  if(kind === "alumnos") return b31(item.dni || item.email || item.nombre || item.data?.dni || item.data?.email || item.data?.nombre).toLowerCase();
+  return String(item.id || "");
+}
+
+function b31Dedupe(kind, list){
+  const seen = new Map();
+  const duplicates = [];
+  (list || []).forEach(item => {
+    const key = b31SyncKey(kind, item) || String(item.id || "");
+    if(!key) return;
+    if(!seen.has(key)) seen.set(key, item);
+    else duplicates.push(item);
+  });
+  return { clean:[...seen.values()], duplicates };
+}
+
+async function b31DeleteRemote(kind, id){
+  if(!id || !bloom3Client || !bloom3Tables?.[kind]) return false;
+  const { error } = await bloom3Client.from(bloom3Tables[kind]).delete().eq("id", String(id));
+  if(error) throw error;
+  return true;
+}
+
+async function b31CleanDuplicates(){
+  let removed = 0;
+  for(const kind of ["empresas","alumnos"]){
+    const r = b31Dedupe(kind, state[kind] || []);
+    state[kind] = r.clean;
+    for(const dup of r.duplicates){
+      if(dup?.id){
+        try{ await b31DeleteRemote(kind, dup.id); removed++; }catch(e){ console.warn(e); }
+      }
+    }
+  }
+  localStorage.setItem(KEY, JSON.stringify(state));
+  setSync(`Duplicados limpiados: ${removed}`, "ok");
+  toast(`Duplicados limpiados: ${removed} 🌸`);
+}
+
+async function b31ForceReload(){
+  if(!confirm("Recargar desde Supabase y sustituir la caché local de este navegador?")) return;
+  try{
+    setSync("Recargando nube...", "saving");
+    if(typeof bloom3LoadAll === "function") await bloom3LoadAll();
+    for(const kind of ["empresas","alumnos"]){
+      const r = b31Dedupe(kind, state[kind] || []);
+      state[kind] = r.clean;
+    }
+    localStorage.setItem(KEY, JSON.stringify(state));
+    setSync("Nube cargada", "ok");
+    render();
+    toast("Datos recargados desde nube 🌸");
+  }catch(error){
+    setSync("Error nube", "error");
+    alert("No se pudo recargar desde Supabase:\n\n" + error.message);
+  }
+}
+
+function b31ClearCache(){
+  localStorage.removeItem(KEY);
+  b31ForceReload();
+}
+
+window.b31ForceReload = b31ForceReload;
+window.b31ClearCache = b31ClearCache;
+window.b31CleanDuplicates = b31CleanDuplicates;
+
+/* Guardado deduplicado */
+const b31SaveOriginal = typeof save === "function" ? save : null;
+save = function(){
+  for(const kind of ["empresas","alumnos"]){
+    const r = b31Dedupe(kind, state[kind] || []);
+    state[kind] = r.clean;
+  }
+  if(b31SaveOriginal) return b31SaveOriginal();
+  localStorage.setItem(KEY, JSON.stringify(state));
+};
+
+/* Eliminación definitiva */
+delEmpresa = async function(id){
+  const e = (state.empresas || []).find(x => b31id(x.id, id));
+  if(!confirm(`¿Eliminar definitivamente ${e?.nombre || "esta empresa"}?`)) return;
+  try{
+    setSync("Eliminando empresa...", "saving");
+    await b31DeleteRemote("empresas", id);
+    state.empresas = (state.empresas || []).filter(x => !b31id(x.id, id));
+    localStorage.setItem(KEY, JSON.stringify(state));
+    if(typeof bloom3LoadAll === "function") await bloom3LoadAll();
+    setSync("Empresa eliminada", "ok");
+    render();
+  }catch(error){
+    setSync("Error eliminando", "error");
+    alert("No se pudo eliminar la empresa:\n\n" + error.message);
+  }
+};
+
+delAlumno = async function(id){
+  const a = b31Alumno(id);
+  if(!confirm(`¿Eliminar definitivamente ${a?.nombre || "este alumno"}?`)) return;
+  try{
+    setSync("Eliminando alumno...", "saving");
+    await b31DeleteRemote("alumnos", id);
+    state.alumnos = (state.alumnos || []).filter(x => !b31id(x.id, id));
+    localStorage.setItem(KEY, JSON.stringify(state));
+    if(typeof bloom3LoadAll === "function") await bloom3LoadAll();
+    setSync("Alumno eliminado", "ok");
+    render();
+  }catch(error){
+    setSync("Error eliminando", "error");
+    alert("No se pudo eliminar el alumno:\n\n" + error.message);
+  }
+};
+
+/* ---------- Vista Alumnos profesional ---------- */
+
+function b31DocButtons(a){
+  const hasPhoto = b31PhotoDirect(a) || b31PhotoPath(a);
+  const hasCv = a.curriculum?.data || a.curriculum?.url || a.curriculum?.path || a.curriculum?.signedUrl;
+  return `
+    ${hasPhoto ? `<button class="b31-pill" data-b31-action="photo" data-id="${esc(a.id)}">Foto</button>` : `<span class="b31-muted">Sin foto</span>`}
+    ${hasCv ? `<button class="b31-pill" data-b31-action="cv" data-id="${esc(a.id)}">CV</button>` : `<span class="b31-muted">Sin CV</span>`}
+  `;
+}
+
+renderAlumnos = function(){
+  const q = $("#studentSearch")?.value?.toLowerCase() || "";
+  const list = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+
+  const total = (state.alumnos || []).length;
+  const sinEmpresa = (state.alumnos || []).filter(a => !a.empresa).length;
+  const enPracticas = (state.alumnos || []).filter(a => b31(a.estado).toLowerCase().includes("pract") || b31(a.estado).toLowerCase().includes("práct")).length;
+  const conCv = (state.alumnos || []).filter(a => a.curriculum?.data || a.curriculum?.url || a.curriculum?.path || a.curriculum?.signedUrl).length;
+
+  $("#alumnos").innerHTML = pageHead("Alumnos","Alumnos","Ficha completa del alumnado") + `
+    <section class="b31-students-page">
+      <div class="b31-kpis">
+        <article><b>${total}</b><span>Alumnos</span></article>
+        <article><b>${sinEmpresa}</b><span>Sin empresa</span></article>
+        <article><b>${enPracticas}</b><span>En prácticas</span></article>
+        <article><b>${conCv}</b><span>Con CV</span></article>
+      </div>
+
+      <section class="card b31-students-card">
+        <div class="toolbar b31-toolbar">
+          <input id="studentSearch" placeholder="Buscar por nombre, DNI, email, empresa..." oninput="renderAlumnos()" value="${esc(q)}">
+          <button class="primary" onclick="openAlumno()">Añadir alumno</button>
+          ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
+          ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
+          ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
+          <button class="soft-btn" onclick="b31ForceReload()">Recargar nube</button>
+        </div>
+
+        <div class="b31-student-list">
+          ${list.map(a => {
+            const progress = b31Progress(a);
+            return `
+              <article class="b31-student-row" data-b31-row="${esc(a.id)}">
+                <div class="b31-student-main">
+                  ${b31Avatar(a, "lg")}
+                  <div class="b31-student-info">
+                    <div class="b31-title">
+                      <h3>${esc(a.nombre || "Sin nombre")}</h3>
+                      <span class="b31-status ${b31StatusClass(a.estado)}">${esc(a.estado || "sin asignar")}</span>
+                    </div>
+                    <div class="b31-meta">
+                      <span>${a.dni ? "DNI: " + esc(a.dni) : "Sin DNI"}</span>
+                      <span>NSS: ${esc(a.nss || "Sin NSS")}</span>
+                      <span>${esc(a.empresa || "Sin empresa")}</span>
+                    </div>
+                    <div class="b31-contact">
+                      <span>📞 ${esc(a.telefono || "Sin teléfono")}</span>
+                      <span>✉ ${esc(a.email || "Sin email")}</span>
+                      <span>🎓 ${esc(a.curso || "Sin curso")}</span>
+                    </div>
+                    <div class="b31-progress">
+                      <i><em style="width:${progress}%"></em></i>
+                      <span>${progress}% prácticas</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="b31-docs" onclick="event.stopPropagation()">
+                  ${b31DocButtons(a)}
+                </div>
+
+                <div class="b31-actions" onclick="event.stopPropagation()">
+                  <button data-b31-action="view" data-id="${esc(a.id)}">Ver ficha</button>
+                  <button data-b31-action="edit" data-id="${esc(a.id)}">Editar</button>
+                  <button data-b31-action="delete" data-id="${esc(a.id)}">Eliminar</button>
+                </div>
+              </article>
+            `;
+          }).join("") || `<div class="b31-empty">No hay alumnos.</div>`}
+        </div>
+      </section>
+    </section>
+  `;
+
+  setTimeout(b31HydrateAvatars, 40);
+  setTimeout(b31HydrateAvatars, 250);
+};
+
+/* ---------- Alumno 360 ---------- */
+
+function openStudentProfile(id){
+  const a = b31Alumno(id);
+  if(!a){
+    alert("No se encontró el alumno seleccionado.");
+    return;
+  }
+
+  b31ResolvePhoto(a).then(() => {
+    const empresa = b31EmpresaByName(a.empresa);
+    const convenio = (state.convenios || []).find(c => c.empresa === a.empresa || c.alumno === a.nombre || b31id(c.alumno_id, a.id));
+    const docs = (state.documentos || []).filter(d => d.alumno === a.nombre || d.alumno_id === a.id || d.empresa === a.empresa);
+    const segs = (state.seguimientos || []).filter(s => s.alumno === a.nombre || s.alumno_id === a.id || s.empresa === a.empresa);
+    const photo = b31PhotoDirect(a);
+    const progress = b31Progress(a);
+
+    modal("Alumno 360", `
+      <section class="b31-profile">
+        <aside class="b31-profile-side">
+          <div class="b31-profile-photo" id="b31ProfilePhotoBox">
+            ${photo ? `<img src="${esc(photo)}" alt="" onerror="this.closest('.b31-profile-photo').innerHTML='<span>${esc(b31Initials(a.nombre))}</span>'; this.remove();">` : `<span>${esc(b31Initials(a.nombre))}</span>`}
+          </div>
+
+          <h2>${esc(a.nombre || "Alumno")}</h2>
+          <p>${esc(a.dni || "Sin DNI/NIE")}</p>
+          <span class="b31-status ${b31StatusClass(a.estado)}">${esc(a.estado || "sin asignar")}</span>
+
+          <div class="b31-side-progress">
+            <div><span>Progreso prácticas</span><b>${progress}%</b></div>
+            <i><em style="width:${progress}%"></em></i>
+          </div>
+
+          <label class="b31-change-photo">
+            Cambiar foto
+            <input id="b31ChangePhotoInput" type="file" accept="image/*">
+          </label>
+
+          <button class="primary" onclick="openAlumno('${esc(a.id)}')">Editar alumno</button>
+          ${a.curriculum ? `<button class="soft-btn" onclick="b31PreviewDoc(b31Alumno('${esc(a.id)}').curriculum,'Currículum')">Ver currículum</button>` : ""}
+        </aside>
+
+        <main class="b31-profile-main">
+          <section class="b31-section">
+            <div class="section-head"><div><p>Datos personales</p><h3>Información del alumno</h3></div></div>
+            <div class="b31-grid">
+              ${b31Field("Nombre", a.nombre)}
+              ${b31Field("DNI / NIE", a.dni)}
+              ${b31Field("Teléfono", a.telefono)}
+              ${b31Field("Correo", a.email)}
+              ${b31Field("Dirección", a.direccion)}
+              ${b31Field("Nº Seguridad Social", a.nss)}
+              ${b31Field("Curso", a.curso)}
+            </div>
+          </section>
+
+          <section class="b31-section">
+            <div class="section-head"><div><p>Prácticas</p><h3>Datos académicos y FCT</h3></div></div>
+            <div class="b31-grid">
+              ${b31Field("Estado", a.estado)}
+              ${b31Field("Empresa", a.empresa)}
+              ${b31Field("Tutor centro", a.tutor)}
+              ${b31Field("Tutor empresa", a.tutor_empresa)}
+              ${b31Field("Inicio", a.inicio || convenio?.inicio)}
+              ${b31Field("Fin", a.fin || convenio?.fin)}
+              ${b31Field("Horas", a.horas)}
+              ${b31Field("Evaluación", a.evaluacion)}
+              ${b31Field("Convenio", convenio?.estado)}
+            </div>
+          </section>
+
+          <section class="b31-section">
+            <div class="section-head"><div><p>Empresa</p><h3>Empresa asignada</h3></div></div>
+            ${empresa ? `
+              <article class="item">
+                <div><b>${esc(empresa.nombre)}</b><p>${esc(empresa.contacto || "Sin contacto")} · ${esc(empresa.telefono || "")}${empresa.email ? " · " + esc(empresa.email) : ""}</p></div>
+              </article>
+            ` : `<p class="empty-text">Sin empresa asignada.</p>`}
+          </section>
+
+          <section class="b31-section">
+            <div class="section-head"><div><p>Documentación</p><h3>Archivos y previsualización</h3></div></div>
+            <div class="b31-doc-grid">
+              ${photo ? `<article class="b31-doc-card" onclick="b31PreviewDoc(b31Alumno('${esc(a.id)}').foto,'Foto')"><b>🖼 Foto</b><span>Ver / descargar</span></article>` : `<article class="b31-doc-card muted"><b>🖼 Foto</b><span>No adjuntada</span></article>`}
+              ${a.curriculum ? `<article class="b31-doc-card" onclick="b31PreviewDoc(b31Alumno('${esc(a.id)}').curriculum,'Currículum')"><b>📄 Currículum</b><span>Ver / descargar</span></article>` : `<article class="b31-doc-card muted"><b>📄 Currículum</b><span>No adjuntado</span></article>`}
+              ${docs.map(d => `<article class="b31-doc-card" onclick="b31PreviewDoc(state.documentos.find(x=>String(x.id)===String('${d.id}')).file,'${esc(d.nombre || "Documento")}')"><b>📎 ${esc(d.nombre || "Documento")}</b><span>${esc(d.tipo || "Documento")} · ${esc(d.estado || "")}</span></article>`).join("")}
+            </div>
+          </section>
+
+          <section class="b31-section">
+            <div class="section-head"><div><p>Seguimiento</p><h3>Historial relacionado</h3></div></div>
+            ${b31List(segs.map(s => `<article class="item"><div><b>${esc(s.tipo || "Seguimiento")} · ${esc(s.fecha || "")}</b><p>${esc(s.resultado || "")}${s.proxima ? " · Próxima: " + esc(s.proxima) : ""}</p></div></article>`), "No hay seguimientos relacionados.")}
+          </section>
+
+          <section class="b31-section">
+            <div class="section-head"><div><p>Observaciones</p><h3>Notas privadas</h3></div></div>
+            <p>${esc(a.notas || "Sin observaciones.")}</p>
+          </section>
+        </main>
+      </section>
+    `, () => closeModal());
+
+    setTimeout(() => {
+      const input = $("#b31ChangePhotoInput");
+      const box = $("#b31ProfilePhotoBox");
+      if(input && box){
+        input.addEventListener("change", async () => {
+          const file = input.files?.[0];
+          if(!file) return;
+
+          const data = await fileToData(file);
+          a.foto = data;
+          a.foto_url = data?.data || "";
+          box.innerHTML = `<img src="${esc(data.data)}" alt="">`;
+          save();
+          toast("Foto actualizada 🌸");
+          setTimeout(renderAlumnos, 80);
+        });
+      }
+    }, 60);
+  });
+}
+
+window.openStudentProfile = openStudentProfile;
+
+/* Edición robusta */
+function openAlumno(id=null){
+  const existing = id !== null && id !== undefined && id !== "" ? b31Alumno(id) : null;
+  const a = existing || {
+    nombre:"", dni:"", telefono:"", email:"", direccion:"", nss:"", curso:"",
+    estado:"sin asignar", empresa:"", inicio:"", fin:"", tutor:"", tutor_empresa:"",
+    horas:"", evaluacion:"", notas:"", foto:null, curriculum:null
+  };
+
+  b31ResolvePhoto(a).then(() => {
+    const photo = b31PhotoDirect(a);
+
+    modal(existing ? "Editar alumno" : "Alumno", `
+      <form id="alumnoForm" class="form-grid b31-edit-form">
+        <div class="student-photo-preview" id="b31EditPhotoBox">
+          ${photo ? `<img src="${esc(photo)}" alt="">` : "Foto"}
+        </div>
+        <input name="nombre" value="${esc(a.nombre || "")}" placeholder="Nombre" required>
+        <input name="dni" value="${esc(a.dni || "")}" placeholder="DNI / NIE">
+        <input name="telefono" value="${esc(a.telefono || "")}" placeholder="Teléfono">
+        <input name="email" value="${esc(a.email || "")}" placeholder="Correo">
+        <input name="direccion" value="${esc(a.direccion || "")}" placeholder="Dirección">
+        <input name="nss" value="${esc(a.nss || "")}" placeholder="Nº Seguridad Social">
+        <input name="curso" value="${esc(a.curso || "")}" placeholder="Curso">
+        <label class="student-files">Foto<input id="alumnoFoto" type="file" accept="image/*"></label>
+        <label class="student-files">Currículum<input id="alumnoCV" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></label>
+        <select name="empresa"><option value="">Sin empresa</option>${(state.empresas || []).map(e => `<option ${a.empresa === e.nombre ? "selected" : ""}>${esc(e.nombre)}</option>`).join("")}</select>
+        <select name="estado">${["sin asignar","propuesta","entrevista","prácticas","finalizado","archivado"].map(x => `<option ${a.estado === x ? "selected" : ""}>${x}</option>`).join("")}</select>
+        <input name="inicio" type="date" value="${esc(a.inicio || "")}">
+        <input name="fin" type="date" value="${esc(a.fin || "")}">
+        <input name="tutor" value="${esc(a.tutor || "")}" placeholder="Tutor centro">
+        <input name="tutor_empresa" value="${esc(a.tutor_empresa || "")}" placeholder="Tutor empresa">
+        <input name="horas" value="${esc(a.horas || "")}" placeholder="Horas">
+        <input name="evaluacion" value="${esc(a.evaluacion || "")}" placeholder="Evaluación">
+        <textarea name="notas" placeholder="Notas">${esc(a.notas || "")}</textarea>
+      </form>
+    `, async () => {
+      const data = Object.fromEntries(new FormData($("#alumnoForm")).entries());
+      Object.keys(data).forEach(k => data[k] = String(data[k] || "").trim());
+      data.dni = String(data.dni || "").toUpperCase();
+
+      let target = existing;
+      if(!target){
+        target = { id:uid(), foto:null, curriculum:null };
+        state.alumnos.unshift(target);
+      }
+
+      Object.assign(target, data, { data:Object.assign({}, target.data || {}, data) });
+
+      const foto = $("#alumnoFoto")?.files?.[0];
+      const cv = $("#alumnoCV")?.files?.[0];
+
+      if(foto){
+        target.foto = await fileToData(foto);
+        target.foto_url = target.foto?.data || "";
+      }
+      if(cv) target.curriculum = await fileToData(cv);
+
+      log(`Alumno guardado: ${target.nombre}`);
+      save();
+      closeModal();
+      render();
+      toast(existing ? "Alumno modificado 🌸" : "Alumno creado 🌸");
+    });
+
+    setTimeout(() => {
+      const input = $("#alumnoFoto");
+      const box = $("#b31EditPhotoBox");
+      if(input && box){
+        input.addEventListener("change", () => {
+          const file = input.files?.[0];
+          if(!file) return;
+          const reader = new FileReader();
+          reader.onload = () => box.innerHTML = `<img src="${reader.result}" alt="">`;
+          reader.readAsDataURL(file);
+        });
+      }
+    }, 60);
+  });
+}
+
+window.openAlumno = openAlumno;
+
+/* Preview privado */
+async function b31PreviewDoc(file, title="Documento"){
+  if(!file) return previewAnyFile(file, title);
+  const url = await b31ResolveDoc(file);
+  if(url && typeof file === "object" && !file.data) file.data = url;
+  previewAnyFile(file, title);
+}
+window.b31PreviewDoc = b31PreviewDoc;
+
+/* Eventos vista alumnos */
+document.addEventListener("click", function(event){
+  const btn = event.target.closest("[data-b31-action]");
+  if(btn){
+    event.preventDefault();
+    event.stopPropagation();
+    const a = b31Alumno(btn.dataset.id);
+    if(!a) return;
+    const action = btn.dataset.b31Action;
+    if(action === "view") return openStudentProfile(a.id);
+    if(action === "edit") return openAlumno(a.id);
+    if(action === "delete") return delAlumno(a.id);
+    if(action === "photo") return b31PreviewDoc(a.foto, "Foto");
+    if(action === "cv") return b31PreviewDoc(a.curriculum, "Currículum");
+  }
+
+  const row = event.target.closest(".b31-student-row[data-b31-row]");
+  if(row && !event.target.closest("button, a, input, select, textarea, label")){
+    event.preventDefault();
+    event.stopPropagation();
+    openStudentProfile(row.dataset.b31Row);
+  }
+}, true);
+
+/* Ajustes: controles de nube */
+const b31RenderAjustesOriginal = typeof renderAjustes === "function" ? renderAjustes : null;
+if(b31RenderAjustesOriginal){
+  renderAjustes = function(){
+    b31RenderAjustesOriginal();
+    const target = $("#ajustes .grid-2") || $("#ajustes");
+    if(target && !$("#b31SyncCard")){
+      target.insertAdjacentHTML("afterbegin", `
+        <section id="b31SyncCard" class="card table-card b31-sync-card">
+          <div class="section-head"><div><p>Sincronización</p><h3>Casa / trabajo</h3></div></div>
+          <p>Supabase debe ser la fuente principal. Usa estas acciones si cambias de ordenador o ves datos antiguos.</p>
+          <div class="settings-row">
+            <button class="primary" onclick="b31ForceReload()">Recargar desde nube</button>
+            <button class="soft-btn" onclick="b31ClearCache()">Limpiar caché local</button>
+            <button class="soft-btn" onclick="b31CleanDuplicates().then(()=>render())">Limpiar duplicados</button>
+            <button class="soft-btn" onclick="saveCloud()">Guardar ahora</button>
+          </div>
+        </section>
+      `);
+    }
+  };
+}
+
+/* Rehidratar miniaturas tras render general */
+const b31RenderOriginal = typeof render === "function" ? render : null;
+if(b31RenderOriginal){
+  render = function(){
+    b31RenderOriginal();
+    setTimeout(b31HydrateAvatars, 80);
+  };
+}

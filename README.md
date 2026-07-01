@@ -326,3 +326,29 @@ Se reconstruye visualmente la pestaña Alumnos:
 - Indicador de progreso de prácticas.
 - Botones: Ver ficha, Editar, Eliminar, Foto y CV.
 - Clic en toda la tarjeta abre la ficha del alumno.
+
+
+## Bloom CRM 3.1 — Alumno 360, fotos y sincronización
+
+Entrega consolidada sobre los archivos actuales.
+
+Incluye:
+- Miniaturas reales de alumnos en la pestaña Alumnos.
+- Compatible con fotos en Base64, URL pública y Supabase Storage privado.
+- Signed URLs con caché temporal para evitar imágenes rotas.
+- Ficha Alumno 360 rediseñada.
+- Foto grande en la ficha.
+- Cambio de foto directamente desde la ficha.
+- Edición robusta de alumnos.
+- Previsualización de currículum y documentos privados.
+- Eliminación definitiva de empresas y alumnos en Supabase.
+- Limpieza de duplicados.
+- Botones en Ajustes:
+  - Recargar desde nube.
+  - Limpiar caché local.
+  - Limpiar duplicados.
+  - Guardar ahora.
+
+Recomendación de uso:
+- Al cambiar entre casa y trabajo, entra en Ajustes y pulsa **Recargar desde nube**.
+- Si ves datos antiguos, pulsa **Limpiar caché local**.

@@ -300,3 +300,14 @@ Cambios:
 Recomendación:
 - Al cambiar de casa a trabajo o de trabajo a casa, entra en Ajustes y pulsa **Recargar desde nube**.
 - Si ves información antigua, pulsa **Limpiar caché local**.
+
+
+## Fix — visualización de alumnos
+
+Corrige la vista de la tabla de alumnos:
+
+- La foto ya no muestra texto roto dentro del círculo.
+- Si la imagen no carga, se muestran iniciales limpias.
+- La tabla usa columnas estables.
+- Los botones Modificar, Ver ficha y Eliminar ya no se salen de la tabla.
+- La fila completa sigue abriendo la ficha del alumno.

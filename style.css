@@ -789,3 +789,149 @@ body.auth-locked .overlay{
   color:var(--muted);
   line-height:1.5;
 }
+
+
+
+/* Bloom CRM 3.0 — arreglo visual alumnos */
+.alumnos-table-card{
+  overflow-x:auto;
+}
+
+.alumnos-toolbar{
+  flex-wrap:wrap;
+}
+
+.alumnos-table{
+  width:100%;
+  table-layout:fixed;
+  min-width:1120px;
+}
+
+.alumnos-table th:nth-child(1),
+.alumnos-table td:nth-child(1){
+  width:34%;
+}
+
+.alumnos-table th:nth-child(2),
+.alumnos-table td:nth-child(2){
+  width:17%;
+}
+
+.alumnos-table th:nth-child(3),
+.alumnos-table td:nth-child(3){
+  width:12%;
+}
+
+.alumnos-table th:nth-child(4),
+.alumnos-table td:nth-child(4){
+  width:10%;
+}
+
+.alumnos-table th:nth-child(5),
+.alumnos-table td:nth-child(5){
+  width:10%;
+}
+
+.alumnos-table th:nth-child(6),
+.alumnos-table td:nth-child(6){
+  width:17%;
+}
+
+.student-cell{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-width:0;
+}
+
+.student-main-data{
+  min-width:0;
+}
+
+.student-main-data b{
+  display:block;
+  white-space:normal;
+  line-height:1.25;
+}
+
+.student-main-data small,
+.student-contact small,
+.student-contact span{
+  display:block;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+.student-avatar.avatar-fixed{
+  width:64px!important;
+  height:64px!important;
+  min-width:64px!important;
+  border-radius:22px!important;
+  overflow:hidden!important;
+  display:grid!important;
+  place-items:center!important;
+  background:linear-gradient(135deg,#ffe7f0,#fff)!important;
+  color:var(--pink)!important;
+  border:1px solid var(--line)!important;
+  font-weight:950!important;
+  font-size:16px!important;
+  line-height:1!important;
+  box-shadow:0 10px 24px rgba(188,86,122,.10);
+}
+
+.student-avatar.avatar-fixed img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  display:block!important;
+  color:transparent!important;
+  font-size:0!important;
+}
+
+.student-avatar.avatar-fixed span{
+  text-align:center;
+  padding:2px;
+}
+
+.student-files.compact{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+}
+
+.student-files.compact button,
+.student-files.compact span{
+  white-space:nowrap;
+}
+
+.alumno-actions{
+  display:flex!important;
+  flex-wrap:wrap;
+  gap:6px;
+  justify-content:flex-start;
+  align-items:center;
+}
+
+.alumno-actions button{
+  white-space:nowrap;
+  height:34px;
+  padding:0 10px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#fff;
+}
+
+#alumnos .clickable-row{
+  cursor:pointer;
+}
+
+#alumnos .clickable-row:hover{
+  background:rgba(255,231,240,.35);
+}
+
+@media(max-width:900px){
+  .alumnos-table{
+    min-width:980px;
+  }
+}

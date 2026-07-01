@@ -4197,3 +4197,150 @@ if(bloomSyncRenderEmpresasBase){
 window.forceCloudReload = forceCloudReload;
 window.clearLocalCacheAndReload = clearLocalCacheAndReload;
 window.bloomSyncCleanDuplicates = bloomSyncCleanDuplicates;
+
+
+
+/* =========================================================
+   Bloom CRM 3.0 — FIX visual tabla Alumnos
+   Corrige:
+   - Fotos rotas mostrando texto alt dentro del círculo.
+   - Miniatura demasiado pequeña/descuadrada.
+   - Botones Modificar / Ver ficha / Eliminar fuera de la tabla.
+   - Tabla de alumnos sin distribución estable.
+========================================================= */
+
+function bloomSafeInitials(name){
+  const parts = String(name || "A").trim().split(/\s+/).filter(Boolean);
+  return (parts.length ? parts.slice(0,2).map(p => p[0]).join("") : "A").toUpperCase();
+}
+
+function bloomPhotoCandidate(a){
+  if(!a) return "";
+  if(a.foto?.data) return a.foto.data;
+  if(a.foto?.url) return a.foto.url;
+  if(a.foto?.signedUrl) return a.foto.signedUrl;
+  if(a.foto_signed_url) return a.foto_signed_url;
+  if(a.foto_url) return a.foto_url;
+  if(a.fotoUrl) return a.fotoUrl;
+  if(typeof a.foto === "string") return a.foto;
+  return "";
+}
+
+function bloomAvatarFixed(a){
+  const src = bloomPhotoCandidate(a);
+  const initials = bloomSafeInitials(a?.nombre);
+  const id = String(a?.id || "");
+  return `
+    <div class="student-avatar avatar-fixed" data-avatar-id="${esc(id)}" data-initials="${esc(initials)}">
+      ${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.closest('.student-avatar').innerHTML='<span>${esc(initials)}</span>'; this.remove();">` : `<span>${esc(initials)}</span>`}
+    </div>
+  `;
+}
+
+async function bloomHydrateFixedAvatars(){
+  const avatars = [...document.querySelectorAll(".avatar-fixed[data-avatar-id]")];
+
+  for(const avatar of avatars){
+    if(avatar.querySelector("img")) continue;
+
+    const alumno = (state.alumnos || []).find(a => String(a.id) === String(avatar.dataset.avatarId));
+    if(!alumno) continue;
+
+    let path = alumno.foto_path || alumno.fotoPath || alumno.foto?.path || alumno.foto?.storage_path || "";
+    if(!path) continue;
+
+    try{
+      let url = "";
+      if(typeof bloom3SignedUrl === "function"){
+        url = await bloom3SignedUrl(path);
+      }else if(typeof bloom3Client !== "undefined" && bloom3Client){
+        const bucket = typeof BLOOM3_BUCKET !== "undefined" ? BLOOM3_BUCKET : "bloom-crm-documents";
+        const { data, error } = await bloom3Client.storage.from(bucket).createSignedUrl(path, 300);
+        if(error) throw error;
+        url = data.signedUrl;
+      }
+
+      if(url){
+        alumno.foto = Object.assign({}, alumno.foto || {}, { path, signedUrl:url, type:"image/*", storage:true });
+        avatar.innerHTML = `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.closest('.student-avatar').innerHTML='<span>${esc(bloomSafeInitials(alumno.nombre))}</span>'; this.remove();">`;
+      }
+    }catch(error){
+      console.warn("No se pudo cargar foto alumno", error);
+    }
+  }
+}
+
+renderAlumnos = function(){
+  const q = $("#studentSearch")?.value?.toLowerCase() || "";
+  const alumnos = (state.alumnos || []).filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+
+  $("#alumnos").innerHTML = pageHead("Alumnos", "Alumnos", "Ficha completa del alumnado") + `
+    <section class="card table-card alumnos-table-card">
+      <div class="toolbar alumnos-toolbar">
+        <input id="studentSearch" placeholder="Buscar alumno..." oninput="renderAlumnos()" value="${esc(q)}">
+        <button class="primary" onclick="openAlumno()">Añadir alumno</button>
+        ${typeof openImportExcel === "function" ? `<button class="soft-btn" onclick="openImportExcel('alumnos')">Importar Excel</button>` : ""}
+        ${typeof exportExcel === "function" ? `<button class="soft-btn" onclick="exportExcel('alumnos')">Exportar Excel</button>` : ""}
+        ${typeof downloadTemplateExcel === "function" ? `<button class="soft-btn" onclick="downloadTemplateExcel('alumnos')">Plantilla Excel</button>` : ""}
+      </div>
+
+      <table class="alumnos-table">
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Contacto</th>
+            <th>Empresa</th>
+            <th>Estado</th>
+            <th>Archivos</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${alumnos.map(a => `
+            <tr class="student-row clickable-row" data-alumno-row-id="${esc(a.id)}">
+              <td>
+                <div class="student-cell">
+                  ${bloomAvatarFixed(a)}
+                  <div class="student-main-data">
+                    <b>${esc(a.nombre || "Sin nombre")}</b>
+                    <small>${a.dni ? "DNI: " + esc(a.dni) + " · " : ""}NSS: ${esc(a.nss || "Sin NSS")}</small>
+                  </div>
+                </div>
+              </td>
+              <td class="student-contact">
+                <span>${esc(a.telefono || "")}</span>
+                <small>${esc(a.email || "")}</small>
+              </td>
+              <td>${esc(a.empresa || "Sin empresa")}</td>
+              <td><span class="badge">${esc(a.estado || "sin asignar")}</span></td>
+              <td onclick="event.stopPropagation()">
+                <div class="student-files compact">
+                  ${(bloomPhotoCandidate(a) || a.foto_path || a.foto?.path) ? `<button onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).foto,'Foto')">Foto</button>` : `<span>Sin foto</span>`}
+                  ${a.curriculum?.data || a.curriculum?.url || a.curriculum?.path ? `<button onclick="previewAnyFile(state.alumnos.find(x=>String(x.id)===String('${a.id}')).curriculum,'CV')">CV</button>` : `<span>Sin CV</span>`}
+                </div>
+              </td>
+              <td class="row-actions alumno-actions" onclick="event.stopPropagation()">
+                <button onclick="openAlumno('${esc(a.id)}')">Modificar</button>
+                <button onclick="openStudentProfile('${esc(a.id)}')">Ver ficha</button>
+                <button onclick="delAlumno('${esc(a.id)}')">Eliminar</button>
+              </td>
+            </tr>
+          `).join("") || `<tr><td colspan="6">No hay alumnos.</td></tr>`}
+        </tbody>
+      </table>
+    </section>
+  `;
+
+  setTimeout(bloomHydrateFixedAvatars, 80);
+};
+
+/* Click en fila abre ficha; botones no disparan la fila */
+document.addEventListener("click", function(event){
+  const row = event.target.closest("#alumnos tr[data-alumno-row-id]");
+  if(!row) return;
+  if(event.target.closest("button, a, input, select, textarea, label")) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  openStudentProfile(row.dataset.alumnoRowId);
+}, true);

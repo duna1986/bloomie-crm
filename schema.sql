@@ -300,3 +300,19 @@ create index if not exists bloom_documentos_storage_path_idx on bloom_documentos
 -- Las policies de Storage se basan en que todos los objetos cuelgan de auth.uid() como primera carpeta:
 -- <auth.uid()>/alumnos/fotos/..., <auth.uid()>/alumnos/cv/..., <auth.uid()>/documentos/...
 -- Mantener bucket privado. No crear policies públicas de lectura.
+
+
+-- Bloom CRM 3.2.1 — reparación idempotente
+-- Asegura que el bucket sigue privado y que los duplicados se controlan por usuario.
+insert into storage.buckets (id, name, public)
+values ('bloom-crm-documents', 'bloom-crm-documents', false)
+on conflict (id) do update set public = false;
+
+create unique index if not exists bloom_empresas_user_nombre_uidx
+  on bloom_empresas (user_id, lower(trim(nombre)));
+create unique index if not exists bloom_alumnos_user_email_uidx
+  on bloom_alumnos (user_id, lower(trim(email)))
+  where email is not null and trim(email) <> '';
+create unique index if not exists bloom_alumnos_user_dni_uidx
+  on bloom_alumnos (user_id, lower(trim(dni)))
+  where dni is not null and trim(dni) <> '';

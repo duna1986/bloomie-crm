@@ -4981,3 +4981,183 @@ if(bloom32OldUnlock){
 }
 
 document.title = "Bloom CRM 3.2";
+
+
+/* =========================================================
+   Bloom CRM 3.2.1 — reparación final de archivos
+   Corrige el origen de datos, duplicados reales y miniaturas privadas.
+========================================================= */
+(function(){
+  const FIX_VERSION = "3.2.1 archivos reparados";
+
+  function norm(v){
+    return String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g," ");
+  }
+
+  async function signed(path, ttl=900){
+    if(!path) return "";
+    const cache = typeof bloom3SignedCache !== "undefined" ? bloom3SignedCache : new Map();
+    const cached = cache.get(path);
+    if(cached && cached.exp > Date.now()+30000) return cached.url;
+    const client = (typeof bloom32Client === "function" ? bloom32Client() : bloom3Client);
+    const { data, error } = await client.storage.from(BLOOM3_BUCKET).createSignedUrl(path, ttl);
+    if(error) throw error;
+    const url = data?.signedUrl || "";
+    cache.set(path, {url, exp:Date.now()+ttl*1000});
+    return url;
+  }
+
+  async function findExisting(kind, item){
+    if(!bloom3Session?.user?.id) return null;
+    const client = typeof bloom32Client === "function" ? bloom32Client() : bloom3Client;
+    const table = bloom3Tables?.[kind];
+    if(!client || !table) return null;
+
+    if(kind === "empresas"){
+      const name = String(item?.nombre || "").trim();
+      if(!name) return null;
+      const { data, error } = await client.from(table).select("id,nombre,data").eq("user_id", bloom3Session.user.id).ilike("nombre", name).limit(1);
+      if(!error && data?.[0]) return data[0];
+      const local = (state.empresas || []).find(e => norm(e.nombre) === norm(name));
+      return local ? { id:String(local.id), data:local } : null;
+    }
+
+    if(kind === "alumnos"){
+      const email = String(item?.email || "").trim();
+      const dni = String(item?.dni || "").trim();
+      if(email){
+        const { data, error } = await client.from(table).select("id,email,dni,data").eq("user_id", bloom3Session.user.id).ilike("email", email).limit(1);
+        if(!error && data?.[0]) return data[0];
+      }
+      if(dni){
+        const { data, error } = await client.from(table).select("id,email,dni,data").eq("user_id", bloom3Session.user.id).ilike("dni", dni).limit(1);
+        if(!error && data?.[0]) return data[0];
+      }
+      const name = String(item?.nombre || "").trim();
+      const local = (state.alumnos || []).find(a => (email && norm(a.email) === norm(email)) || (dni && norm(a.dni) === norm(dni)) || (!email && !dni && name && norm(a.nombre) === norm(name)));
+      return local ? { id:String(local.id), data:local } : null;
+    }
+    return null;
+  }
+
+  async function upsertClean(kind, item){
+    if(typeof bloom32RequireSession === "function") bloom32RequireSession();
+    if(!item.id) item.id = String(uid());
+    item.id = String(item.id);
+    const existing = await findExisting(kind, item);
+    if(existing && String(existing.id) !== String(item.id)){
+      item.id = String(existing.id);
+      const list = state[kind] || [];
+      const oldIndex = list.findIndex(x => String(x.id) === String(existing.id));
+      if(oldIndex >= 0) list[oldIndex] = Object.assign({}, list[oldIndex], item);
+    }
+    const row = bloom3PublicRow(kind, item);
+    row.user_id = bloom3Session.user.id;
+    const { error } = await bloom32Client().from(bloom3Tables[kind]).upsert(row, { onConflict:"id" });
+    if(error) throw error;
+    return item;
+  }
+
+  window.bloom32FindExisting = findExisting;
+  bloom32Upsert = upsertClean;
+
+  const oldLoad = loadCloud;
+  loadCloud = async function(){
+    if(!bloom3Session?.user){ setSync("Inicia sesión", "saving"); return; }
+    await oldLoad();
+    state.empresas = bloom32UniqueItems("empresas", state.empresas || []);
+    state.alumnos = bloom32UniqueItems("alumnos", state.alumnos || []);
+    for(const a of state.alumnos || []){
+      const p = a.foto_path || a.foto?.path || a.foto?.storage_path;
+      if(p){
+        a.foto_path = p;
+        a.foto = Object.assign({name:"Foto alumno", type:"image/*", storage:true}, a.foto || {}, {path:p});
+        try{ a.foto.signedUrl = await signed(p, 900); a.foto_signed_url = a.foto.signedUrl; }catch(e){ console.warn("Foto sin signed URL", e); }
+      }
+      const c = a.cv_path || a.curriculum?.path || a.curriculum?.storage_path;
+      if(c){ a.cv_path = c; a.curriculum = Object.assign({name:"Currículum", storage:true}, a.curriculum || {}, {path:c}); }
+    }
+    try{ localStorage.removeItem(KEY); localStorage.removeItem("bloom_crm_3_state"); }catch(e){}
+    setSync("Supabase sincronizado", "ok");
+    render();
+  };
+
+  save = function(){
+    if(!bloom3Session?.user || !bloom3Ready){ setSync("Pendiente de Supabase", "saving"); return; }
+    state.empresas = bloom32UniqueItems("empresas", state.empresas || []);
+    state.alumnos = bloom32UniqueItems("alumnos", state.alumnos || []);
+    clearTimeout(cloudTimer);
+    setSync("Guardando en Supabase...", "saving");
+    cloudTimer = setTimeout(() => saveCloud(true), 350);
+  };
+
+  const oldOpenEmpresa = openEmpresa;
+  openEmpresa = function(eid=null){
+    const editing = (state.empresas || []).find(x => String(x.id) === String(eid));
+    const e = editing || { id:String(uid()), nombre:"", sector:"", subsector:"", isla:"Gran Canaria", ciudad:"Las Palmas", estado:"nueva", prioridad:"media", contacto:"", telefono:"", email:"", notas:"" };
+    modal("Empresa", bloom32EmpresaForm(e), async()=>{
+      const values = Object.fromEntries(new FormData($("#empresaForm")).entries());
+      Object.assign(e, values);
+      try{
+        setSync("Guardando empresa...", "saving");
+        await bloom32Upsert("empresas", e);
+        state.empresas = [e, ...(state.empresas || []).filter(x => String(x.id) !== String(e.id))];
+        state.empresas = bloom32UniqueItems("empresas", state.empresas);
+        log(`Empresa guardada: ${e.nombre}`);
+        closeModal(); render(); setSync("Empresa sincronizada", "ok"); toast("Empresa guardada 🌸");
+      }catch(error){ setSync("Error empresa", "error"); alert("No se pudo guardar la empresa:\n\n" + error.message); }
+    });
+  };
+
+  const oldOpenAlumno = openAlumno;
+  openAlumno = function(aid=null){
+    const editing = (state.alumnos || []).find(x => String(x.id) === String(aid));
+    const a = editing || { id:String(uid()), nombre:"", telefono:"", email:"", direccion:"", nss:"", dni:"", curso:"", estado:"sin asignar", empresa:"", inicio:"", fin:"", tutor:"", notas:"", foto:null, curriculum:null };
+    modal("Alumno", bloom32AlumnoForm(a), async()=>{
+      const values = Object.fromEntries(new FormData($("#alumnoForm")).entries());
+      const oldPhoto = a.foto_path || a.foto?.path;
+      const oldCv = a.cv_path || a.curriculum?.path;
+      Object.assign(a, values);
+      try{
+        setSync("Guardando alumno...", "saving");
+        const foto = $("#alumnoFoto")?.files?.[0];
+        const cv = $("#alumnoCV")?.files?.[0];
+        if(foto){
+          a.foto = await bloom3UploadFile(foto, "alumnos/fotos");
+          a.foto_path = a.foto.path;
+          try{ a.foto.signedUrl = await signed(a.foto_path, 900); a.foto_signed_url = a.foto.signedUrl; }catch(e){}
+          if(oldPhoto && oldPhoto !== a.foto_path) await bloom32RemoveStoragePaths([oldPhoto]);
+        }
+        if(cv){
+          a.curriculum = await bloom3UploadFile(cv, "alumnos/cv");
+          a.cv_path = a.curriculum.path;
+          if(oldCv && oldCv !== a.cv_path) await bloom32RemoveStoragePaths([oldCv]);
+        }
+        await bloom32Upsert("alumnos", a);
+        state.alumnos = [a, ...(state.alumnos || []).filter(x => String(x.id) !== String(a.id))];
+        state.alumnos = bloom32UniqueItems("alumnos", state.alumnos);
+        log(`Alumno guardado: ${a.nombre}`);
+        closeModal(); render(); setSync("Alumno sincronizado", "ok"); toast("Alumno guardado 🌸");
+      }catch(error){ setSync("Error alumno", "error"); alert("No se pudo guardar el alumno:\n\n" + error.message); }
+    });
+  };
+
+  previewAnyFile = async function(file, title="Documento"){
+    if(!file){ modal("Previsualizar documento", `<p>No hay archivo adjunto.</p>`, () => closeModal()); return; }
+    const path = file.path || file.storage_path || file.storagePath;
+    if(path && (file.storage || !file.data)){
+      try{
+        const url = await signed(path, 900);
+        const name = file.name || title;
+        const type = file.type || "";
+        const isPdf = type.includes("pdf") || /\.pdf$/i.test(name);
+        const isImage = type.includes("image") || /\.(png|jpg|jpeg|webp|gif)$/i.test(name);
+        modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>${isPdf ? `<div class="student-cv-preview"><iframe src="${url}"></iframe></div>` : isImage ? `<div class="student-cv-image"><img src="${url}"></div>` : `<div class="student-cv-empty"><b>${esc(name)}</b><span>Archivo privado con enlace temporal.</span></div>`}<div class="student-cv-actions"><a href="${url}" target="_blank">Abrir temporal</a><a href="${url}" download="${esc(name)}">Descargar</a></div></section>`, () => closeModal());
+      }catch(error){ alert("No se pudo crear el enlace temporal:\n\n" + error.message); }
+      return;
+    }
+    modal("Previsualizar documento", `<section><h2>${esc(title)}</h2>${filePreviewHTML(file,"modal")}</section>`, () => closeModal());
+  };
+
+  document.title = "Bloom CRM " + FIX_VERSION;
+})();

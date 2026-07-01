@@ -5161,3 +5161,8 @@ document.title = "Bloom CRM 3.2";
 
   document.title = "Bloom CRM " + FIX_VERSION;
 })();
+
+
+/* Bloom CRM 3.2.2 paquete raíz reparado: cache-bust + supabase/schema.sql incluido */
+window.BLOOM_CRM_BUILD="3.2.2-reparado-final";
+console.info("Bloom CRM build", window.BLOOM_CRM_BUILD);
